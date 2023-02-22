@@ -1,0 +1,9 @@
+#!/bin/sh
+clear
+sdcc -c src/initdevice.c -o build/
+sdcc -c src/globals.c -o build/
+sdcc -c src/main.c -o build/
+sdcc -c src/rf_handling.c -o build/
+sdcc -c src/uart.c -o build/
+
+sdcc --iram-size 256 --xram-size 256 --code-size 8192 build/initdevice.rel build/globals.rel build/main.rel build/rf_handling.rel build/uart.rel -o build/firmware.hex
