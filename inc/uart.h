@@ -43,7 +43,8 @@ typedef enum
 	RECEIVE_LEN,
 	RECEIVING,
 	TRANSMIT,
-	COMMAND
+	COMMAND,
+    RF_FINISHED
 } uart_state_t;
 
 typedef enum
@@ -79,10 +80,8 @@ extern unsigned int uart_getc(void);
 extern void uart_putc(uint8_t txdata);
 extern void uart_write(uint8_t value);
 extern void uart_put_command(uint8_t command);
-extern void uart_put_rf_data_standard(const uint8_t command);
-extern void uart_put_rf_data_advanced(const uint8_t command, const uint8_t protocol_index);
 
-// INCLUDE_BUCKET_SNIFFING
-extern void uart_put_rf_buckets(const uint8_t command);
+
+extern volatile bool gTXFinished;
 
 #endif // INC_UART_H_

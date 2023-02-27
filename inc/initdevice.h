@@ -10,11 +10,12 @@
 
 
 extern void init_port_pins(void);
-extern void init_timers(void);
 extern void init_interrupts(void);
-extern void init_pca(void);
 extern void init_uart(void);
 extern void init_interrupt0(void);
+extern void init_timer2_capture(void);
+extern void enable_interrupts(void);
+extern void disable_interrupts(void);
 
 #endif
 

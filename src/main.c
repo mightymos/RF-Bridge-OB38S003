@@ -7,27 +7,36 @@
 // SFR declarations
 //#include <SI_EFM8BB1_Register_Enums.h>
 #include <8052.h>
+#include <stdint.h>
+#include <stdio.h>
 
 #include "..\inc\globals.h"
 #include "..\inc\initdevice.h"
-//#include "uart_0.h"
-//#include "pca_0.h"
-//#include "wdt_0.h"
+//#include "..\inc\pca.h"
+#include "..\inc\timer.h"
 #include "..\inc\uart.h"
-#include "..\inc\rf_handling.h"
+//#include "wdt_0.h"
+
+//#include "..\inc\rf_handling.h"
 #include "..\inc\rf_protocols.h"
 
 // FIXME: try to remove the need for these, or change to global naming convention
 //bool gReadUartData = true;
 
-RF_SNIFFING_MODE_T lastSniffingMode;
-uint8_t trRepeats;
-uint8_t gLength;
+// units of milliseconds
+#define TOLERANCE 100
+
+const static uint16_t timings [] = { 350, 1050, 10850 };
+
+//RF_SNIFFING_MODE_T lastSniffingMode;
+//uint8_t trRepeats;
+//uint8_t gLength;
 
 
 // sdccman sec. 3.8.1 indicates isr prototype must appear in the file containing main
 extern void uart_isr(void) __interrupt (4);
 extern void timer2_isr(void) __interrupt (5);
+//extern void pca_isr(void) __interrupt (14);
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -44,22 +53,6 @@ void delay_hacky(unsigned int msCount)
         for(j = 0; j < 1000; j++);
     }
 }
-
-
-// FIXME: this seems to be mixing multiple functions in one, consider changes
-//void finish_command(uint8_t command)
-//{
-//	// send uart command
-//	uart_put_command(command);
-//
-//    // FIXME: do not understand why control of uart is being spread around
-//	// enable UART again
-//	//gReadUartData = true;
-//
-//	// restart sniffing in its previous mode
-//	//PCA0_DoSniffing(gLastSniffingCommand);
-//}
-
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -127,67 +120,11 @@ void uart_state_machine(const unsigned int rxdata)
             switch(command)
             {
                 case RF_CODE_LEARN:
-                    //InitTimer3_ms(1, 50);
-                    //buzzer_on();
-                    // wait until timer has finished
-                    //WaitTimer3Finished();
-                    //buzzer_off();
-
-                    // set desired RF protocol PT2260
-                    //gSniffingMode = STANDARD;
-                    //gLastSniffingCommand = PCA0_DoSniffing(RF_CODE_LEARN);
-
-                    // start timeout timer
-                    //InitTimer3_ms(1, 30000);
                     break;
                 // do original sniffing
                 case RF_CODE_RFIN:
-                    // check if a RF signal got decoded
-                    if ((gRFDataStatus & RF_DATA_RECEIVED_MASK) != 0)
-                    {
-                        uart_put_RF_Data_Standard(RF_CODE_RFIN);
-
-                        // clear RF status
-                        gRFDataStatus = 0;
-
-                        // enable interrupt for RF receiving
-                        //PCA0CPM0 |= PCA0CPM0_ECCF__ENABLED;
-                    }
-                    else
-                    {
-                        // handle new received buckets
-                        if (buffer_out(&bucket))
-                        {
-                            handle_rf_bucket(bucket & 0x7FFF, (bool)((bucket & 0x8000) >> 15));
-                        }
-                    }
                     break;
                 case RF_CODE_RFOUT:
-                    // stop sniffing while handling received data
-                    //PCA0_StopSniffing();
-                    //state = RECEIVING;
-                    //trRepeats = RF_TRANSMIT_REPEATS;
-                    //position = 0;
-                    //gLength = 9;
-                    
-                    trRepeats--;
-                    PCA0_StopSniffing();
-
-                    // byte 0..1:	Tsyn
-                    // byte 2..3:	Tlow
-                    // byte 4..5:	Thigh
-                    // byte 6..7:	24bit Data
-
-                    buckets[0] = *(uint16_t *)&gRFData[2];
-                    buckets[1] = *(uint16_t *)&gRFData[4];
-                    buckets[2] = *(uint16_t *)&gRFData[0];
-
-                    SendBuckets(buckets,
-                            protocols[0].start.dat, protocols[0].start.size,
-                            protocols[0].bit0.dat, protocols[0].bit0.size, protocols[0].bit1.dat, protocols[0].bit1.size, protocols[0].end.dat, protocols[0].end.size,
-                            protocols[0].bit_count,
-                            gRFData + 6
-                            );
                     break;
                 case RF_DO_BEEP:
                     // FIXME: replace with timer rather than delay(), although appears original code was blocking too
@@ -209,10 +146,10 @@ void uart_state_machine(const unsigned int rxdata)
                     break;
                 case RF_CODE_SNIFFING_OFF:
                     // set desired RF protocol PT2260
-                    gSniffingMode = STANDARD;
+                    //gSniffingMode = STANDARD;
                     // re-enable default RF_CODE_RFIN sniffing
-                    pca_start_sniffing(RF_CODE_RFIN);
-                    gLastSniffingCommand = RF_CODE_RFIN;
+                    //pca_start_sniffing(RF_CODE_RFIN);
+                    //gLastSniffingCommand = RF_CODE_RFIN;
                     break;
                 case RF_CODE_ACK:
                     // re-enable default RF_CODE_RFIN sniffing
@@ -222,15 +159,15 @@ void uart_state_machine(const unsigned int rxdata)
                     
                 // wait until data got transfered
                 case RF_FINISHED:
-                    if (trRepeats == 0)
-                    {
-                        // disable RF transmit
-                        tdata_off();
-
-                        uart_put_command(RF_CODE_ACK);
-                    } else {
-                        gRFState = RF_IDLE;
-                    }
+                    //if (trRepeats == 0)
+                    //{
+                    //    // disable RF transmit
+                    //    tdata_off();
+                    //
+                    //    uart_put_command(RF_CODE_ACK);
+                    //} else {
+                    //    gRFState = RF_IDLE;
+                    //}
                     break;
 
                 // unknown command
@@ -243,32 +180,32 @@ void uart_state_machine(const unsigned int rxdata)
 
         // Receiving UART data length
         case RECEIVE_LEN:
-            position = 0;
-            gLength = rxdata & 0xFF;
-            if (gLength > 0)
-            {
-                // stop sniffing while handling received data
-                PCA0_StopSniffing();
-                state = RECEIVING;
-            }
-            else
-                state = SYNC_FINISH;
+            //position = 0;
+            //gLength = rxdata & 0xFF;
+            //if (gLength > 0)
+            //{
+            //    // stop sniffing while handling received data
+            //    pca_stop_sniffing();
+            //    state = RECEIVING;
+            //}
+            //else
+            //    state = SYNC_FINISH;
             break;
 
         // receiving UART data
         case RECEIVING:
-            gRFData[position] = rxdata & 0xFF;
-            position++;
+            //gRFData[position] = rxdata & 0xFF;
+            //position++;
 
-            if (position == gLength)
-            {
-                state = SYNC_FINISH;
-            }
-            else if (position >= RF_DATA_BUFFERSIZE)
-            {
-                gLength = RF_DATA_BUFFERSIZE;
-                state = SYNC_FINISH;
-            }
+            //if (position == gLength)
+            //{
+            //    state = SYNC_FINISH;
+            //}
+            //else if (position >= RF_DATA_BUFFERSIZE)
+            //{
+            //    gLength = RF_DATA_BUFFERSIZE;
+            //    state = SYNC_FINISH;
+            //}
             break;
 
         // wait and check for UART_SYNC_END
@@ -281,22 +218,31 @@ void uart_state_machine(const unsigned int rxdata)
     }
 }
 
+
 //-----------------------------------------------------------------------------
 // main() Routine
 // ----------------------------------------------------------------------------
 int main (void)
 {
+    static bool oneShot = false;
+    
     // upper eight bits hold error or no data flags
  	unsigned int rxdata = UART_NO_DATA;
 
 	// hardware initialization
 	init_port_pins();
     init_uart();
+    init_timer2_capture();
 
 	// set default state
     led_off();
     buzzer_off();
     tdata_off();
+    
+    // DEBUG: disable radio (not working, does not set pin high?)
+    //radio_off();
+    
+    //RDATA = 1;
 
 
     // FIXME: does this contradict state machine where sniffing is advanced?
@@ -306,7 +252,7 @@ int main (void)
 	//gLastSniffingCommand = RF_CODE_RFIN;
 
     // FIXME: comment on pca being a comparator?
-	pca_stop_sniffing();
+	//pca_stop_sniffing();
 
 	// enable global interrupts
     init_interrupts();
@@ -332,7 +278,7 @@ int main (void)
 		rxdata = uart_getc();
         
         // FIXME: figure out why this allows state machine echoes to work properly
-        delay_hacky(10);
+        //delay_hacky(10);
         
         // DEBUG: echo back received character
         //delay_hacky(500);
@@ -346,14 +292,46 @@ int main (void)
         // check if transmit buffer is empty
         if(!is_uart_tx_buffer_empty())
         {
-            // if not empty, set TI, which triggers interrupt to actually transmit
-            uart_init_tx_polling();
+            if (gTXFinished)
+            {
+                // if not empty, set TI, which triggers interrupt to actually transmit
+                uart_init_tx_polling();
+            }
         }
 
         
         if (rxdata != UART_NO_DATA)
         {
             uart_state_machine(rxdata);
+        }
+        
+        if (gCaptureDone)
+        {
+            //led_toggle();
+            
+            //uart_putc((gCaptureDiff >> 8) & 0xff);
+            //uart_putc(gCaptureDiff & 0xff);
+            
+            // divide by four to get microseconds
+            
+            disable_interrupts();
+            
+            if ( (gDuration[0] > (timings[0] - TOLERANCE_MIN)) && (gDuration[0] < (timings[0] + TOLERANCE_MIN)) )
+            {
+                led_toggle();
+
+                if ( (gDuration[1] > (timings[2] - TOLERANCE_MAX)) && (gDuration[1] < (timings[2] + TOLERANCE_MAX)) )
+                {
+                    printf("SYNC:\r\n");
+                    printf("%u\r\n", gDuration[0]);
+                    printf("%u\r\n", gDuration[1]);
+                    printf("\r\n");
+                }
+            }
+            
+            enable_interrupts();
+            
+            gCaptureDone = false;
         }
 
 	}
