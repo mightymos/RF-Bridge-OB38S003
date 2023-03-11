@@ -41,6 +41,22 @@ void uart_transmitCompleteCb()
     
 }
 
+// for supporting printf()
+int putchar(int c)
+{
+    // basically acts as wrapper to ring buffer
+    uart_putc(c);
+    
+    // assumes a polled operation (i.e., no serial interrupt)
+    //SBUF = c;
+    
+    // FIXME: should this be placed here or prior to SBUF write as in sdccman manual ?
+    //while (!TI);
+    //TI = 0;
+    
+    return c;
+}
+
 int getchar(void)
 {
     return SBUF;
@@ -65,6 +81,7 @@ void uart_isr(void) __interrupt (4)
 	// buffer and clear flags immediately so we don't miss an interrupt while processing
 	const uint8_t flags = SCON & (0x01 | 0x02);
 	SCON &= ~flags;
+    
     // FIXME: this approach may be more portable because register address is not the same as a bit mask
     //const bool flagRI = RI;
     //const bool flagTI = TI;
@@ -162,15 +179,6 @@ unsigned int uart_getc(void)
     lastRxError = 0;
     
     return rxdata;
-}
-
-// supports printf()
-int putchar(int c)
-{
-    // basically wrapper
-    uart_putc(c);
-    
-    return c;
 }
 
 //************************************************************************

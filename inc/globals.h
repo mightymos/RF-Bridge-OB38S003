@@ -13,7 +13,14 @@
 #include <stdint.h>
 #include <stdio.h>
 
+
 // SFRs
+__sfr __at (0x8E) CKCON;
+
+
+__sfr __at (0xA8) IEN0;
+
+
 __sfr __at (0xD2) P0M0;
 __sfr __at (0xD3) P0M1;
 __sfr __at (0xD4) P1M0;
@@ -42,7 +49,6 @@ __sfr __at (0xCB) CRCH;
 __sfr __at (0xCC) TL2;
 __sfr __at (0xCD) TH2;
 
-__sfr __at (0xA8) IEN0;
 
 //sfr16 CC1   = 0xC2;
 //sfr16 CC2   = 0xC4;
@@ -57,29 +63,26 @@ __sfr __at (0xA8) IEN0;
 //#define INCLUDE_BUCKET_SNIFFING 1
 //#define INCLUDE_BUCKET_SNIFFING 0
 
-//
-#define SYSCLK 16000000
+// FIXME: define a similar macro in delay.h
+//#define SYSCLK 16000000
 //
 #define FIRMWARE_VERSION 0x03
 
-// pin defines
-#define BUZZER    P0_0
-#define TDATA     P0_7
-#define RDATA     P1_6
-#define RF_ENABLE P1_7
-#define LED       P3_0
 
-
-
+extern void buzzer_on(void);
+extern void buzzer_off(void);
+extern bool is_rdata_low(void);
 extern void led_on(void);
 extern void led_off(void);
 extern void led_toggle(void);
-extern void buzzer_on(void);
-extern void buzzer_off(void);
-extern void tdata_on(void);
-extern void tdata_off(void);
-extern bool is_rdata_low(void);
 extern void radio_off(void);
 extern void radio_on(void);
+extern void reset_pin_on(void);
+extern void reset_pin_off(void);
+extern void tdata_on(void);
+extern void tdata_off(void);
+extern void uart_tx_pin_off(void);
+extern void uart_tx_pin_on(void);
+extern void uart_tx_pin_toggle(void);
 
 #endif // INC_GLOBALS_H_

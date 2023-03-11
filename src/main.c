@@ -8,7 +8,11 @@
 //#include <SI_EFM8BB1_Register_Enums.h>
 #include <8052.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
+
+// borrowed from area-8051 uni-stc HAL...
+#include "..\inc\delay.h"
 
 #include "..\inc\globals.h"
 #include "..\inc\initdevice.h"
@@ -20,23 +24,16 @@
 //#include "..\inc\rf_handling.h"
 #include "..\inc\rf_protocols.h"
 
-// FIXME: try to remove the need for these, or change to global naming convention
-//bool gReadUartData = true;
 
-// units of milliseconds
-#define TOLERANCE 100
-
-const static uint16_t timings [] = { 350, 1050, 10850 };
-
-//RF_SNIFFING_MODE_T lastSniffingMode;
-//uint8_t trRepeats;
-//uint8_t gLength;
-
+// DEBUG: bench sensor
+//15:12:45.080 MQT: tele/tasmota_4339CA/RESULT = {"Time":"2023-02-27T15:12:45","RfReceived":{"Sync":10250,"Low":340,"High":1010,"Data":"4AF10A","RfKey":"None"}}
+//15:12:49.186 MQT: tele/tasmota_4339CA/RESULT = {"Time":"2023-02-27T15:12:49","RfReceived":{"Sync":10250,"Low":340,"High":1000,"Data":"4AF10E","RfKey":"None"}}
+#define RADIO_STARTUP_TIME 500
+#define REPEAT_TRANSMISSIONS 8
 
 // sdccman sec. 3.8.1 indicates isr prototype must appear in the file containing main
 extern void uart_isr(void) __interrupt (4);
 extern void timer2_isr(void) __interrupt (5);
-//extern void pca_isr(void) __interrupt (14);
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -45,14 +42,6 @@ void _sdcc_external_startup(void)
 
 }
 
-void delay_hacky(unsigned int msCount)
-{
-    unsigned int i,j;
-    for(i = 0; i < msCount; i++)
-    {
-        for(j = 0; j < 1000; j++);
-    }
-}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -129,7 +118,7 @@ void uart_state_machine(const unsigned int rxdata)
                 case RF_DO_BEEP:
                     // FIXME: replace with timer rather than delay(), although appears original code was blocking too
                     buzzer_on();
-                    delay_hacky(50);
+                    delay1ms(50);
                     buzzer_off();
 
                     // send acknowledge
@@ -155,6 +144,9 @@ void uart_state_machine(const unsigned int rxdata)
                     // re-enable default RF_CODE_RFIN sniffing
                     //gLastSniffingCommand = PCA0_DoSniffing(gLastSniffingCommand);
                     //state = IDLE;
+                    break;
+                case SINGLE_STEP_DEBUG:
+                    gSingleStep = true;
                     break;
                     
                 // wait until data got transfered
@@ -219,17 +211,94 @@ void uart_state_machine(const unsigned int rxdata)
 }
 
 
+//
+// borrowed from ReedTripRadio
+//  
+void send(const unsigned char byte)
+{
+    const unsigned char numBits = 8;
+    
+    // mask out highest bit
+    const unsigned char mask = 1 << (numBits - 1);
+    
+    unsigned char i = 0;
+
+    // byte for shifting
+    unsigned char toSend = byte;
+    
+    // Repeat until all bits sent
+    for(i = 0; i < numBits; i++)
+    {
+        // mask out all but left most bit value, and if byte is not equal to zero (i.e. left most bit must be one) then send one level
+        if((toSend & mask) > 0)
+        {
+            tdata_on();
+            delay10us(105);
+            
+            tdata_off();
+            delay10us(35);
+        }
+        else
+        {
+            tdata_on();
+            delay10us(35);
+            
+            tdata_off();
+            delay10us(105);
+        }
+        
+        toSend = toSend << 1;
+    }
+}
+
+void send_radio_packet(const unsigned char rfcode)
+{
+    unsigned char index;
+    //unsigned char byteToSend;
+    
+    
+    //enable_radio_vdd();
+    delay1ms(RADIO_STARTUP_TIME);
+    
+    // many receivers require repeatedly sending identical transmissions to accept data
+    for (index = 0; index < REPEAT_TRANSMISSIONS; index++)
+    {
+        // rf sync pulse
+        tdata_on();
+        delay10us(35);
+        
+        // this should be the only really long delay required
+        tdata_off();
+        delay1ms(11);
+
+        // send rf key with unique id and code
+        send(0x4a);
+        send(0xf1);
+        send(rfcode);
+    }
+    
+    //disable_radio_vdd();
+    
+    // FIXME: we need to force ask low/high just in case correct?
+}
+
+
 //-----------------------------------------------------------------------------
 // main() Routine
 // ----------------------------------------------------------------------------
 int main (void)
 {
-    static bool oneShot = false;
+    // FIXME: avoid magic numbers
+    __xdata bool rfData[24];
+
+    uint8_t index;
+    uint8_t bitIndex;
     
     // upper eight bits hold error or no data flags
  	unsigned int rxdata = UART_NO_DATA;
 
 	// hardware initialization
+    set_clock_1t_mode();
 	init_port_pins();
     init_uart();
     init_timer2_capture();
@@ -242,30 +311,34 @@ int main (void)
     // DEBUG: disable radio (not working, does not set pin high?)
     //radio_off();
     
-    //RDATA = 1;
 
-
-    // FIXME: does this contradict state machine where sniffing is advanced?
-	// set desired sniffing type to PT2260
-	//gSniffingMode = STANDARD;
-	//PCA0_DoSniffing(RF_CODE_RFIN);
-	//gLastSniffingCommand = RF_CODE_RFIN;
-
-    // FIXME: comment on pca being a comparator?
-	//pca_stop_sniffing();
-
-	// enable global interrupts
-    init_interrupts();
+	// enable interrupts
+    init_serial_interrupt();
+    init_capture_interrupt();
+    enable_global_interrupts();
 
 
     // FIXME: startup beep helpful or annoying?
     //buzzer_on();
-    //delay_hacky(50);
+    //delay1ms(20);
     //buzzer_off();
     
+    // startup blink
     led_on();
-    delay_hacky(500);
+    delay1ms(500);
     led_off();
+    
+    printf("Startup...\r\n");
+
+    // DEBUG:
+    //while (true)
+    //{
+    //    send_radio_packet(0x0a);
+    //    //uart_tx_pin_toggle();
+    //    delay1ms(10000);
+    //    //delay10us(35);
+    //}
+
 
 
 	while (true)
@@ -281,7 +354,7 @@ int main (void)
         //delay_hacky(10);
         
         // DEBUG: echo back received character
-        //delay_hacky(500);
+        //delay1ms(500);
         //if (rxdata != UART_NO_DATA)
         //{
         //    // if buffer is not empty, echo back byte by transmitting
@@ -305,33 +378,57 @@ int main (void)
             uart_state_machine(rxdata);
         }
         
-        if (gCaptureDone)
+        // DEBUG: 
+        // if (gPacket.count >= 2)
+        // {
+            // printf("count:%u\r\n",       gPacket.count);
+            // printf("syncFirst: %u\r\n", gPacket.syncFirstDuration);
+            // printf("syncSecond: %u\r\n", gPacket.syncSecondDuration);
+            // printf("diff: %lu\r\n", gPacket.diff);
+            
+            // gPacket.count = 0;
+        // }
+        
+        // similar to rc-switch duration based decoder
+        if (gPacket.captureDone)
         {
             //led_toggle();
             
-            //uart_putc((gCaptureDiff >> 8) & 0xff);
-            //uart_putc(gCaptureDiff & 0xff);
-            
-            // divide by four to get microseconds
-            
-            disable_interrupts();
-            
-            if ( (gDuration[0] > (timings[0] - TOLERANCE_MIN)) && (gDuration[0] < (timings[0] + TOLERANCE_MIN)) )
+            index = 0;
+            bitIndex = 0;
+            while (index < TOTAL_RF_DATA_BITS)
             {
-                led_toggle();
-
-                if ( (gDuration[1] > (timings[2] - TOLERANCE_MAX)) && (gDuration[1] < (timings[2] + TOLERANCE_MAX)) )
+                // FIXME: support inverted protocols (or does it matter since it is duration only?)
+                if (gPacket.duration[bitIndex] && !gPacket.duration[bitIndex + 1])
                 {
-                    printf("SYNC:\r\n");
-                    printf("%u\r\n", gDuration[0]);
-                    printf("%u\r\n", gDuration[1]);
-                    printf("\r\n");
+                    rfData[index] = 1;
+                } else {
+                    if (!gPacket.duration[bitIndex] && gPacket.duration[bitIndex + 1])
+                    {
+                        rfData[index] = 0;
+                    } else {
+                        // error condition
+                        printf("decoding error\r\n");
+                    }
                 }
+                
+                index++;
+                bitIndex += 2;
             }
             
-            enable_interrupts();
+            index = 0;
+            while (index < TOTAL_RF_DATA_BITS)
+            {
+                printf("%d", rfData[index]);
+                index++;
+            }
             
-            gCaptureDone = false;
+            printf("\r\n");
+            
+            //enable_interrupts();
+            //gSyncFirst   = false;
+            //gSyncSecond  = false;
+            gPacket.captureDone = false;
         }
 
 	}
