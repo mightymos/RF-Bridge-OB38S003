@@ -8,7 +8,7 @@
 #ifndef INC_TIMERS_H_
 #define INC_TIMERS_H_
 
-#define MAX_COUNT 48
+#define MAX_PERIOD_COUNT 48
 
 //extern volatile bool gSyncFirst;
 //extern volatile bool gSyncSecond;
@@ -16,20 +16,19 @@
 
 struct RADIO_PACKET_T
 {
-    volatile bool syncFirst;
-    volatile bool syncSecond;
+    volatile bool syncFirstFlag;
+    volatile bool syncSecondFlag;
     volatile bool captureDone;
     
     volatile uint8_t  count;
     
     volatile uint16_t syncFirstDuration;
     volatile uint16_t syncSecondDuration;
-    volatile uint16_t duration[MAX_COUNT];
-    volatile unsigned long diff;
+    volatile uint16_t duration[MAX_PERIOD_COUNT];
 };
 
 extern __xdata struct RADIO_PACKET_T gPacket;
-extern const uint16_t timings [];
+extern const uint16_t gTimings [];
 
 extern volatile bool gSingleStep;
 

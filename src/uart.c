@@ -41,21 +41,28 @@ void uart_transmitCompleteCb()
     
 }
 
-// for supporting printf()
-int putchar(int c)
-{
-    // basically acts as wrapper to ring buffer
-    uart_putc(c);
-    
-    // assumes a polled operation (i.e., no serial interrupt)
-    //SBUF = c;
-    
-    // FIXME: should this be placed here or prior to SBUF write as in sdccman manual ?
-    //while (!TI);
-    //TI = 0;
-    
-    return c;
-}
+#if 0
+    int putchar(int c)
+    {
+        // basically acts as wrapper to ring buffer
+        uart_putc(c);
+    }
+
+#else
+    // for supporting printf()
+    int putchar(int c)
+    {
+        // assumes a polled operation (i.e., no serial interrupt)
+        SBUF = c;
+        
+        // FIXME: should this be placed here or prior to SBUF write as in sdccman manual ?
+        while (!TI);
+        TI = 0;
+        
+        return c;
+    }
+
+#endif
 
 int getchar(void)
 {

@@ -29,7 +29,8 @@
 //15:12:45.080 MQT: tele/tasmota_4339CA/RESULT = {"Time":"2023-02-27T15:12:45","RfReceived":{"Sync":10250,"Low":340,"High":1010,"Data":"4AF10A","RfKey":"None"}}
 //15:12:49.186 MQT: tele/tasmota_4339CA/RESULT = {"Time":"2023-02-27T15:12:49","RfReceived":{"Sync":10250,"Low":340,"High":1000,"Data":"4AF10E","RfKey":"None"}}
 #define RADIO_STARTUP_TIME 500
-#define REPEAT_TRANSMISSIONS 8
+#define TX_REPEAT_TRANSMISSIONS 1
+
 
 // sdccman sec. 3.8.1 indicates isr prototype must appear in the file containing main
 extern void uart_isr(void) __interrupt (4);
@@ -232,18 +233,22 @@ void send(const unsigned char byte)
         // mask out all but left most bit value, and if byte is not equal to zero (i.e. left most bit must be one) then send one level
         if((toSend & mask) > 0)
         {
-            tdata_on();
+            //tdata_on();
+            reset_pin_on();
             delay10us(105);
             
-            tdata_off();
+            //tdata_off();
+            reset_pin_off();
             delay10us(35);
         }
         else
         {
-            tdata_on();
+            //tdata_on();
+            reset_pin_on();
             delay10us(35);
             
-            tdata_off();
+            //tdata_off();
+            reset_pin_off();
             delay10us(105);
         }
         
@@ -261,15 +266,19 @@ void send_radio_packet(const unsigned char rfcode)
     delay1ms(RADIO_STARTUP_TIME);
     
     // many receivers require repeatedly sending identical transmissions to accept data
-    for (index = 0; index < REPEAT_TRANSMISSIONS; index++)
+    for (index = 0; index < TX_REPEAT_TRANSMISSIONS; index++)
     {
         // rf sync pulse
-        tdata_on();
+        //tdata_on();
+        reset_pin_on();
         delay10us(35);
         
         // this should be the only really long delay required
-        tdata_off();
-        delay1ms(11);
+        //tdata_off();
+        reset_pin_off();
+        // FIXME: needs to be programmable
+        delay1ms(10);
+        delay10us(85);
 
         // send rf key with unique id and code
         send(0x4a);
@@ -282,6 +291,22 @@ void send_radio_packet(const unsigned char rfcode)
     // FIXME: we need to force ask low/high just in case correct?
 }
 
+void send_1khz_square_wave(void)
+{
+    unsigned char index;
+    
+    delay1ms(RADIO_STARTUP_TIME);
+    
+    for (index = 0; index < 25; index++)
+    {
+        reset_pin_on();
+        delay10us(100);
+        
+        reset_pin_off();
+        delay10us(100);
+    }
+}
+
 
 //-----------------------------------------------------------------------------
 // main() Routine
@@ -289,10 +314,19 @@ void send_radio_packet(const unsigned char rfcode)
 int main (void)
 {
     // FIXME: avoid magic numbers
-    __xdata bool rfData[24];
+    __xdata bool radioBits[24];
+    __xdata uint8_t radioBytes[3];
+    
+    uint8_t* bytePtr;
 
     uint8_t index;
     uint8_t bitIndex;
+    uint8_t arrayIndex;
+    
+    uint16_t firstPeriod;
+    uint16_t secondPeriod;
+    
+    unsigned long hackCount = 0;
     
     // upper eight bits hold error or no data flags
  	unsigned int rxdata = UART_NO_DATA;
@@ -313,7 +347,7 @@ int main (void)
     
 
 	// enable interrupts
-    init_serial_interrupt();
+    //init_serial_interrupt();
     init_capture_interrupt();
     enable_global_interrupts();
 
@@ -329,17 +363,6 @@ int main (void)
     led_off();
     
     printf("Startup...\r\n");
-
-    // DEBUG:
-    //while (true)
-    //{
-    //    send_radio_packet(0x0a);
-    //    //uart_tx_pin_toggle();
-    //    delay1ms(10000);
-    //    //delay10us(35);
-    //}
-
-
 
 	while (true)
 	{
@@ -378,37 +401,42 @@ int main (void)
             uart_state_machine(rxdata);
         }
         
-        // DEBUG: 
-        // if (gPacket.count >= 2)
-        // {
-            // printf("count:%u\r\n",       gPacket.count);
-            // printf("syncFirst: %u\r\n", gPacket.syncFirstDuration);
-            // printf("syncSecond: %u\r\n", gPacket.syncSecondDuration);
-            // printf("diff: %lu\r\n", gPacket.diff);
+        
+        // DEBUG:
+        // this executes about every 10 seconds
+        if (hackCount++ >= (4294967295 / 10000) )
+        {
+            send_radio_packet(0x0f);
+            //send_1khz_square_wave();
             
-            // gPacket.count = 0;
-        // }
+            led_toggle();
+            
+            hackCount = 0;
+        }
         
         // similar to rc-switch duration based decoder
         if (gPacket.captureDone)
         {
             //led_toggle();
-            
+                        
             index = 0;
             bitIndex = 0;
             while (index < TOTAL_RF_DATA_BITS)
             {
+                firstPeriod  = gPacket.duration[bitIndex];
+                secondPeriod = gPacket.duration[bitIndex + 1];
+                
                 // FIXME: support inverted protocols (or does it matter since it is duration only?)
-                if (gPacket.duration[bitIndex] && !gPacket.duration[bitIndex + 1])
+                if (abs(firstPeriod - gTimings[1]) < TOLERANCE_MIN && abs(secondPeriod - gTimings[0]) < TOLERANCE_MIN)
                 {
-                    rfData[index] = 1;
+                    radioBits[index] = 1;
                 } else {
-                    if (!gPacket.duration[bitIndex] && gPacket.duration[bitIndex + 1])
+                    if (abs(firstPeriod - gTimings[0]) < TOLERANCE_MIN && abs(secondPeriod - gTimings[1]) < TOLERANCE_MIN)
                     {
-                        rfData[index] = 0;
+                        radioBits[index] = 0;
                     } else {
                         // error condition
-                        printf("decoding error\r\n");
+                        printf("error: %u, %u, %u\r\n", index, firstPeriod, secondPeriod);
                     }
                 }
                 
@@ -416,14 +444,60 @@ int main (void)
                 bitIndex += 2;
             }
             
+
+            
+            // clear array
             index = 0;
-            while (index < TOTAL_RF_DATA_BITS)
+            while(index < 3)
             {
-                printf("%d", rfData[index]);
+                radioBytes[index] = 0;
                 index++;
             }
             
+            index = 0;
+            bitIndex = 0;
+            arrayIndex = 0;
+            
+            // convert bits to byte array
+            while (arrayIndex < 3)
+            {
+                while (index < 8)
+                {
+                    if (radioBits[bitIndex])
+                    {
+                        radioBytes[arrayIndex] |=  (1 << (7 - index));
+                        printf("%u: %u: %u: %u\r\n", bitIndex, index, arrayIndex, radioBytes[arrayIndex]);
+                    }
+                    
+                    
+                    index++;
+                    bitIndex++;
+                }
+                
+                index = 0;
+                arrayIndex++;
+            }
+            
+            
             printf("\r\n");
+            
+            // display bits
+            bitIndex = 0;
+            while (bitIndex < 24)
+            {
+                printf("%d", radioBits[bitIndex]);
+                bitIndex++;
+            }
+
+            printf("\r\n");
+            
+            // display bytes in hex format
+            index = 0;
+            while (index < 3)
+            {
+                printf("0x%x%x\r\n", radioBytes[index] >> 4, radioBytes[index] & 0x0f);
+                index++;
+            }
             
             //enable_interrupts();
             //gSyncFirst   = false;
