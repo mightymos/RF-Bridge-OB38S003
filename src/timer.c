@@ -96,7 +96,7 @@ void timer2_isr(void) __interrupt (5)
     switch (currentState)
     {
         // only begin saving durations if expected start pulse timings are observed
-        //   in order to attempt to discard noise pulses
+        //   as an initial attempt to ignore noise pulses
         case START_HIGH_STATE:
             if ( abs(diff - gTimings[0]) < TOLERANCE_MIN )
             {
@@ -142,6 +142,12 @@ void timer2_isr(void) __interrupt (5)
                 gPacket.captureDone = true;
                 
                 currentState = START_HIGH_STATE;
+                
+                // FIXME:
+                // we may never get another transition if level remains the same
+                // e.g. last bit is low level and default signal level is also low
+                // so save last level here
+                //gPacket.lastLevel = !is_rdata_low();
             }
             
             break;

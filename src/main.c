@@ -233,22 +233,22 @@ void send(const unsigned char byte)
         // mask out all but left most bit value, and if byte is not equal to zero (i.e. left most bit must be one) then send one level
         if((toSend & mask) > 0)
         {
-            //tdata_on();
-            reset_pin_on();
+            tdata_on();
+            //reset_pin_on();
             delay10us(105);
             
-            //tdata_off();
-            reset_pin_off();
+            tdata_off();
+            //reset_pin_off();
             delay10us(35);
         }
         else
         {
-            //tdata_on();
-            reset_pin_on();
+            tdata_on();
+            //reset_pin_on();
             delay10us(35);
             
-            //tdata_off();
-            reset_pin_off();
+            tdata_off();
+            //reset_pin_off();
             delay10us(105);
         }
         
@@ -269,13 +269,13 @@ void send_radio_packet(const unsigned char rfcode)
     for (index = 0; index < TX_REPEAT_TRANSMISSIONS; index++)
     {
         // rf sync pulse
-        //tdata_on();
-        reset_pin_on();
+        tdata_on();
+        //reset_pin_on();
         delay10us(35);
         
         // this should be the only really long delay required
-        //tdata_off();
-        reset_pin_off();
+        tdata_off();
+        //reset_pin_off();
         // FIXME: needs to be programmable
         delay1ms(10);
         delay10us(85);
@@ -299,10 +299,12 @@ void send_1khz_square_wave(void)
     
     for (index = 0; index < 25; index++)
     {
-        reset_pin_on();
+        tdata_on();
+        //reset_pin_on();
         delay10us(100);
         
-        reset_pin_off();
+        tdata_off();
+        //reset_pin_off();
         delay10us(100);
     }
 }
@@ -414,6 +416,7 @@ int main (void)
             hackCount = 0;
         }
         
+        // look for flag set in capture mode timer interrupt
         // similar to rc-switch duration based decoder
         if (gPacket.captureDone)
         {
@@ -444,6 +447,21 @@ int main (void)
                 bitIndex += 2;
             }
             
+            
+            // FIXME: hack
+            //radioBits[TOTAL_RF_DATA_BITS - 1] = gPacket.lastLevel;
+            
+            firstPeriod = gPacket.duration[MAX_PERIOD_COUNT - 2];
+            if (abs(firstPeriod - gTimings[1]) < TOLERANCE_MIN)
+            {
+                radioBits[TOTAL_RF_DATA_BITS - 1] = 1;
+            } else {
+                if (abs(firstPeriod - gTimings[0]) < TOLERANCE_MIN)
+                {
+                    radioBits[TOTAL_RF_DATA_BITS - 1] = 0;
+                }
+            }
+            
 
             
             // clear array
@@ -466,7 +484,7 @@ int main (void)
                     if (radioBits[bitIndex])
                     {
                         radioBytes[arrayIndex] |=  (1 << (7 - index));
-                        printf("%u: %u: %u: %u\r\n", bitIndex, index, arrayIndex, radioBytes[arrayIndex]);
+                        //printf("%u: %u: %u: %u\r\n", bitIndex, index, arrayIndex, radioBytes[arrayIndex]);
                     }
                     
                     

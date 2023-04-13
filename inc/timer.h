@@ -25,6 +25,7 @@ struct RADIO_PACKET_T
     volatile uint16_t syncFirstDuration;
     volatile uint16_t syncSecondDuration;
     volatile uint16_t duration[MAX_PERIOD_COUNT];
+    volatile bool lastLevel;
 };
 
 extern __xdata struct RADIO_PACKET_T gPacket;
