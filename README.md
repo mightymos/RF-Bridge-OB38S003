@@ -7,5 +7,8 @@ The radio decoder is an 8052 based On Bright OB38S003.
 
 Reprogramming the OB38S003 requires erasing the chip because the stock firmware is protected.  
 A MSM9066 programmer is needed to flash ($30 USD).  
-Hopefully I can capture I2C communication from the programmer.  
-It can then be implemented in Tasmota itself or in less expensive hardware.  
+
+Captures of the erase/write/verify programming cycle have been captured here:
+https://github.com/mightymos/msm9066_capture
+
+If someone wanted to create a programmer using less expensive/existing hardware or within Tasmota itself...that would be cool.  

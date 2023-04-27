@@ -92,6 +92,40 @@ void init_capture_interrupt(void)
     CCCON |= 0x20;
 }
 
+void disable_capture_interrupt(void)
+{
+    CCCON &= ~0x20;
+}
+
+void enable_capture_interrupt(void)
+{
+    CCCON |= 0x20;
+}
+
+void init_timer0(void)
+{
+    // 16-bit mode
+    TMOD |= T0_M0;
+    
+    // T0PS 0x10 prescaler fosc / 96
+    PFCON |= 0x01;
+    
+    // one millisecond to overflow
+    TH0 = 0xc1;
+    TL0 = 0x7f;
+    
+    
+    // ten microseconds to overflow
+    //TH0 = 0xff;
+    //TL0 = 0x5f;
+    
+    // enable timer0 overflow interrupt
+    ET0 = 1;
+    
+    // enable timer0
+    TR0 = 1;
+}
+
 //================================================================================
 //================================================================================
 void init_timer2_capture(void)

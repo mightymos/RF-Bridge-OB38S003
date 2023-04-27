@@ -6,8 +6,8 @@
 #include "..\inc\rf_protocols.h"
 #include "..\inc\timer.h"
 
-uint16_t gTimer2Timeout;
-uint16_t gTimer2Interval;
+//static uint16_t gTimer2Timeout;
+//static uint16_t gTimer2Interval;
 //uint16_t gTimer3Timeout;
 //uint16_t gTimer3Interval;
 
@@ -15,18 +15,27 @@ uint16_t gTimer2Interval;
 
 __xdata struct RADIO_PACKET_T gPacket;
 
-volatile bool gSingleStep = true;
+//volatile bool gSingleStep = true;
+
+static unsigned long gTimeMilliseconds = 0;
+
 
 // rc-switch protocol 1
 const uint16_t gTimings [] = { 350, 1050, 10850 };
 //const uint16_t gTimings [] = { 1000, 1000, 1000 };
 
-// TODO:
-typedef enum {
-    START_HIGH_STATE = 0,
-    START_LOW_STATE  = 1,
-    DATA_STATE = 2,
-} STATE_TYPE;
+//void timer0_isr(void) __interrupt (1)
+//{
+//    gTimeMilliseconds++;
+
+//    // one millisecond to overflow
+//    //TH0 = 0xc1;
+//    //TL0 = 0x7f;
+//    
+//    // ten microseconds to overflow
+//    TH0 = 0xff;
+//    TL0 = 0x5f;
+//}
 
 //-----------------------------------------------------------------------------
 // timer 2 should previously be set in capture mode 0 - pg. 32 of OB38S003 datasheet
@@ -38,13 +47,11 @@ void timer2_isr(void) __interrupt (5)
     static uint8_t lowByteNew  = 0;
     static uint8_t highByteNew = 0;
     
-    static uint8_t count = 0;
-    
-    uint16_t previous;
+   
+    uint16_t        previous;
     static uint16_t current = 0;
     unsigned long diff;
     
-    static STATE_TYPE currentState = START_HIGH_STATE;
     
     // DEBUG: output pulses to compare to radio DO pin on oscilloscope (should match)
     // check if rising or falling edge
@@ -91,72 +98,59 @@ void timer2_isr(void) __interrupt (5)
     // e.g., (1/(16000000/24)) * dec(0xFFFF) = 98.30 milliseconds maximum can be counted
     diff = (diff * 3) / 2;
     
- 
-    // state machine begins by looking for sync pulse and then stores duration of data bits
-    switch (currentState)
+    // FIXME: add comment
+    gPacket.diff[gPacket.writePosition] = diff;
+    
+    // FIXME: add comment
+    gPacket.writePosition++;
+    
+    // handle wrap around
+    if (gPacket.writePosition == BUFFER_SIZE)
     {
-        // only begin saving durations if expected start pulse timings are observed
-        //   as an initial attempt to ignore noise pulses
-        case START_HIGH_STATE:
-            if ( abs(diff - gTimings[0]) < TOLERANCE_MIN )
-            {
-
-                
-                gPacket.syncFirstDuration = diff;
-                gPacket.syncFirstFlag = true;
-                currentState = START_LOW_STATE;
-            } else {
-                //DEBUG:
-                //reset_pin_off();
-            }
-            break;
-            
-        case START_LOW_STATE:
-            
-            if ( abs(diff - gTimings[2]) < TOLERANCE_MAX )
-            {
-                gPacket.syncSecondDuration = diff;
-                gPacket.syncSecondFlag = true;
-                count = 0;
-                currentState = DATA_STATE;
-            } else {
-                currentState = START_HIGH_STATE;
-            }
-            break;
-            
-        case DATA_STATE:
-        
-            gPacket.duration[count] = diff;
-            count++;
-            
-            // if we see a really long duration, bail out and reset to looking for sync pulse
-            //if (diff >= 4500)
-            //{
-            //    currentState = START_HIGH_STATE;
-            //    count = 0;
-            //}
-
-            
-            if (count >= MAX_PERIOD_COUNT)
-            {
-                gPacket.captureDone = true;
-                
-                currentState = START_HIGH_STATE;
-                
-                // FIXME:
-                // we may never get another transition if level remains the same
-                // e.g. last bit is low level and default signal level is also low
-                // so save last level here
-                //gPacket.lastLevel = !is_rdata_low();
-            }
-            
-            break;
-            
-        default:
-            break;
+        gPacket.writePosition = 0;
     }
     
-    
+    gPacket.length++;
+        
     //clear compare/capture 1 flag
     CCCON &= ~0x02;
+}
+
+
+unsigned long get_current_time(void)
+{
+    unsigned long currentTime;
+    
+    // FIXME: disable timer0 interrupt for atomic reading of variable
+    //        consider check to see if interrupt was enabled in the first place
+    ET0 = 0;
+    
+    // FIXME: compute the proper conversion from counts to milliseconds
+    currentTime = gTimeMilliseconds;
+    
+    // re-enable timer0 interrupt
+    ET0 = 1;
+    
+    return currentTime;
+}
+
+
+unsigned long get_elapsed_time(unsigned long previousTime)
+{
+    unsigned long currentTime;
+    unsigned long elapsed;
+    
+    currentTime = get_current_time();
+    
+    //printf("currentTime: %lu\r\n", currentTime);
+    
+    // handle typical versus wraparound condition
+    if (previousTime <= currentTime)
+    {
+        elapsed = currentTime - previousTime;
+    } else {
+        elapsed = ULONG_MAX - previousTime + currentTime;
+    }
+    
+    return elapsed;
 }

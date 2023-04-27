@@ -20,7 +20,7 @@
 
 // sync constants
 #define TOLERANCE_MAX 500
-#define TOLERANCE_MIN 120
+#define TOLERANCE_MIN 150
 
 //
 #define TOTAL_RF_DATA_BITS 24

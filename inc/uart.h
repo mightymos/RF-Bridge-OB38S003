@@ -17,7 +17,7 @@
 #define RF_CODE_STOP		0x55
 
 #define UART_RX_BUFFER_SIZE 32
-#define UART_TX_BUFFER_SIZE	64
+#define UART_TX_BUFFER_SIZE	32
 
 
 // high byte error return code of uart_getc()
@@ -45,7 +45,7 @@ typedef enum
 	TRANSMIT,
 	COMMAND,
     RF_FINISHED
-} uart_state_t;
+} UART_STATE_T;
 
 typedef enum
 {
@@ -67,7 +67,7 @@ typedef enum
 	RF_DO_BEEP                 = 0xC0,
     SINGLE_STEP_DEBUG          = 0xFE,
 	RF_ALTERNATIVE_FIRMWARE    = 0xFF
-} uart_command_t;
+} UART_COMMAND_T;
 
 
 //-----------------------------------------------------------------------------

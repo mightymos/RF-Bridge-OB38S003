@@ -17,6 +17,7 @@
 #include "..\inc\globals.h"
 #include "..\inc\initdevice.h"
 //#include "..\inc\pca.h"
+#include "..\inc\rtos.h"
 #include "..\inc\timer.h"
 #include "..\inc\uart.h"
 //#include "wdt_0.h"
@@ -31,9 +32,34 @@
 #define RADIO_STARTUP_TIME 500
 #define TX_REPEAT_TRANSMISSIONS 1
 
+// removed SYN470R radio receiver on one of my boards and tied reset pin to rdata input pin for testing purposes
+// so basically enabling loopback uses reset pin to apply radio transmission signals, as opposed to tdata pin
+
+
+// TODO:
+typedef enum {
+    START_FIRST_LEVEL,
+    START_SECOND_LEVEL,
+    RF_BITS,
+} RADIO_DECODE_STATE_T;
+
+typedef enum {
+    STARTUP,
+    FIRST_PULSE_LEVEL,
+    SECOND_PULSE_LEVEL,
+    INITIALIZE_SEND,
+    SEND_DATA,
+    ONE_FIRST_LEVEL,
+    ONE_SECOND_LEVEL,
+    ZERO_FIRST_LEVEL,
+    ZERO_SECOND_LEVEL,
+    FINISHED
+} RADIO_TX_STATE_T;
 
 // sdccman sec. 3.8.1 indicates isr prototype must appear in the file containing main
-extern void uart_isr(void) __interrupt (4);
+//extern void timer0_isr(void) __interrupt (1);
+extern void rtos_timer(void) __interrupt (1);
+extern void uart_isr(void)   __interrupt (4);
 extern void timer2_isr(void) __interrupt (5);
 
 //-----------------------------------------------------------------------------
@@ -49,8 +75,8 @@ void _sdcc_external_startup(void)
 void uart_state_machine(const unsigned int rxdata)
 {
     // FIXME: need to check what appropriate initialization values are
-    static uart_state_t state = IDLE;
-    uart_command_t command = NONE;
+    static UART_STATE_T state = IDLE;
+    UART_COMMAND_T command = NONE;
     
     uint16_t bucket = 0;
 
@@ -147,7 +173,7 @@ void uart_state_machine(const unsigned int rxdata)
                     //state = IDLE;
                     break;
                 case SINGLE_STEP_DEBUG:
-                    gSingleStep = true;
+                    //gSingleStep = true;
                     break;
                     
                 // wait until data got transfered
@@ -212,8 +238,123 @@ void uart_state_machine(const unsigned int rxdata)
 }
 
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+void radio_decode_state_machine(unsigned long diff)
+{
+    static RADIO_DECODE_STATE_T currentState = START_FIRST_LEVEL;
+    
+    static uint8_t bitIndex    = 0;
+    static uint8_t periodIndex = 0;
+    
+    // FIXME: add comment
+    static uint16_t firstPeriod;
+    static uint16_t secondPeriod;
+
+    // state machine begins by looking for sync pulse and then stores duration of data bits
+    switch (currentState)
+    {
+        // only begin saving durations if expected start pulse timings are observed
+        //   as an initial attempt to ignore noise pulses
+        case START_FIRST_LEVEL:
+            if ( abs(diff - gTimings[0]) < TOLERANCE_MIN )
+            {
+                gPacket.syncFirstDuration = diff;
+                gPacket.syncFirstFlag = true;
+                currentState = START_SECOND_LEVEL;
+                
+                periodIndex = 0;
+                bitIndex    = 0;
+                
+                //led_toggle();
+            } else {
+                //DEBUG:
+                //reset_pin_off();
+            }
+            break;
+            
+        case START_SECOND_LEVEL:
+            
+            if ( abs(diff - gTimings[2]) < TOLERANCE_MAX )
+            {
+                gPacket.syncSecondDuration = diff;
+                gPacket.syncSecondFlag = true;
+
+                currentState = RF_BITS;
+            } else {
+                currentState = START_FIRST_LEVEL;
+            }
+            break;
+            
+        case RF_BITS:
+        
+            // check if index is even or odd
+            if ((periodIndex % 2) == 0)
+            {
+                //firstPeriod  = gPacket.duration[periodIndex - 1];
+                //secondPeriod = gPacket.duration[periodIndex];
+                firstPeriod = diff;
+            } else {
+                secondPeriod = diff;
+                
+                // FIXME: support inverted protocols (or does it matter since it is duration only?)
+                if (abs(firstPeriod - gTimings[1]) < TOLERANCE_MIN && abs(secondPeriod - gTimings[0]) < TOLERANCE_MIN)
+                {
+                    gPacket.radioBits[bitIndex++] = 1;
+                } else {
+                    if (abs(firstPeriod - gTimings[0]) < TOLERANCE_MIN && abs(secondPeriod - gTimings[1]) < TOLERANCE_MIN)
+                    {
+                        gPacket.radioBits[bitIndex++] = 0;
+                    } else {
+                        // error condition
+                        printf("error: %u, %u, %u\r\n", periodIndex);
+                        printf("%u\r\n", firstPeriod);
+                        printf("%u\r\n", secondPeriod);
+
+                        // reset state to beginning
+                        currentState = START_FIRST_LEVEL;
+                    }
+                }
+            }
+            
+            periodIndex++;
+
+            
+            if (periodIndex >= MAX_PERIOD_COUNT)
+            {
+                //firstPeriod  = gPacket.duration[periodIndex - 1];
+                
+                if (abs(firstPeriod - gTimings[1]) < TOLERANCE_MIN)
+                {
+                    gPacket.radioBits[TOTAL_RF_DATA_BITS - 1] = 1;
+                } else {
+                    if (abs(firstPeriod - gTimings[0]) < TOLERANCE_MIN)
+                    {
+                        gPacket.radioBits[TOTAL_RF_DATA_BITS - 1] = 0;
+                    }
+                }
+            
+                gPacket.captureDone = true;
+                
+                currentState = START_FIRST_LEVEL;
+                
+                // FIXME:
+                // we may never get another transition if level remains the same
+                // e.g. last bit is low level and default signal level is also low
+                // so save last level here
+                //gPacket.lastLevel = !is_rdata_low();
+            }
+            
+            break;
+            
+        default:
+            break;
+    }
+}
+
+/*
 //
-// borrowed from ReedTripRadio
+// toggle pins for radio transmission
 //  
 void send(const unsigned char byte)
 {
@@ -233,29 +374,32 @@ void send(const unsigned char byte)
         // mask out all but left most bit value, and if byte is not equal to zero (i.e. left most bit must be one) then send one level
         if((toSend & mask) > 0)
         {
-            tdata_on();
-            //reset_pin_on();
+            
+            reset_pin_on();
+            //tdata_on();
             delay10us(105);
             
-            tdata_off();
-            //reset_pin_off();
+            reset_pin_off();
+            //tdata_off();
             delay10us(35);
         }
         else
         {
-            tdata_on();
-            //reset_pin_on();
+            reset_pin_on();
+            //tdata_on();
             delay10us(35);
             
-            tdata_off();
-            //reset_pin_off();
+            reset_pin_off();
+            //tdata_off();
             delay10us(105);
         }
         
         toSend = toSend << 1;
     }
 }
+*/
 
+/*
 void send_radio_packet(const unsigned char rfcode)
 {
     unsigned char index;
@@ -269,13 +413,14 @@ void send_radio_packet(const unsigned char rfcode)
     for (index = 0; index < TX_REPEAT_TRANSMISSIONS; index++)
     {
         // rf sync pulse
-        tdata_on();
-        //reset_pin_on();
+        reset_pin_on();
+        //tdata_on();
         delay10us(35);
         
+        reset_pin_off();
+        //tdata_off();
+    
         // this should be the only really long delay required
-        tdata_off();
-        //reset_pin_off();
         // FIXME: needs to be programmable
         delay1ms(10);
         delay10us(85);
@@ -290,7 +435,9 @@ void send_radio_packet(const unsigned char rfcode)
     
     // FIXME: we need to force ask low/high just in case correct?
 }
+*/
 
+/*
 void send_1khz_square_wave(void)
 {
     unsigned char index;
@@ -299,15 +446,16 @@ void send_1khz_square_wave(void)
     
     for (index = 0; index < 25; index++)
     {
-        tdata_on();
-        //reset_pin_on();
+        reset_pin_on();
+        //tdata_on();
         delay10us(100);
-        
-        tdata_off();
-        //reset_pin_off();
+
+        reset_pin_off();
+        //tdata_off();
         delay10us(100);
     }
 }
+*/
 
 
 //-----------------------------------------------------------------------------
@@ -316,43 +464,52 @@ void send_1khz_square_wave(void)
 int main (void)
 {
     // FIXME: avoid magic numbers
-    __xdata bool radioBits[24];
     __xdata uint8_t radioBytes[3];
     
-    uint8_t* bytePtr;
 
+    // FIXME: add comment
     uint8_t index;
-    uint8_t bitIndex;
     uint8_t arrayIndex;
+    uint8_t bitIndex;
     
-    uint16_t firstPeriod;
-    uint16_t secondPeriod;
     
-    unsigned long hackCount = 0;
+    // track elapsed time for doing something periodically (e.g., every 10 seconds)
+    unsigned long previousTime = 0;
+    unsigned long elapsedTime;
     
     // upper eight bits hold error or no data flags
  	unsigned int rxdata = UART_NO_DATA;
+    
+    bool doATransmit = false;
+    
+    _fn fn;
+    int ok;
+    // init hardware and rtos
+    //init_hardware();
 
 	// hardware initialization
     set_clock_1t_mode();
 	init_port_pins();
     init_uart();
+    init_timer0();
     init_timer2_capture();
 
-	// set default state
+    // individual interrupts
+    init_capture_interrupt();
+    //init_serial_interrupt();
+
+
+	// set default pin levels
     led_off();
     buzzer_off();
     tdata_off();
     
+    // FIXME: need to set startup reset pin state in case it is used?
+    //reset_off();
+    
     // DEBUG: disable radio (not working, does not set pin high?)
     //radio_off();
     
-
-	// enable interrupts
-    //init_serial_interrupt();
-    init_capture_interrupt();
-    enable_global_interrupts();
-
 
     // FIXME: startup beep helpful or annoying?
     //buzzer_on();
@@ -365,6 +522,35 @@ int main (void)
     led_off();
     
     printf("Startup...\r\n");
+
+    // init semaphores
+    //init(&key_pressed, 0);
+    //init(&key_released, 1);
+    //init(&flash_req, 0);
+    //init(&ext_int,0);	
+
+    // init rtos
+    rtos_init();
+    
+    // add required idle process
+    fn = idle;
+    // lowest priority
+    ok = create_process(fn, 0) >= 0;
+    
+    //fn = send_radio_packet_task;
+    //fn = flash_led;
+    //ok |= create_process(fn, 1) >= 0;
+
+	// enable interrupts
+    enable_global_interrupts();
+    
+    if (ok)
+    {
+        rtos_run();
+    }
+
+    while (true);
+    return 0;
 
 	while (true)
 	{
@@ -387,7 +573,7 @@ int main (void)
         //    uart_putc(rxdata);
         //}
         
-        // check if transmit buffer is empty
+        // check if serial transmit buffer is empty
         if(!is_uart_tx_buffer_empty())
         {
             if (gTXFinished)
@@ -397,7 +583,7 @@ int main (void)
             }
         }
 
-        
+        // process serial receive data
         if (rxdata != UART_NO_DATA)
         {
             uart_state_machine(rxdata);
@@ -406,63 +592,53 @@ int main (void)
         
         // DEBUG:
         // this executes about every 10 seconds
-        if (hackCount++ >= (4294967295 / 10000) )
+        //elapsedTime = get_elapsed_time(previousTime);
+
+        //if (elapsedTime >= 1000000)
+        //{
+        //    printf("elapsedTime: %lu\r\n", elapsedTime);
+        //    printf("sending radio packet...\r\n");
+        //    //printf("heartbeat...\r\n");
+        //
+        //    //send_radio_packet(0x0f);
+        //    //send_1khz_square_wave();
+        //    
+        //    doATransmit = true;
+        //    
+        //    previousTime = get_current_time();
+        //}
+        
+        //if (doATransmit)
+        //{
+        //    doATransmit = send_radio_packet_state_machine();
+        //}
+        
+        if (gPacket.length > 0)
         {
-            send_radio_packet(0x0f);
-            //send_1khz_square_wave();
-            
+            //printf("debug: radio decode...\r\n");
             led_toggle();
             
-            hackCount = 0;
+            radio_decode_state_machine(gPacket.diff[gPacket.readPosition]);
+            
+            gPacket.readPosition++;
+            
+            // handle wrap around
+            if (gPacket.readPosition == BUFFER_SIZE)
+            {
+                gPacket.readPosition = 0;
+            }
+            
+            gPacket.length--;
         }
+        
         
         // look for flag set in capture mode timer interrupt
         // similar to rc-switch duration based decoder
         if (gPacket.captureDone)
         {
             //led_toggle();
+            disable_capture_interrupt();
                         
-            index = 0;
-            bitIndex = 0;
-            while (index < TOTAL_RF_DATA_BITS)
-            {
-                firstPeriod  = gPacket.duration[bitIndex];
-                secondPeriod = gPacket.duration[bitIndex + 1];
-                
-                // FIXME: support inverted protocols (or does it matter since it is duration only?)
-                if (abs(firstPeriod - gTimings[1]) < TOLERANCE_MIN && abs(secondPeriod - gTimings[0]) < TOLERANCE_MIN)
-                {
-                    radioBits[index] = 1;
-                } else {
-                    if (abs(firstPeriod - gTimings[0]) < TOLERANCE_MIN && abs(secondPeriod - gTimings[1]) < TOLERANCE_MIN)
-                    {
-                        radioBits[index] = 0;
-                    } else {
-                        // error condition
-                        printf("error: %u, %u, %u\r\n", index, firstPeriod, secondPeriod);
-                    }
-                }
-                
-                index++;
-                bitIndex += 2;
-            }
-            
-            
-            // FIXME: hack
-            //radioBits[TOTAL_RF_DATA_BITS - 1] = gPacket.lastLevel;
-            
-            firstPeriod = gPacket.duration[MAX_PERIOD_COUNT - 2];
-            if (abs(firstPeriod - gTimings[1]) < TOLERANCE_MIN)
-            {
-                radioBits[TOTAL_RF_DATA_BITS - 1] = 1;
-            } else {
-                if (abs(firstPeriod - gTimings[0]) < TOLERANCE_MIN)
-                {
-                    radioBits[TOTAL_RF_DATA_BITS - 1] = 0;
-                }
-            }
-            
-
             
             // clear array
             index = 0;
@@ -481,7 +657,7 @@ int main (void)
             {
                 while (index < 8)
                 {
-                    if (radioBits[bitIndex])
+                    if (gPacket.radioBits[bitIndex])
                     {
                         radioBytes[arrayIndex] |=  (1 << (7 - index));
                         //printf("%u: %u: %u: %u\r\n", bitIndex, index, arrayIndex, radioBytes[arrayIndex]);
@@ -497,30 +673,34 @@ int main (void)
             }
             
             
-            printf("\r\n");
+            //printf("\r\n");
             
             // display bits
-            bitIndex = 0;
-            while (bitIndex < 24)
-            {
-                printf("%d", radioBits[bitIndex]);
-                bitIndex++;
-            }
+            //bitIndex = 0;
+            //while (bitIndex < 24)
+            //{
+            //    printf("%d", radioBits[bitIndex]);
+            //    bitIndex++;
+            //}
 
-            printf("\r\n");
+            //printf("\r\n");
             
             // display bytes in hex format
             index = 0;
             while (index < 3)
             {
-                printf("0x%x%x\r\n", radioBytes[index] >> 4, radioBytes[index] & 0x0f);
+                printf("0x%x\r\n", radioBytes[index] >> 4);
+                printf("0x%x\r\n", radioBytes[index] & 0x0f);
                 index++;
             }
+            
             
             //enable_interrupts();
             //gSyncFirst   = false;
             //gSyncSecond  = false;
             gPacket.captureDone = false;
+            
+            enable_capture_interrupt();
         }
 
 	}
