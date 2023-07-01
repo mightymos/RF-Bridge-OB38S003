@@ -29,8 +29,10 @@
 
 #define MAX_STACK_LEVELS 3
 
+// FIXME: force fixed address or set at startup somehow?
 // typically need to also account for two more bytes attributable to storing rtos_run() address
-#define START_OF_STACK 0x7c
+//#define START_OF_STACK 0x81
+__idata unsigned char* gStackStart;
 
 // ------------------------------------------------------------------------------
 
@@ -61,9 +63,12 @@ int rtos_on = false;
 #define STATE_BLOCKED    2 // has run, but now blocked by semaphore
 #define STATE_DELAYED    3 // has run, but now awaiting timer
 
-#define MAX_TASKS 2       // maximum number of valid tasks
-int task_current = 0;      // index of last dispatched task
-int task_count = 0;        // total number of valid tasks
+// maximum number of valid tasks
+#define MAX_TASKS 2
+// index of last dispatched task
+int gTaskCurrent = 0;
+// total number of valid tasks
+int gTaskCount = 0;
 
 // REQUIRED: add ability to store stack
 struct _tcb
@@ -85,7 +90,7 @@ struct _tcb
 };
 
 // task control block
-__xdata struct _tcb *tcb_ptr;
+__xdata struct _tcb *gTcbPtr;
 __xdata struct _tcb tcb[MAX_TASKS];
 
 // ------------------------------------------------------------------------------
@@ -93,31 +98,54 @@ __xdata struct _tcb tcb[MAX_TASKS];
 // ------------------------------------------------------------------------------
 int rtos_scheduler();
 
-// debug helper
-inline void stack_print(void)
+
+void stack_print(void)
 {
-    __idata unsigned char *stackPtr;
+    __idata unsigned char* stackPtr;
     
-    for (stackPtr = START_OF_STACK; stackPtr <= SP; stackPtr++)
+    printf("stack_print()\r\n");
+    
+    for (stackPtr = gStackStart; stackPtr <= (__idata unsigned char*) SP; stackPtr++)
     {
-        printf("stackPtr[%p]: 0x%x\r\n", stackPtr, *stackPtr);
+        printf("stackPtr[%p]: 0x%02x\r\n", stackPtr, *stackPtr);
     }
     
 }
 
 // debug helper
-inline void tcb_print(void)
+void task_stack_print(void)
+{
+    __idata unsigned char* stackPtr;
+    unsigned char index;
+    
+    printf("task_stack_print()\r\n");
+    
+    //for (stackPtr = gStackStart; stackPtr <= (__idata unsigned char*) SP; stackPtr++)
+    stackPtr = gStackStart;
+    for (index = 0; index < gTcbPtr->stack_count + MAIN_LEVEL + RTOS_RUN_LEVEL; index++)
+    {
+        printf("stackPtr[%p]: 0x%02x\r\n", stackPtr, *stackPtr);
+        printf("stackPtr[%p]: 0x%02x\r\n", stackPtr + 1, *(stackPtr + 1));
+        
+        stackPtr += 2;
+    }
+    
+}
+
+// debug helper
+void tcb_print(void)
 {
     unsigned char index;
     
-    for (index = 0; index < tcb_ptr->stack_count; index++)
+    printf("tcb_print()\r\n");
+    
+    for (index = 0; index < gTcbPtr->stack_count; index++)
     {
-        printf("tcb_ptr->addr[%u]: 0x%x\r\n", index, tcb_ptr->addr[index]);
+        printf("gTcbPtr->addr[%u]: 0x%04x\r\n", index, gTcbPtr->addr[index]);
     }
 }
 
-// specify inline so we do not place this function call on the stack while we mess with the stack
-inline void os_context_save()
+void os_context_save()
 {
     __idata unsigned char *stackPtr;
     unsigned char index;
@@ -133,25 +161,26 @@ inline void os_context_save()
     stackPtr = (__idata unsigned char*) SP;
     
     // FIXME: fix comment
-	// save number of levels to POPed off later EXCEPT rtos_run() at lower level AND yield(),wait(),os_context_save(), etc.
-	tcb_ptr->stack_count = ((unsigned char)stackPtr - START_OF_STACK + 1 - 2) / 2;
+	// save number of levels to be POPed off later EXCEPT rtos_run() at lower level AND yield(),wait(),os_context_save(), etc.
+	//gTcbPtr->stack_count = ((unsigned char)stackPtr - (unsigned char) gStackStart + 1 - 4) / 2;
+    gTcbPtr->stack_count = ((unsigned char)stackPtr - MAIN_LENGTH - RTOS_RUN_LENGTH - DELAY_LENGTH - (unsigned char) gStackStart + OFF_BY_ONE_LENGTH) / 2;
     
     // DEBUG:
-    printf("tcb_ptr->stack_count: %u\r\n", tcb_ptr->stack_count);
+    printf("gTcbPtr->stack_count: %u\r\n", gTcbPtr->stack_count);
     
     // 
-    index = tcb_ptr->stack_count;
+    index = gTcbPtr->stack_count;
     
     // skip over rtos_run() address
-    stackPtr = (__idata unsigned char*) (START_OF_STACK + 2);
+    stackPtr = gStackStart + MAIN_LENGTH + RTOS_RUN_LENGTH;
     
     //
-    for (index = 0; index < tcb_ptr->stack_count; index++)
+    for (index = 0; index < gTcbPtr->stack_count; index++)
     {
         //
         lowerByte = *stackPtr;
         upperByte = *(stackPtr + 1);
-        tcb_ptr->addr[index] = (upperByte << 8) | lowerByte;
+        gTcbPtr->addr[index] = (upperByte << 8) | lowerByte;
         
         // traverse stack
         stackPtr += 2;
@@ -162,35 +191,77 @@ inline void os_context_save()
     tcb_print();
 }
 
-inline void os_context_restore()
+// specify inline so we do not place this function call on the stack while we mess with the stack
+// FIXME: would like to remove the need to inline
+void os_context_restore()
 {
-    __idata unsigned char *stackPtr;
+    __idata unsigned char* stackPtr;
     unsigned char index;
     
+    unsigned char lowAddr;
+    unsigned char highAddr;
+
+    
+    // DEBUG:
     printf("os_context_restore()\r\n");
     
-    //SP = START_OF_STACK;
+    // save the return address for this function because restored stack might overwrite
+    stackPtr = (__idata unsigned char*) SP;
+    //lowAddr  = *(stackPtr - 1);
+    //highAddr = *stackPtr;
+    
+    // DEBUG:
+    printf("stackPtr[%p]: 0x%02x\r\n", stackPtr - 1, *(stackPtr - 1));
+    printf("stackPtr[%p]: 0x%02x\r\n", stackPtr, *stackPtr);
+
+    
     // set pointer to bottom of stack and skip over rtos_run()
-    stackPtr = START_OF_STACK + 2;
+    stackPtr = gStackStart + MAIN_LENGTH + RTOS_RUN_LENGTH;
+    
+    SP = (uint8_t) stackPtr;
+    
+    // DEBUG:
+    printf("stack_count: %u\r\n", gTcbPtr->stack_count);
     
     // loop until top of stack which was previously saved is reached
-    for (index = 0; index < tcb[task_current].stack_count; index++)
+    for (index = 0; index < gTcbPtr->stack_count; index++)
     {
         // index should begin at start/bottom of stack
-        *stackPtr = (tcb_ptr->addr[index] & 0xff);
-        *(stackPtr + 1) = (tcb_ptr->addr[index] >> 8) & 0xff;
+        *stackPtr = gTcbPtr->addr[index] & 0xff;
         
-        //printf("stackPtr: %p\r\n", stackPtr);
-        //printf("stackPtr[0]: 0x%02x\r\n",  *stackPtr);
-        //printf("stackPtr[+1]: 0x%02x\r\n", *(stackPtr+1));
+        SP++;
+        
+        *(stackPtr + 1) = (gTcbPtr->addr[index] >> 8) & 0xff;
+        
+        SP++;
+        
+        // DEBUG:
+        printf("gTcbPtr->addr[%u]: 0x%04x\r\n", index, gTcbPtr->addr[index]);
+        printf("stackPtr[%p]: 0x%02x\r\n", stackPtr,   *stackPtr);
+        printf("stackPtr[%p]: 0x%02x\r\n", stackPtr+1, *(stackPtr + 1));
         
         // traverse stack from bottom to top - hence increment
         stackPtr += 2;
     }
     
+    // place return address for this function on top of restored stack
+    //*stackPtr = lowAddr;
+    //SP++;
+    //*(stackPtr + 1) = highAddr;
+    //SP++;
+    
     // DEBUG:
+    task_stack_print();
     stack_print();
     tcb_print();
+    
+    
+    // DEBUG:
+    stackPtr = (__idata unsigned char*) SP;
+    printf("stackPtr[%p]: 0x%02x\r\n", stackPtr - 1, *(stackPtr - 1));
+    printf("stackPtr[%p]: 0x%02x\r\n", stackPtr, *stackPtr);
+    
+    SP = (uint8_t) gStackStart + MAIN_LENGTH + RTOS_RUN_LENGTH;
 }
 
 void rtos_init()
@@ -201,7 +272,7 @@ void rtos_init()
     rtos_on = false;
     
     // no tasks running
-    task_count = 0;
+    gTaskCount = 0;
     
     // clear out tcb records
     for (i = 0; i < MAX_TASKS; i++)
@@ -236,92 +307,7 @@ void init(void* p, int count)
   s->queue_size = 0;
 }
 
-// REQUIRED: modify this function to wait a semaphore 
-// return if avail, else yield to scheduler
-void wait(void* p)
-{
-	// temporary stack address storage to make code more readable
-	//uint16_t stackAddress;
-
-	disable_global_interrupts();
-
-	s = p;
-
-	// no resource available ?
-	if (s->count <= 0) {
-
-		tcb_ptr = &tcb[task_current];
-											
-        // save current task in queue
-		s->process_queue[s->queue_size++] = task_current;			
-		
-		// task won't run again until semphore signaled
-		tcb_ptr->state = STATE_BLOCKED;
-
-        // FIXME: correct?
-        //os_context_save();
-
-	}else{
-		// use up one resource
-		s->count--;
-	}
-
-	enable_global_interrupts();	
-}
-
-// REQUIRED: modify this function to signal a semaphore is available
-void signal(void* p)
-{
-	// temp queue array index
-	int	 index;
-
-	disable_global_interrupts();
-
-	s = p;
-	// 1 more resource available
-	s->count++;
-	// resource avail. > resource needed ?
-	if (s->count == 1) {
-		// does some task even need the resource ?
-		if (s->queue_size > 0) {
-	        // handling need for one task 
-			s->queue_size--;
-			// retrieve task id from queue
-			index = s->process_queue[s->queue_size];
-			// unblock this task
-			tcb_ptr = &tcb[index];	
-			tcb_ptr->state = STATE_READY;		
-			s->count--;	// todo: take this out	
-		}
-	}
-
-	enable_global_interrupts();
-}
-
-// REQUIRED: modify this function to signal a semaphore is available
-void signal_int(void* p)
-{
-	// do NOT enable/disable interrupts here
-
-	s = p;
-	// 1 more resource available
-	s->count++;
-	// resource avail. > resource needed ?
-	if (s->count == 1) {
-		// does some task even need the resource ?
-		if (s->queue_size > 0) {
-	        // handling need for one task 
-			s->queue_size--;
-			// retrive task, then unblock this task	
-			tcb[s->process_queue[s->queue_size]].state = STATE_READY;
-            // FIXME: previous comment said 'take this out'?
-			s->count--;	
-		}
-	}
-}
-
-// REQUIRED: modify this function to yield execution back to scheduler
-// COMPLETED: JDA
+// yield execution back to scheduler
 void yield()
 {
 	disable_global_interrupts();
@@ -330,74 +316,79 @@ void yield()
     printf("yield()\r\n");
     printf("SP: 0x%02x\r\n", SP);
 	
-	tcb_ptr = &tcb[task_current];
+	gTcbPtr = &tcb[gTaskCurrent];
 
     // save stack
+    // FIXME: assume pointer has been set to current task?
     os_context_save();
     
 
 	// FIXME: this is wrong for nested function
     // so need to calculate from top of stack instead
-	SP = START_OF_STACK + 3;
-    
-    // DEBUG:
-    //printf("SP: 0x%02x\r\n", SP);
+	SP = (uint8_t) gStackStart + MAIN_LENGTH + RTOS_RUN_LENGTH;
 
 	enable_global_interrupts();
-
-	// return with resumed task
+    
+    // return to rtos_run()
 }
 
-// REQUIRED: modify this function to support 1ms system timer
+// function uses 1ms system timer
 // execution yielded back to scheduler until time elapses
 void delay(long ticks)
 {
 	disable_global_interrupts();
+    
+    // DEBUG:
+    printf("delay()\r\n");
+    printf("SP: 0x%02x\r\n", SP);
 
-	tcb_ptr = &tcb[task_current];
+	gTcbPtr = &tcb[gTaskCurrent];
 
-	tcb_ptr->tick = ticks;
-	tcb_ptr->state = STATE_DELAYED;
+	gTcbPtr->tick = ticks;
+	gTcbPtr->state = STATE_DELAYED;
 
     os_context_save();
 
 	// FIXME: correct?
-	SP = START_OF_STACK + 3;
+	SP = (uint8_t) gStackStart + MAIN_LENGTH + RTOS_RUN_LENGTH;
 
 	enable_global_interrupts();
 }
 
-// REQUIRED: modify this function to support prioritization
+// FIXME: modify this function to support prioritization - completed?
 int rtos_scheduler()
 {
-  static int ok;
-  static int task = 0xFF;
-  static int task_run = 0;
-  ok = false;
+    static int ok;
+    static int task = 0xFF;
+    static int task_run = 0;
+    ok = false;
   
-  while (!ok)
-  {
-    task++;
-    if (task >= MAX_TASKS)
-      task = 0;
-
-	tcb_ptr = &tcb[task];
-
-	if (tcb_ptr->state == STATE_READY)
+    while (!ok)
     {
-		if (tcb_ptr->position <= tcb_ptr->priority)
+        task++;
+        if (task >= MAX_TASKS)
         {
-			ok = true;
-			task_run = task;
-		}
-	}
-    
-	tcb_ptr->position++;
-  }
-  
-  return task_run;
+            task = 0;
+        }
+
+        gTcbPtr = &tcb[task];
+
+        if (gTcbPtr->state == STATE_READY)
+        {
+            if (gTcbPtr->position <= gTcbPtr->priority)
+            {
+                ok = true;
+                task_run = task;
+            }
+        }
+
+        gTcbPtr->position++;
+    }
+
+    return task_run;
 }
 
+// yielded/delayed/etc tasks will return here and then next task gets identified and run
 void rtos_run()
 {
     static _fn fn;
@@ -405,7 +396,7 @@ void rtos_run()
 
     rtos_on = true;
 
-    __idata unsigned char *stackPtr = SP;
+    __idata unsigned char* stackPtr = (__idata unsigned char*) SP;
   
     // DEBUG:
     printf("rtos_run()\r\n");
@@ -416,21 +407,30 @@ void rtos_run()
   
     while(rtos_on)
     {
-        task_current = rtos_scheduler();
+        // get next task
+        gTaskCurrent = rtos_scheduler();
         
+        // current task should just be zero on first entry        
+        // DEBUG:
+        printf("gTaskCurrent: %u\r\n", gTaskCurrent);
+
+        // assign pointer to be used as shorthand in context restore
+        gTcbPtr = &tcb[gTaskCurrent];
+        
+        // assumes tcb pointer has been set to current task
         os_context_restore();
+        
+        // FIXME: think that SP needs to be set here
 
         // call next instruction in process
-        index = tcb[task_current].stack_count - 1;
-        fn = tcb[task_current].addr[index];
+        index = tcb[gTaskCurrent].stack_count - 1;
+        fn = (_fn) tcb[gTaskCurrent].addr[index];
 
         // DEBUG:
         printf("fn: %p\r\n", fn);
         
         (*fn)();
 
-        // FIXME: fix comment grammer for understanding
-        // we don't, we get a new task/restore inside of yield()
         // yield(), wait(), delay(), and perhaps signal() will return to here
     }
 }
@@ -442,48 +442,62 @@ void rtos_stop()
 
 signed int create_process(_fn fn, int priority)
 {
-  signed int status = -1;
-  int i = 0;
-  int found = false;
-  
-  //disable_global_interrupts();  
-  
-  // save starting address if room in task list
-  if (task_count < MAX_TASKS)
-  {
-    // make sure fn not already in list (prevent reentrancy)
-    while (!found && (i < MAX_TASKS))
+    signed int status = -1;
+    int index = 0;
+    bool found = false;
+    const bool flag = global_interrupts_are_enabled();
+
+    // FIXME: necessary?
+    // checking if globals are enabled in the first place
+    // so that we do not prematurely enable them at the end of create_process
+    // however, we might have to disable/re-enable if creating processes dynamically
+    // (i.e., while rtos is running)
+    if (flag)
     {
-      found = (tcb[i++].pid == fn);
+        disable_global_interrupts();  
     }
-    
-    if (!found)
+  
+    // save starting address if room in task list
+    if (gTaskCount < MAX_TASKS)
     {
-        // find first available tcb record
-        i = 0;
-        while (tcb[i].state != STATE_INVALID)
+        // make sure fn not already in list (prevent reentrancy)
+        while (!found && (index < MAX_TASKS))
         {
-            i++;
+          found = (tcb[index++].pid == (uint16_t) fn);
         }
-        
-        // load tcb record
-        tcb[i].state = STATE_READY;
-        // FIXME: variable indirection
-        tcb[i].pid = (uint16_t) fn;
-        // 1st stack level is begin. of fn
-        tcb[i].addr[0] = (uint16_t) fn;
-        // on 1st run, always 1 stack level
-        tcb[i].stack_count = 1;
-        tcb[i].priority = priority;    
-        // increment task count
-        task_count++;
-        status = task_count;
+
+        if (!found)
+        {
+            // find first available tcb record
+            index = 0;
+            while (tcb[index].state != STATE_INVALID)
+            {
+                index++;
+            }
+            
+            // load tcb record
+            tcb[index].state = STATE_READY;
+            // we store what are really function pointers as unsigned int
+            // because we need to manipulate the addresses from 8-bit values on the stack
+            tcb[index].pid = (uint16_t) fn;
+            // 1st stack level is begin. of fn
+            tcb[index].addr[0] = (uint16_t) fn;
+            // on 1st run, always 1 stack level
+            tcb[index].stack_count = 1;
+            tcb[index].priority = priority; 
+            
+            // increment task count
+            gTaskCount++;
+            status = gTaskCount;
+        }
     }
-  }
-  
-  //enable_global_interrupts();  
-  
-  return status;
+
+    if (flag)
+    {
+        enable_global_interrupts();
+    }
+
+    return status;
 }
 
 // REQUIRED: add code
@@ -500,20 +514,20 @@ void destroy_process(_fn fn)
 	while(!found && (i < MAX_TASKS))
 	{
 		// fn. to destroy found ?
-		found = (tcb[i++].pid == fn);  
+		found = (tcb[i++].pid == (uint16_t) fn);  
 	}
 
 	// must negate last i++
 	i--;
 	// did we find the task (abort if current task!) ?
-	if (found && (i != task_current))
+	if (found && (i != gTaskCurrent))
 	{
 	 	tcb[i].pid = 0;
 	 	tcb[i].state = STATE_INVALID;
 		tcb[i].position = 0;
 
 		// MUST decrement task count
-		task_count--;
+		gTaskCount--;
 
 		// visually confirm destroy process
 	  	//signal(&flash_req);
@@ -533,14 +547,15 @@ void idle()
     while(true) 
     {
         // DEBUG:
-        //printf("idle...\r\n");
+        printf("idle()\r\n");
+        
+        //led_toggle();
         
         // blocking delay
-        led_toggle();
-        //delay1ms(500);
-        delay(500);
+        delay1ms(1);
         
         yield();
+        
     }
 }
 
@@ -551,10 +566,12 @@ void flash_led()
 {
     while(true)
     {
-        led_on();
-        // non-block delay
-        delay(1000);
-        led_off();
+        // DEBUG:
+        printf("flash_led()\r\n");
+        
+        led_toggle();
+        
+        // non-blocking delay
         delay(1000);
     }
 }
@@ -619,19 +636,19 @@ void rtos_timer(void) __interrupt (1)
 	while (task < MAX_TASKS)
     {
 
-		tcb_ptr = &tcb[task];
+		gTcbPtr = &tcb[task];
 
 		// is task delayed ?
-		if (tcb_ptr->state == STATE_DELAYED)
+		if (gTcbPtr->state == STATE_DELAYED)
         {
 			// yes, decrement ticks
-			tcb_ptr->tick--;
+			gTcbPtr->tick--;
             
 			// is ticks 0 ?
-			if (tcb_ptr->tick == 0)
+			if (gTcbPtr->tick == 0)
             {
 				// yes, then task is ready
-				tcb_ptr->state = STATE_READY;
+				gTcbPtr->state = STATE_READY;
 			}
 		}
 

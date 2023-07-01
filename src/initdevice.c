@@ -107,7 +107,7 @@ void init_timer0(void)
     // 16-bit mode
     TMOD |= T0_M0;
     
-    // T0PS 0x10 prescaler fosc / 96
+    // FIXME: T0PS 0x10 prescaler fosc
     PFCON |= 0x01;
     
     // one millisecond to overflow
@@ -120,10 +120,29 @@ void init_timer0(void)
     //TL0 = 0x5f;
     
     // enable timer0 overflow interrupt
-    ET0 = 1;
+    ET0 = true;
     
     // enable timer0
-    TR0 = 1;
+    TR0 = true;
+}
+
+void init_timer1(void)
+{
+    // 16-bit mode
+    TMOD |= T1_M0;
+    
+    // T1PS prescaler fosc
+    PFCON |= 0x08;
+    
+    // ten microseconds to overflow
+    //TH1 = 0xff;
+    //TL1 = 0x5f;
+    
+    // enable timer1 overflow interrupt
+    ET1 = true;
+    
+    // enable timer1
+    TR1 = true;
 }
 
 //================================================================================
@@ -149,4 +168,9 @@ void enable_global_interrupts(void)
 void disable_global_interrupts(void)
 {
     EA = 0;
+}
+
+bool global_interrupts_are_enabled(void)
+{
+    return EA;
 }

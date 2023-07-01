@@ -14,6 +14,8 @@
 //extern volatile bool gSyncFirst;
 //extern volatile bool gSyncSecond;
 //extern volatile bool gCaptureDone;
+extern uint16_t gTimerOneCount;
+extern bool     gIsTimerOneFinished;
 
 struct RADIO_PACKET_T
 {
@@ -32,6 +34,8 @@ struct RADIO_PACKET_T
     unsigned long diff[BUFFER_SIZE];
     bool radioBits[24];
     
+    uint16_t errors;
+    
     uint8_t writePosition;
     uint8_t readPosition;
     uint8_t length;
@@ -44,5 +48,7 @@ extern const uint16_t gTimings [];
 
 extern unsigned long get_current_time(void);
 extern unsigned long get_elapsed_time(unsigned long previousTime);
+//extern void reload_timer1(unsigned int reload);
+extern void reload_timer1(unsigned char high, unsigned char low);
 
 #endif

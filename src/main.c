@@ -17,7 +17,7 @@
 #include "..\inc\globals.h"
 #include "..\inc\initdevice.h"
 //#include "..\inc\pca.h"
-#include "..\inc\rtos.h"
+//#include "..\inc\rtos.h"
 #include "..\inc\timer.h"
 #include "..\inc\uart.h"
 //#include "wdt_0.h"
@@ -57,12 +57,15 @@ typedef enum {
 } RADIO_TX_STATE_T;
 
 // sdccman sec. 3.8.1 indicates isr prototype must appear in the file containing main
-//extern void timer0_isr(void) __interrupt (1);
-extern void rtos_timer(void) __interrupt (1);
+extern void timer0_isr(void) __interrupt (1);
+//extern void rtos_timer(void) __interrupt (1);
+extern void timer1_isr(void) __interrupt (3);
 extern void uart_isr(void)   __interrupt (4);
 extern void timer2_isr(void) __interrupt (5);
 
+
 //-----------------------------------------------------------------------------
+// FIXME: this is sometimes needed to initialize external ram, etc.
 //-----------------------------------------------------------------------------
 void _sdcc_external_startup(void)
 {
@@ -257,33 +260,34 @@ void radio_decode_state_machine(unsigned long diff)
         // only begin saving durations if expected start pulse timings are observed
         //   as an initial attempt to ignore noise pulses
         case START_FIRST_LEVEL:
-            if ( abs(diff - gTimings[0]) < TOLERANCE_MIN )
-            {
+            //if ( abs(diff - gTimings[0]) < TOLERANCE_MIN )
+            //{
                 gPacket.syncFirstDuration = diff;
                 gPacket.syncFirstFlag = true;
                 currentState = START_SECOND_LEVEL;
                 
                 periodIndex = 0;
                 bitIndex    = 0;
+                gPacket.errors = 0;
                 
                 //led_toggle();
-            } else {
+            //} else {
                 //DEBUG:
                 //reset_pin_off();
-            }
+            //}
             break;
             
         case START_SECOND_LEVEL:
             
-            if ( abs(diff - gTimings[2]) < TOLERANCE_MAX )
-            {
+            //if ( abs(diff - gTimings[2]) < TOLERANCE_MAX )
+            //{
                 gPacket.syncSecondDuration = diff;
                 gPacket.syncSecondFlag = true;
 
                 currentState = RF_BITS;
-            } else {
-                currentState = START_FIRST_LEVEL;
-            }
+            //} else {
+            //    currentState = START_FIRST_LEVEL;
+            //}
             break;
             
         case RF_BITS:
@@ -301,19 +305,18 @@ void radio_decode_state_machine(unsigned long diff)
                 if (abs(firstPeriod - gTimings[1]) < TOLERANCE_MIN && abs(secondPeriod - gTimings[0]) < TOLERANCE_MIN)
                 {
                     gPacket.radioBits[bitIndex++] = 1;
-                } else {
-                    if (abs(firstPeriod - gTimings[0]) < TOLERANCE_MIN && abs(secondPeriod - gTimings[1]) < TOLERANCE_MIN)
-                    {
+                } else if (abs(firstPeriod - gTimings[0]) < TOLERANCE_MIN && abs(secondPeriod - gTimings[1]) < TOLERANCE_MIN) {
                         gPacket.radioBits[bitIndex++] = 0;
-                    } else {
+                } else {
                         // error condition
-                        printf("error: %u, %u, %u\r\n", periodIndex);
-                        printf("%u\r\n", firstPeriod);
-                        printf("%u\r\n", secondPeriod);
+                        //printf("error: %u\r\n", periodIndex);
+                        //printf("%u\r\n", firstPeriod);
+                        //printf("%u\r\n", secondPeriod);
+                        
+                        gPacket.errors++;
 
                         // reset state to beginning
-                        currentState = START_FIRST_LEVEL;
-                    }
+                        //currentState = START_FIRST_LEVEL;
                 }
             }
             
@@ -352,111 +355,141 @@ void radio_decode_state_machine(unsigned long diff)
     }
 }
 
-/*
-//
-// toggle pins for radio transmission
-//  
-void send(const unsigned char byte)
-{
-    const unsigned char numBits = 8;
-    
-    // mask out highest bit
-    const unsigned char mask = 1 << (numBits - 1);
-    
-    unsigned char i = 0;
 
-    // byte for shifting
-    unsigned char toSend = byte;
+//-----------------------------------------------------------------------------
+// toggle reset and led pins so that timing can be inspected on oscilloscope
+// ----------------------------------------------------------------------------
+void blink_task(void)
+{
+    static bool pinState = true;
     
-    // Repeat until all bits sent
-    for(i = 0; i < numBits; i++)
+    // DEBUG:
+    //printf("blink_task()\r\n");
+    
+    if (pinState)
     {
-        // mask out all but left most bit value, and if byte is not equal to zero (i.e. left most bit must be one) then send one level
-        if((toSend & mask) > 0)
-        {
-            
-            reset_pin_on();
-            //tdata_on();
-            delay10us(105);
-            
-            reset_pin_off();
-            //tdata_off();
-            delay10us(35);
-        }
-        else
-        {
-            reset_pin_on();
-            //tdata_on();
-            delay10us(35);
-            
-            reset_pin_off();
-            //tdata_off();
-            delay10us(105);
-        }
-        
-        toSend = toSend << 1;
+        led_on();
+        reset_pin_on();
+    } else {
+        led_off();
+        reset_pin_off();
     }
+    
+    pinState = !pinState;
+    
+    // about half a second
+    //reload_timer1(50000);
+    
+    // about six milliseconds
+    //reload_timer1(600);
+    reload_timer1(0xfc, 0x17);
 }
-*/
 
-/*
-void send_radio_packet(const unsigned char rfcode)
+//-----------------------------------------------------------------------------
+// simulates sending a radio packet by toggling the reset pin (which we bridge to radio receive pin)
+// ----------------------------------------------------------------------------
+bool send_radio_task(const uint8_t totalRepeats)
 {
-    unsigned char index;
-    //unsigned char byteToSend;
+    // 0x4a, 0xf1, 0x08
+    __code const bool bitLevels[] = {0,1,0,0, 1,0,1,0, 1,1,1,1, 0,0,0,1, 0,0,0,0, 1,0,0,0};
+    
+    // since sync pulse is two bits, we need 24 more for data bits
+    const uint8_t indexEnd = 26;
+    
+    
+    static uint8_t index = 0;
+    static uint8_t repeatIndex = 0;
+    static bool isFirst = true;
+
+    
+    uint8_t dataBitIndex = 0;
+    
+    bool isRunning = true;
     
     
     //enable_radio_vdd();
-    delay1ms(RADIO_STARTUP_TIME);
+    //delay(RADIO_STARTUP_TIME);
+    //delay(500);
     
-    // many receivers require repeatedly sending identical transmissions to accept data
-    for (index = 0; index < TX_REPEAT_TRANSMISSIONS; index++)
+    //DEBUG
+    //printf("index: %u\r\n", index);
+    
+    if (index == 0)
     {
-        // rf sync pulse
-        reset_pin_on();
-        //tdata_on();
-        delay10us(35);
+        //reset_pin_on();
+        tdata_on();
         
-        reset_pin_off();
-        //tdata_off();
-    
-        // this should be the only really long delay required
-        // FIXME: needs to be programmable
-        delay1ms(10);
-        delay10us(85);
-
-        // send rf key with unique id and code
-        send(0x4a);
-        send(0xf1);
-        send(rfcode);
+        //reload_timer1(35);
+        reload_timer1(0xff, 0xcf);
+        index++;
+    } else if (index == 1) {
+        //reset_pin_off();
+        tdata_off();
+        
+        //reload_timer1(1085);
+        reload_timer1(0xf8, 0xef);
+        index++;
+    } else if ((index >= 2) && (index < indexEnd)) {
+        
+        dataBitIndex = index - 2;
+        
+        if (bitLevels[dataBitIndex] == true)
+        {
+            if (isFirst == true)
+            {
+                //reset_pin_on();
+                tdata_on();
+                
+                //reload_timer1(105);
+                reload_timer1(0xff, 0x50);
+                isFirst = false;
+            } else {
+                //reset_pin_off();
+                tdata_off();
+                
+                //reload_timer1(35);
+                reload_timer1(0xff, 0xcf);
+                isFirst = true;
+                index++;
+            }
+        } else {
+            if (isFirst == true)
+            {
+                //reset_pin_on();
+                tdata_on();
+                
+                //reload_timer1(35);
+                reload_timer1(0xff, 0xcf);
+                isFirst = false;
+            } else {
+                //reset_pin_off();
+                tdata_off();
+                
+                //reload_timer1(105);
+                reload_timer1(0xff, 0x50);
+                isFirst = true;
+                index++;
+            }
+        }
+    } else if (index == indexEnd) {
+        //reset_pin_off();
+        tdata_off();
+        index = 0;
+        
+        repeatIndex++;
+        
+        if (repeatIndex >= totalRepeats)
+        {
+            reload_timer1(0xff, 0xcf);
+            repeatIndex = 0;
+            isRunning = false;
+        }
     }
     
-    //disable_radio_vdd();
     
-    // FIXME: we need to force ask low/high just in case correct?
+
+    return isRunning;
 }
-*/
-
-/*
-void send_1khz_square_wave(void)
-{
-    unsigned char index;
-    
-    delay1ms(RADIO_STARTUP_TIME);
-    
-    for (index = 0; index < 25; index++)
-    {
-        reset_pin_on();
-        //tdata_on();
-        delay10us(100);
-
-        reset_pin_off();
-        //tdata_off();
-        delay10us(100);
-    }
-}
-*/
-
 
 //-----------------------------------------------------------------------------
 // main() Routine
@@ -465,6 +498,9 @@ int main (void)
 {
     // FIXME: avoid magic numbers
     __xdata uint8_t radioBytes[3];
+
+    __idata unsigned char* stackStart;
+
     
 
     // FIXME: add comment
@@ -474,16 +510,23 @@ int main (void)
     
     
     // track elapsed time for doing something periodically (e.g., every 10 seconds)
-    unsigned long previousTime = 0;
-    unsigned long elapsedTime;
+    unsigned long previousTimeSendRadio = 0;
+    unsigned long previousTimeHeartbeat = 0;
+    unsigned long elapsedTimeSendRadio;
+    unsigned long elapsedTimeHeartbeat;
+    unsigned long heartbeat = 0;
+    
+    bool triggerRadioSendTask = false;
     
     // upper eight bits hold error or no data flags
  	unsigned int rxdata = UART_NO_DATA;
     
-    bool doATransmit = false;
     
-    _fn fn;
-    int ok;
+    //_fn fn;
+    //int ok;
+    
+    stackStart = (__idata unsigned char*) SP + 1;
+    
     // init hardware and rtos
     //init_hardware();
 
@@ -492,6 +535,7 @@ int main (void)
 	init_port_pins();
     init_uart();
     init_timer0();
+    init_timer1();
     init_timer2_capture();
 
     // individual interrupts
@@ -503,6 +547,7 @@ int main (void)
     led_off();
     buzzer_off();
     tdata_off();
+    reset_pin_off();
     
     // FIXME: need to set startup reset pin state in case it is used?
     //reset_off();
@@ -522,7 +567,15 @@ int main (void)
     led_off();
     
     printf("Startup...\r\n");
+    printf("Start of stack: %p\r\n", stackStart);
 
+
+    // DEBUG: demonstrates that we cannot write above SP (stack pointer)
+    //*gStackStart       = 0x5a;
+    //*(gStackStart + 1) = 0x5a;
+    //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart,   *gStackStart);
+    //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart+1, *(gStackStart + 1));
+    
     // init semaphores
     //init(&key_pressed, 0);
     //init(&key_released, 1);
@@ -530,27 +583,33 @@ int main (void)
     //init(&ext_int,0);	
 
     // init rtos
-    rtos_init();
+    //rtos_init();
     
     // add required idle process
-    fn = idle;
+    //fn = idle;
     // lowest priority
-    ok = create_process(fn, 0) >= 0;
+    //ok = create_process(fn, 0) >= 0;
     
-    //fn = send_radio_packet_task;
     //fn = flash_led;
     //ok |= create_process(fn, 1) >= 0;
 
 	// enable interrupts
     enable_global_interrupts();
     
-    if (ok)
-    {
-        rtos_run();
-    }
+    // avoid starting rtos if process creation failed (e.g., exceeded max tasks)
+    //if (ok)
+    //{
+    //    rtos_run();
+    //}
 
-    while (true);
-    return 0;
+    // FIXME: consider what happens if rtos is stopped
+    //while (true)
+    //{
+    //    led_toggle();
+    //    delay1ms(250);
+    //}
+    
+    //return 0;
 
 	while (true)
 	{
@@ -589,29 +648,51 @@ int main (void)
             uart_state_machine(rxdata);
         }
         
-        
         // DEBUG:
-        // this executes about every 10 seconds
-        //elapsedTime = get_elapsed_time(previousTime);
+        // display serial message about every 10 seconds
+        elapsedTimeHeartbeat = get_elapsed_time(previousTimeHeartbeat);
 
-        //if (elapsedTime >= 1000000)
-        //{
-        //    printf("elapsedTime: %lu\r\n", elapsedTime);
-        //    printf("sending radio packet...\r\n");
-        //    //printf("heartbeat...\r\n");
-        //
-        //    //send_radio_packet(0x0f);
-        //    //send_1khz_square_wave();
-        //    
-        //    doATransmit = true;
-        //    
-        //    previousTime = get_current_time();
-        //}
+        if (elapsedTimeHeartbeat >= 10000)
+        {
+            printf("elapsedTime (ms): %lu\r\n", elapsedTimeHeartbeat);
+            printf("heartbeat (count): %lu\r\n", heartbeat);
         
-        //if (doATransmit)
+            
+            previousTimeHeartbeat = get_current_time();
+            
+            heartbeat++;
+        }
+        
+        
+        // periodically send out a radio transmission for a sort of loopback test
+        elapsedTimeSendRadio = get_elapsed_time(previousTimeSendRadio);
+
+        if (elapsedTimeSendRadio >= 20000)
+        {
+            printf("triggering send radio task...\r\n");
+            triggerRadioSendTask = true;
+            
+            previousTimeSendRadio = get_current_time();
+        }
+        
+        if (triggerRadioSendTask)
+        {            
+            if (gIsTimerOneFinished)
+            {
+                triggerRadioSendTask = send_radio_task(4);
+                gIsTimerOneFinished = false;
+            }
+        }
+        
+      
+        
+        // DEBUG: check pin timing with oscilloscope
+        //if (gIsTimerOneFinished)
         //{
-        //    doATransmit = send_radio_packet_state_machine();
+        //    blink_task();
+        //    gIsTimerOneFinished = false;
         //}
+
         
         if (gPacket.length > 0)
         {
@@ -686,13 +767,16 @@ int main (void)
             //printf("\r\n");
             
             // display bytes in hex format
-            index = 0;
-            while (index < 3)
-            {
-                printf("0x%x\r\n", radioBytes[index] >> 4);
-                printf("0x%x\r\n", radioBytes[index] & 0x0f);
-                index++;
-            }
+            //index = 0;
+            //while (index < 3)
+            //{
+            //    printf("0x%x\r\n", radioBytes[index] >> 4);
+            //    printf("0x%x\r\n", radioBytes[index] & 0x0f);
+            //    index++;
+            //}
+            
+            // display number of errors
+            //printf("errors: %u\r\n", gPacket.errors);
             
             
             //enable_interrupts();

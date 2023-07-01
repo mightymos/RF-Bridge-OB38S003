@@ -8,6 +8,8 @@
 #ifndef INITDEVICE_H
 #define INITDEVICE_H
 
+#include <stdbool.h>
+
 extern void set_clock_1t_mode(void);
 extern void set_clock_6t_mode(void);
 extern void init_port_pins(void);
@@ -15,11 +17,13 @@ extern void init_serial_interrupt(void);
 extern void init_capture_interrupt(void);
 extern void init_uart(void);
 extern void init_timer0(void);
+extern void init_timer1(void);
 extern void init_timer2_capture(void);
 extern void enable_capture_interrupt(void);
 extern void disable_capture_interrupt(void);
 extern void enable_global_interrupts(void);
 extern void disable_global_interrupts(void);
+extern bool global_interrupts_are_enabled(void);
 
 #endif
 

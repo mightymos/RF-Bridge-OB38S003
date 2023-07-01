@@ -79,6 +79,7 @@ extern void radio_off(void);
 extern void radio_on(void);
 extern void reset_pin_on(void);
 extern void reset_pin_off(void);
+extern void reset_pin_toggle(void);
 extern void tdata_on(void);
 extern void tdata_off(void);
 extern void uart_tx_pin_off(void);

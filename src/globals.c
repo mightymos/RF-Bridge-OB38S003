@@ -11,9 +11,9 @@
 #define TDATA       P0_7
 #define UART_TX_PIN P1_0
 
-// pin does not appear to be connected to anything except copper pad
+// reset pin does not appear to be connected to anything except copper pad
 //  so can use as a debug output
-// apparently need to set as gpio when programming (i.e., disable reset function)
+// apparently need to set as gpio when flashing (i.e., disable reset function)
 #define RESET_PIN   P1_5
 #define RDATA       P1_6
 #define RF_ENABLE   P1_7
@@ -70,6 +70,11 @@ inline void reset_pin_on(void)
 inline void reset_pin_off(void)
 {
     RESET_PIN = 0;
+}
+
+inline void reset_pin_toggle(void)
+{
+    RESET_PIN = !RESET_PIN;
 }
 
 inline void tdata_on(void)
