@@ -158,7 +158,7 @@ void timer2_isr(void) __interrupt (5)
     static uint16_t current = 0;
     unsigned long diff;
 
-   static PULSE_DETECT_T state = FIRST_PULSE_LEVEL;
+   static enum PULSE_DETECT_T state = FIRST_PULSE_LEVEL;
     
     // DEBUG: output pulses to compare to radio DO pin on oscilloscope (should match)
     // check if rising or falling edge

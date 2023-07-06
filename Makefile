@@ -71,7 +71,7 @@ MEMORY_SIZES = \
 #
 MEMORY_MODEL := --model-small
 
-HAS_DUAL_DPTR := y
+HAS_DUAL_DPTR := n
 
 # Define UNISTC_DIR, HAL_DIR, DRIVER_DIR, and MAKE_DIR -----------------
 include makefiles/0-directories.mk
