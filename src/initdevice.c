@@ -5,8 +5,9 @@
 //#include <SI_EFM8BB1_Register_Enums.h>
 #include <8052.h>
 #include <stdint.h>
-#include "..\inc\globals.h"
-#include "..\inc\initdevice.h"
+
+#include "globals.h"
+#include "initdevice.h"
 
 void set_clock_1t_mode(void)
 {

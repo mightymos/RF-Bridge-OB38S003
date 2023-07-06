@@ -2,9 +2,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "..\inc\globals.h"
-#include "..\inc\rf_protocols.h"
-#include "..\inc\timer.h"
+#include "globals.h"
+#include "rf_protocols.h"
+#include "timer.h"
 
 // store attempts to decode radio bits
 __xdata struct RADIO_PACKET_T gPacket;
@@ -20,6 +20,13 @@ static unsigned long gTimeMilliseconds = 0;
 // rc-switch protocol 1
 const uint16_t gTimings [] = { 350, 1050, 10850 };
 //const uint16_t gTimings [] = { 1000, 1000, 1000 };
+
+
+enum PULSE_DETECT_T {
+    FIRST_PULSE_LEVEL,
+    SECOND_PULSE_LEVEL,
+    DATA_BITS
+};
 
 
 unsigned long get_current_time(void)
@@ -58,6 +65,23 @@ unsigned long get_elapsed_time(unsigned long previousTime)
     }
     
     return elapsed;
+}
+
+void write_diff(unsigned long diff)
+{
+    // FIXME: add comment
+    gPacket.diff[gPacket.writePosition] = diff;
+
+    // FIXME: add comment
+    gPacket.writePosition++;
+
+    // handle wrap around
+    if (gPacket.writePosition == BUFFER_SIZE)
+    {
+        gPacket.writePosition = 0;
+    }        
+
+    gPacket.length++;
 }
 
 // FIXME: change function name because this is not directly reloading timer
@@ -125,11 +149,16 @@ void timer2_isr(void) __interrupt (5)
     static uint8_t lowByteNew  = 0;
     static uint8_t highByteNew = 0;
     
+    static uint8_t dataCount;
+    
+    const uint8_t maxDataCount = 24;
+    
    
     uint16_t        previous;
     static uint16_t current = 0;
     unsigned long diff;
-    
+
+   static PULSE_DETECT_T state = FIRST_PULSE_LEVEL;
     
     // DEBUG: output pulses to compare to radio DO pin on oscilloscope (should match)
     // check if rising or falling edge
@@ -180,31 +209,45 @@ void timer2_isr(void) __interrupt (5)
     // e.g., (1/(16000000/24)) * dec(0xFFFF) = 98.30 milliseconds maximum can be counted
     diff = (diff * 3) / 2;
     
-    // skip any edge which does not fall within tolerance of expected periods
-    if (diff % gTimings[0] < TOLERANCE_MIN)
+    switch(state)
     {
-        // FIXME: add comment
-        gPacket.diff[gPacket.writePosition] = diff;
-        
-        // FIXME: add comment
-        gPacket.writePosition++;
-        
-        // handle wrap around
-        if (gPacket.writePosition == BUFFER_SIZE)
-        {
-            gPacket.writePosition = 0;
-        }        
-        
-        gPacket.length++;
-        
-        // DEBUG:
-        reset_pin_toggle();
-        
-    } else {
-        // revert
-        lowByteNew  = lowByteSaved;
-        highByteNew = highByteSaved;
+        case FIRST_PULSE_LEVEL:
+            // discard first pulse length but "warm up" receiver
+            dataCount = 0;
+            write_diff(diff);
+            state = SECOND_PULSE_LEVEL;
+            break;
+        case SECOND_PULSE_LEVEL:
+            // TODO: compute clock from length of second level of initial pulse
+            if (diff % gTimings[0] < TOLERANCE_MIN)
+            {
+                write_diff(diff);
+                state = DATA_BITS;
+            } else {
+                state = FIRST_PULSE_LEVEL;
+            }
+            break;
+        case DATA_BITS:
+            if (diff % gTimings[0] < TOLERANCE_MIN)
+            {
+                dataCount++;
+                write_diff(diff);
+                
+                if (dataCount > maxDataCount)
+                {
+                    state = FIRST_PULSE_LEVEL;
+                }
+                
+                // DEBUG
+                reset_pin_toggle();
+            } else {
+                // revert
+                lowByteNew  = lowByteSaved;
+                highByteNew = highByteSaved;
+            }
+            break;
     }
+    
         
     //clear compare/capture 1 flag
     CCCON &= ~0x02;

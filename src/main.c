@@ -12,18 +12,18 @@
 #include <stdio.h>
 
 // borrowed from area-8051 uni-stc HAL...
-#include "..\inc\delay.h"
+#include "delay.h"
 
-#include "..\inc\globals.h"
-#include "..\inc\initdevice.h"
+#include "globals.h"
+#include "initdevice.h"
 //#include "..\inc\pca.h"
 //#include "..\inc\rtos.h"
-#include "..\inc\timer.h"
-#include "..\inc\uart.h"
+#include "timer.h"
+#include "uart.h"
 //#include "wdt_0.h"
 
 //#include "..\inc\rf_handling.h"
-#include "..\inc\rf_protocols.h"
+#include "rf_protocols.h"
 
 
 // DEBUG: bench sensor

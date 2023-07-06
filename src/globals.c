@@ -3,7 +3,7 @@
  *  Ported on: 02.16.2023
  *      Author: Jonathan Armstrong
  */
-#include "..\inc\globals.h"
+#include "globals.h"
 
 // pin defines
 // avoid exposing to other compilation units

@@ -32,7 +32,7 @@
 #include <8052.h>
 #include <stdint.h>
 
-#include "..\inc\delay.h"
+#include "delay.h"
 
 // these assume 1T mode @ 16 MHz
 // in other words, they were tuned by observing oscilloscope traces

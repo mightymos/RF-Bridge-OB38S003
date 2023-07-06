@@ -6,9 +6,9 @@
 
 //#include <SI_EFM8BB1_Register_Enums.h>
 //#include <string.h>
-#include "..\inc\globals.h"
-#include "..\inc\rf_protocols.h"
-#include "..\inc\uart.h"
+#include "globals.h"
+#include "rf_protocols.h"
+#include "uart.h"
 
 //
 // the original implementation from RF-Bridge-EFM8BB1 looks similar to this implementation
