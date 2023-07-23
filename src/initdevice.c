@@ -40,8 +40,8 @@ void init_port_pins(void)
     //P1_6 = 1;
     
     // rf sleep/wake push pull
-    P1M1 &= ~0x10;
-    P1M1 |=  0x10;
+    //P1M1 &= ~0x10;
+    //P1M1 |=  0x10;
     
     // led push pull
     P3M1 &= ~0x01;

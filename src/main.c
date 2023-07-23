@@ -370,9 +370,11 @@ void blink_task(void)
     {
         led_on();
         reset_pin_on();
+        //tdata_on();
     } else {
         led_off();
         reset_pin_off();
+        //tdata_off();
     }
     
     pinState = !pinState;
@@ -384,6 +386,109 @@ void blink_task(void)
     //reload_timer1(600);
     reload_timer1(0xfc, 0x17);
 }
+
+
+//-----------------------------------------------------------------------------
+// simulates sending a radio packet by toggling the reset pin (which we bridge to radio receive pin)
+// ----------------------------------------------------------------------------
+bool send_radio_blocking(const uint8_t totalRepeats)
+{
+    // 0x4a, 0xf1, 0x08
+    __code const bool bitLevels[] = {0,1,0,0, 1,0,1,0, 1,1,1,1, 0,0,0,1, 0,0,0,0, 1,0,0,0};
+    
+    // since sync pulse is two bits, we need 24 more for data bits
+    const uint8_t indexEnd = 24;
+    
+    
+    uint8_t index;
+    uint8_t repeatIndex;    
+    
+    //enable_radio_vdd();
+    //delay(RADIO_STARTUP_TIME);
+    //delay(500);
+    
+    //DEBUG
+    //printf("index: %u\r\n", index);
+    
+    
+    for (repeatIndex = 0; repeatIndex < totalRepeats; repeatIndex++)
+    {
+    
+        // sync pulse
+        // allow attaching oscilloscope probe to a convenient location (reset) and also actually driving radio transmit pin
+        reset_pin_on();
+        tdata_on();
+        
+        //reload_timer1(35);
+        reload_timer1(0xff, 0xcf);
+        while(!gIsTimerOneFinished);
+        gIsTimerOneFinished = false;
+        
+        // sync pulse
+        reset_pin_off();
+        tdata_off();
+        
+        //reload_timer1(1085);
+        reload_timer1(0xf8, 0xef);
+        while(!gIsTimerOneFinished);
+        gIsTimerOneFinished = false;
+    
+        for (index = 0; index < indexEnd; index++)
+        {
+            
+            // bit is one
+            if (bitLevels[index])
+            {
+                reset_pin_on();
+                tdata_on();
+                    
+                //reload_timer1(105);
+                reload_timer1(0xff, 0x50);
+                while(!gIsTimerOneFinished);
+                gIsTimerOneFinished = false;
+
+                reset_pin_off();
+                tdata_off();
+                
+                //reload_timer1(35);
+                reload_timer1(0xff, 0xcf);
+                while(!gIsTimerOneFinished);
+                gIsTimerOneFinished = false;
+
+            } else {
+
+                reset_pin_on();
+                tdata_on();
+                
+                //reload_timer1(35);
+                reload_timer1(0xff, 0xcf);
+                while(!gIsTimerOneFinished);
+                gIsTimerOneFinished = false;
+
+                reset_pin_off();
+                tdata_off();
+                
+                //reload_timer1(105);
+                reload_timer1(0xff, 0x50);
+                while(!gIsTimerOneFinished);
+                gIsTimerOneFinished = false;
+            }
+            
+        }
+
+
+        reset_pin_off();
+        tdata_off();
+        reload_timer1(0xff, 0xcf);
+        while(!gIsTimerOneFinished);
+        gIsTimerOneFinished = false;
+
+    }
+    
+    // we are always finished because this is blocking (different than task version of the same function)
+    return false;
+}
+
 
 //-----------------------------------------------------------------------------
 // simulates sending a radio packet by toggling the reset pin (which we bridge to radio receive pin)
@@ -416,6 +521,7 @@ bool send_radio_task(const uint8_t totalRepeats)
     
     if (index == 0)
     {
+        // allow attaching oscilloscope probe to a convenient location (reset) and also actually driving radio transmit pin
         //reset_pin_on();
         tdata_on();
         
@@ -553,7 +659,7 @@ int main (void)
     //reset_off();
     
     // DEBUG: disable radio (not working, does not set pin high?)
-    //radio_off();
+    //radio_on();
     
 
     // FIXME: startup beep helpful or annoying?
@@ -632,6 +738,7 @@ int main (void)
         //    uart_putc(rxdata);
         //}
         
+#if 0
         // check if serial transmit buffer is empty
         if(!is_uart_tx_buffer_empty())
         {
@@ -641,13 +748,33 @@ int main (void)
                 uart_init_tx_polling();
             }
         }
+        
+#endif
 
+        
+
+#if 0
         // process serial receive data
         if (rxdata != UART_NO_DATA)
         {
             uart_state_machine(rxdata);
         }
         
+#endif
+
+#if 0
+        
+    if (get_radio_wake())
+    {
+        reset_pin_on();
+    } else {
+        reset_pin_off();
+    }
+    
+#endif
+        
+        
+#if 0
         // DEBUG:
         // display serial message about every 10 seconds
         elapsedTimeHeartbeat = get_elapsed_time(previousTimeHeartbeat);
@@ -663,7 +790,11 @@ int main (void)
             heartbeat++;
         }
         
+#endif
         
+     
+     
+#if 0
         // periodically send out a radio transmission for a sort of loopback test
         elapsedTimeSendRadio = get_elapsed_time(previousTimeSendRadio);
 
@@ -675,15 +806,19 @@ int main (void)
             previousTimeSendRadio = get_current_time();
         }
         
+
         if (triggerRadioSendTask)
         {            
-            if (gIsTimerOneFinished)
-            {
-                triggerRadioSendTask = send_radio_task(4);
-                gIsTimerOneFinished = false;
-            }
+            //if (gIsTimerOneFinished)
+            //{
+                //triggerRadioSendTask = send_radio_task(4);
+                
+                triggerRadioSendTask = send_radio_blocking(4);
+                
+                //gIsTimerOneFinished = false;
+            //}
         }
-        
+#endif 
       
         
         // DEBUG: check pin timing with oscilloscope
@@ -693,7 +828,8 @@ int main (void)
         //    gIsTimerOneFinished = false;
         //}
 
-        
+// DEBUG: include or exclude radio receiver processing in order to check radio transmission only
+#if 0
         if (gPacket.length > 0)
         {
             //printf("debug: radio decode...\r\n");
@@ -711,8 +847,12 @@ int main (void)
             
             gPacket.length--;
         }
+#endif
         
         
+        
+        
+#if 0
         // look for flag set in capture mode timer interrupt
         // similar to rc-switch duration based decoder
         if (gPacket.captureDone)
@@ -786,6 +926,8 @@ int main (void)
             
             enable_capture_interrupt();
         }
+        
+#endif
 
 	}
     

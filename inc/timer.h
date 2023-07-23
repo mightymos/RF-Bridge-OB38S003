@@ -41,7 +41,19 @@ struct RADIO_PACKET_T
     uint8_t length;
 };
 
+
+struct RC_SWITCH_T
+{
+    unsigned long nReceivedValue;
+    unsigned int nReceivedBitlength;
+    unsigned int nReceivedDelay;
+    unsigned int nReceivedProtocol;
+};
+
 extern __xdata struct RADIO_PACKET_T gPacket;
+
+extern __xdata struct RC_SWITCH_T gRCSwitch;
+
 extern const uint16_t gTimings [];
 
 //extern volatile bool gSingleStep;

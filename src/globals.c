@@ -11,9 +11,8 @@
 #define TDATA       P0_7
 #define UART_TX_PIN P1_0
 
-// reset pin does not appear to be connected to anything except copper pad
-//  so can use as a debug output
-// apparently need to set as gpio when flashing (i.e., disable reset function)
+// reset pin does not appear to be connected to anything except copper pad so can use as a debug output
+// apparently need to set as gpio in PC flashing utility when flashing (i.e., disable reset function)
 #define RESET_PIN   P1_5
 #define RDATA       P1_6
 #define RF_ENABLE   P1_7
@@ -29,7 +28,7 @@ inline void buzzer_off(void)
     BUZZER = 0;
 }
 
-inline bool is_rdata_low(void)
+inline bool rdata_level(void)
 {
     return RDATA;
 }
@@ -60,6 +59,11 @@ inline void radio_off(void)
 inline void radio_on(void)
 {
     RF_ENABLE = 0;
+}
+
+inline bool get_radio_wake(void)
+{
+    return RF_ENABLE;
 }
 
 inline void reset_pin_on(void)
