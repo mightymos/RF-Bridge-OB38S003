@@ -241,6 +241,8 @@ void uart_state_machine(const unsigned int rxdata)
 }
 
 
+/*
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 void radio_decode_state_machine(unsigned long diff)
@@ -356,6 +358,8 @@ void radio_decode_state_machine(unsigned long diff)
 }
 
 
+*/
+
 //-----------------------------------------------------------------------------
 // toggle reset and led pins so that timing can be inspected on oscilloscope
 // ----------------------------------------------------------------------------
@@ -390,6 +394,7 @@ void blink_task(void)
 
 //-----------------------------------------------------------------------------
 // simulates sending a radio packet by toggling the reset pin (which we bridge to radio receive pin)
+// use timings from ReedTripRadio project
 // ----------------------------------------------------------------------------
 bool send_radio_blocking(const uint8_t totalRepeats)
 {
@@ -476,10 +481,10 @@ bool send_radio_blocking(const uint8_t totalRepeats)
             
         }
 
-
+        // 30 millisecond gap between repeat transmissions
         reset_pin_off();
         tdata_off();
-        reload_timer1(0xff, 0xcf);
+        reload_timer1(0xec, 0x77);
         while(!gIsTimerOneFinished);
         gIsTimerOneFinished = false;
 
@@ -490,112 +495,7 @@ bool send_radio_blocking(const uint8_t totalRepeats)
 }
 
 
-//-----------------------------------------------------------------------------
-// simulates sending a radio packet by toggling the reset pin (which we bridge to radio receive pin)
-// ----------------------------------------------------------------------------
-bool send_radio_task(const uint8_t totalRepeats)
-{
-    // 0x4a, 0xf1, 0x08
-    __code const bool bitLevels[] = {0,1,0,0, 1,0,1,0, 1,1,1,1, 0,0,0,1, 0,0,0,0, 1,0,0,0};
-    
-    // since sync pulse is two bits, we need 24 more for data bits
-    const uint8_t indexEnd = 26;
-    
-    
-    static uint8_t index = 0;
-    static uint8_t repeatIndex = 0;
-    static bool isFirst = true;
 
-    
-    uint8_t dataBitIndex = 0;
-    
-    bool isRunning = true;
-    
-    
-    //enable_radio_vdd();
-    //delay(RADIO_STARTUP_TIME);
-    //delay(500);
-    
-    //DEBUG
-    //printf("index: %u\r\n", index);
-    
-    if (index == 0)
-    {
-        // allow attaching oscilloscope probe to a convenient location (reset) and also actually driving radio transmit pin
-        //reset_pin_on();
-        tdata_on();
-        
-        //reload_timer1(35);
-        reload_timer1(0xff, 0xcf);
-        index++;
-    } else if (index == 1) {
-        //reset_pin_off();
-        tdata_off();
-        
-        //reload_timer1(1085);
-        reload_timer1(0xf8, 0xef);
-        index++;
-    } else if ((index >= 2) && (index < indexEnd)) {
-        
-        dataBitIndex = index - 2;
-        
-        if (bitLevels[dataBitIndex] == true)
-        {
-            if (isFirst == true)
-            {
-                //reset_pin_on();
-                tdata_on();
-                
-                //reload_timer1(105);
-                reload_timer1(0xff, 0x50);
-                isFirst = false;
-            } else {
-                //reset_pin_off();
-                tdata_off();
-                
-                //reload_timer1(35);
-                reload_timer1(0xff, 0xcf);
-                isFirst = true;
-                index++;
-            }
-        } else {
-            if (isFirst == true)
-            {
-                //reset_pin_on();
-                tdata_on();
-                
-                //reload_timer1(35);
-                reload_timer1(0xff, 0xcf);
-                isFirst = false;
-            } else {
-                //reset_pin_off();
-                tdata_off();
-                
-                //reload_timer1(105);
-                reload_timer1(0xff, 0x50);
-                isFirst = true;
-                index++;
-            }
-        }
-    } else if (index == indexEnd) {
-        //reset_pin_off();
-        tdata_off();
-        index = 0;
-        
-        repeatIndex++;
-        
-        if (repeatIndex >= totalRepeats)
-        {
-            reload_timer1(0xff, 0xcf);
-            repeatIndex = 0;
-            isRunning = false;
-        }
-    }
-    
-    
-
-    return isRunning;
-}
 
 //-----------------------------------------------------------------------------
 // main() Routine
@@ -681,41 +581,10 @@ int main (void)
     //*(gStackStart + 1) = 0x5a;
     //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart,   *gStackStart);
     //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart+1, *(gStackStart + 1));
-    
-    // init semaphores
-    //init(&key_pressed, 0);
-    //init(&key_released, 1);
-    //init(&flash_req, 0);
-    //init(&ext_int,0);	
-
-    // init rtos
-    //rtos_init();
-    
-    // add required idle process
-    //fn = idle;
-    // lowest priority
-    //ok = create_process(fn, 0) >= 0;
-    
-    //fn = flash_led;
-    //ok |= create_process(fn, 1) >= 0;
 
 	// enable interrupts
     enable_global_interrupts();
     
-    // avoid starting rtos if process creation failed (e.g., exceeded max tasks)
-    //if (ok)
-    //{
-    //    rtos_run();
-    //}
-
-    // FIXME: consider what happens if rtos is stopped
-    //while (true)
-    //{
-    //    led_toggle();
-    //    delay1ms(250);
-    //}
-    
-    //return 0;
 
 	while (true)
 	{
@@ -762,13 +631,22 @@ int main (void)
         
 #endif
 
-#if 0
-        
-    if (get_radio_wake())
+
+#if 1
+    if (available())
     {
-        reset_pin_on();
-    } else {
-        reset_pin_off();
+
+        printf("Received: ");
+        printf("%lu", getReceivedValue() );
+        printf(" / ");
+        printf("%u", getReceivedBitlength() );
+        printf("bit ");
+        printf("Protocol: ");
+        printf("%u", getReceivedProtocol() );
+        
+        printf("\r\n");
+
+        resetAvailable();
     }
     
 #endif
@@ -821,12 +699,6 @@ int main (void)
 #endif 
       
         
-        // DEBUG: check pin timing with oscilloscope
-        //if (gIsTimerOneFinished)
-        //{
-        //    blink_task();
-        //    gIsTimerOneFinished = false;
-        //}
 
 // DEBUG: include or exclude radio receiver processing in order to check radio transmission only
 #if 0
@@ -850,84 +722,6 @@ int main (void)
 #endif
         
         
-        
-        
-#if 0
-        // look for flag set in capture mode timer interrupt
-        // similar to rc-switch duration based decoder
-        if (gPacket.captureDone)
-        {
-            //led_toggle();
-            disable_capture_interrupt();
-                        
-            
-            // clear array
-            index = 0;
-            while(index < 3)
-            {
-                radioBytes[index] = 0;
-                index++;
-            }
-            
-            index = 0;
-            bitIndex = 0;
-            arrayIndex = 0;
-            
-            // convert bits to byte array
-            while (arrayIndex < 3)
-            {
-                while (index < 8)
-                {
-                    if (gPacket.radioBits[bitIndex])
-                    {
-                        radioBytes[arrayIndex] |=  (1 << (7 - index));
-                        //printf("%u: %u: %u: %u\r\n", bitIndex, index, arrayIndex, radioBytes[arrayIndex]);
-                    }
-                    
-                    
-                    index++;
-                    bitIndex++;
-                }
-                
-                index = 0;
-                arrayIndex++;
-            }
-            
-            
-            //printf("\r\n");
-            
-            // display bits
-            //bitIndex = 0;
-            //while (bitIndex < 24)
-            //{
-            //    printf("%d", radioBits[bitIndex]);
-            //    bitIndex++;
-            //}
-
-            //printf("\r\n");
-            
-            // display bytes in hex format
-            //index = 0;
-            //while (index < 3)
-            //{
-            //    printf("0x%x\r\n", radioBytes[index] >> 4);
-            //    printf("0x%x\r\n", radioBytes[index] & 0x0f);
-            //    index++;
-            //}
-            
-            // display number of errors
-            //printf("errors: %u\r\n", gPacket.errors);
-            
-            
-            //enable_interrupts();
-            //gSyncFirst   = false;
-            //gSyncSecond  = false;
-            gPacket.captureDone = false;
-            
-            enable_capture_interrupt();
-        }
-        
-#endif
 
 	}
     

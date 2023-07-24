@@ -63,4 +63,14 @@ extern unsigned long get_elapsed_time(unsigned long previousTime);
 //extern void reload_timer1(unsigned int reload);
 extern void reload_timer1(unsigned char high, unsigned char low);
 
+bool available();
+void resetAvailable();
+
+unsigned long getReceivedValue();
+unsigned int getReceivedBitlength();
+unsigned int getReceivedDelay();
+unsigned int getReceivedProtocol();
+
+
+
 #endif

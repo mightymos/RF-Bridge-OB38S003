@@ -6,10 +6,15 @@
 #include "rf_protocols.h"
 #include "timer.h"
 
+#define RCSWITCH_MAX_CHANGES 67
+
 // store attempts to decode radio bits
-__xdata struct RADIO_PACKET_T gPacket;
+//__xdata struct RADIO_PACKET_T gPacket;
 
 __xdata struct RC_SWITCH_T gRCSwitch;
+
+__xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
+
 
 
 // track count of timer 1 which is decremented, and finally flag reaching zero
@@ -24,9 +29,7 @@ static unsigned long gTimeMilliseconds = 0;
 const uint16_t gTimings [] = { 350, 1050, 10850 };
 //const uint16_t gTimings [] = { 1000, 1000, 1000 };
 
-#define RCSWITCH_MAX_CHANGES 67
 
-uint16_t timings[RCSWITCH_MAX_CHANGES];
 
 
 
@@ -76,6 +79,38 @@ unsigned long get_elapsed_time(unsigned long previousTime)
     return elapsed;
 }
 
+bool available()
+{
+    return gRCSwitch.nReceivedValue != 0;
+}
+
+void resetAvailable()
+{
+    gRCSwitch.nReceivedValue = 0;
+}
+
+
+unsigned long getReceivedValue()
+{
+    return gRCSwitch.nReceivedValue;
+}
+
+unsigned int getReceivedBitlength()
+{
+    return gRCSwitch.nReceivedBitlength;
+}
+
+unsigned int getReceivedDelay()
+{
+    return gRCSwitch.nReceivedDelay;
+}
+
+unsigned int getReceivedProtocol()
+{
+  return gRCSwitch.nReceivedProtocol;
+}
+
+/*
 void write_diff(unsigned long diff)
 {
     // FIXME: add comment
@@ -92,6 +127,8 @@ void write_diff(unsigned long diff)
 
     gPacket.length++;
 }
+
+*/
 
 // FIXME: change function name because this is not directly reloading timer
 //void reload_timer1(unsigned int reload)
@@ -152,7 +189,8 @@ bool receiveProtocol(const int p, unsigned int changeCount) {
      *
      * The 2nd saved duration starts the data
      */
-    const unsigned int firstDataTiming = (invertedSignal) ? (2) : (1);
+    //const unsigned int firstDataTiming = (invertedSignal) ? (2) : (1);
+    const unsigned int firstDataTiming = 1;
 
     for (unsigned int i = firstDataTiming; i < changeCount - 1; i += 2)
     {
