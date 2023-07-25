@@ -7,7 +7,7 @@
 //#include <SI_EFM8BB1_Register_Enums.h>
 //#include <string.h>
 #include "globals.h"
-#include "rf_protocols.h"
+//#include "rf_protocols.h"
 #include "uart.h"
 
 //

@@ -3,42 +3,20 @@
 #include <stdlib.h>
 
 #include "globals.h"
-#include "rf_protocols.h"
+#include "rcswitch.h"
 #include "timer.h"
 
-#define RCSWITCH_MAX_CHANGES 67
-
-// store attempts to decode radio bits
-//__xdata struct RADIO_PACKET_T gPacket;
-
-__xdata struct RC_SWITCH_T gRCSwitch;
-
-__xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
 
 
 
-// track count of timer 1 which is decremented, and finally flag reaching zero
+// track count of timer 1 which is decremented
 uint16_t gTimerOneCount = 0;
-bool     gIsTimerOneFinished = true;
+
+// finally when timer reaches zero, set flag to false
+bool gIsTimerOneFinished = true;
 
 // track time since startup in one millisecond increments
 static unsigned long gTimeMilliseconds = 0;
-
-
-// rc-switch protocol 1
-const uint16_t gTimings [] = { 350, 1050, 10850 };
-//const uint16_t gTimings [] = { 1000, 1000, 1000 };
-
-
-
-
-
-enum PULSE_DETECT_T {
-    IDLE,
-    FIRST_PULSE_LEVEL,
-    SECOND_PULSE_LEVEL,
-    DATA_BITS
-};
 
 
 unsigned long get_current_time(void)
@@ -79,96 +57,27 @@ unsigned long get_elapsed_time(unsigned long previousTime)
     return elapsed;
 }
 
-bool available()
-{
-    return gRCSwitch.nReceivedValue != 0;
-}
-
-void resetAvailable()
-{
-    gRCSwitch.nReceivedValue = 0;
-}
-
-
-unsigned long getReceivedValue()
-{
-    return gRCSwitch.nReceivedValue;
-}
-
-unsigned int getReceivedBitlength()
-{
-    return gRCSwitch.nReceivedBitlength;
-}
-
-unsigned int getReceivedDelay()
-{
-    return gRCSwitch.nReceivedDelay;
-}
-
-unsigned int getReceivedProtocol()
-{
-  return gRCSwitch.nReceivedProtocol;
-}
-
-/*
-void write_diff(unsigned long diff)
-{
-    // FIXME: add comment
-    gPacket.diff[gPacket.writePosition] = diff;
-
-    // FIXME: add comment
-    gPacket.writePosition++;
-
-    // handle wrap around
-    if (gPacket.writePosition == BUFFER_SIZE)
-    {
-        gPacket.writePosition = 0;
-    }        
-
-    gPacket.length++;
-}
-
-*/
-
-// FIXME: change function name because this is not directly reloading timer
-//void reload_timer1(unsigned int reload)
-//{
-//    gIsTimerOneFinished = false;
-//    gTimerOneCount = reload;
-//}
-
-void reload_timer1(unsigned char high, unsigned char low)
-{
-    gIsTimerOneFinished = false;
-    
-    TH1 = high;
-    TL1 = low;
-}
 
 bool receiveProtocol(const int p, unsigned int changeCount) {
 
 //    Protocol pro;
 //    memcpy_P(&pro, &proto[p-1], sizeof(Protocol));
 
-    const int nReceiveTolerance = 60;
-    const bool invertedSignal = false;
+    struct Protocol* pro = protocols;
+    unsigned int index = p - 1;
     
     unsigned long code = 0;
     
     // assuming the longer pulse length is the pulse captured in timings[0]
-    //const unsigned int syncLengthInPulses =  ((pro.syncFactor.low) > (pro.syncFactor.high)) ? (pro.syncFactor.low) : (pro.syncFactor.high);
-    const unsigned int syncLengthInPulses = 31;
+    const unsigned int syncLengthInPulses = ((pro[index].syncFactor.low) > (pro[index].syncFactor.high)) ? (pro[index].syncFactor.low) : (pro[index].syncFactor.high);
+    //const unsigned int syncLengthInPulses = 31;
     
-    //const unsigned int delay = RCSwitch::timings[0] / syncLengthInPulses;
-    const unsigned int delay = 350;
+    const unsigned int delay = timings[0] / syncLengthInPulses;
+    //const unsigned int delay = 350;
     
-    //const unsigned int delayTolerance = delay * RCSwitch::nReceiveTolerance / 100;
-    const unsigned int delayTolerance = delay * nReceiveTolerance / 100;
-    
-    const unsigned int zeroHigh = 1;
-    const unsigned int zeroLow  = 3;
-    const unsigned int oneHigh  = 3;
-    const unsigned int oneLow   = 1;
+    // FIXME: use variable
+    //const unsigned int delayTolerance = delay * gRCSwitch.nReceiveTolerance / 100;
+    const unsigned int delayTolerance = delay * 60 / 100;
     
     
     
@@ -189,30 +98,17 @@ bool receiveProtocol(const int p, unsigned int changeCount) {
      *
      * The 2nd saved duration starts the data
      */
-    //const unsigned int firstDataTiming = (invertedSignal) ? (2) : (1);
-    const unsigned int firstDataTiming = 1;
+    const unsigned int firstDataTiming = (pro[index].invertedSignal) ? (2) : (1);
 
     for (unsigned int i = firstDataTiming; i < changeCount - 1; i += 2)
     {
         code <<= 1;
         
-        //if (diff(RCSwitch::timings[i], delay * pro.zero.high) < delayTolerance &&
-        //    diff(RCSwitch::timings[i + 1], delay * pro.zero.low) < delayTolerance) {
-        //    // zero
-        //} else if (diff(RCSwitch::timings[i], delay * pro.one.high) < delayTolerance &&
-        //           diff(RCSwitch::timings[i + 1], delay * pro.one.low) < delayTolerance) {
-        //    // one
-        //    code |= 1;
-        //} else {
-        //    // Failed
-        //    return false;
-        //}
-        
-        if (abs(timings[i] - delay * zeroHigh) < delayTolerance &&
-            abs(timings[i + 1] - delay * zeroLow) < delayTolerance) {
+        if (abs(timings[i] - delay * pro[index].zero.high) < delayTolerance &&
+            abs(timings[i + 1] - delay * pro[index].zero.low) < delayTolerance) {
             // zero
-        } else if (abs(timings[i] - delay * oneHigh) < delayTolerance &&
-            abs(timings[i + 1] - delay * oneLow) < delayTolerance) {
+        } else if (abs(timings[i] - delay * pro[index].one.high) < delayTolerance &&
+            abs(timings[i + 1] - delay * pro[index].one.low) < delayTolerance) {
             // one
             code |= 1;
         } else {
@@ -227,14 +123,22 @@ bool receiveProtocol(const int p, unsigned int changeCount) {
         gRCSwitch.nReceivedValue = code;
         gRCSwitch.nReceivedBitlength = (changeCount - 1) / 2;
         gRCSwitch.nReceivedDelay = delay;
-        //gRCSwitch.nReceivedProtocol = p;
-        gRCSwitch.nReceivedProtocol = 1;
+        gRCSwitch.nReceivedProtocol = p;
         
         return true;
     }
 
     return false;
 }
+
+void reload_timer1(unsigned char high, unsigned char low)
+{
+    gIsTimerOneFinished = false;
+    
+    TH1 = high;
+    TL1 = low;
+}
+
 
 void timer0_isr(void) __interrupt (1)
 {
@@ -279,51 +183,44 @@ void timer1_isr(void) __interrupt (3)
 //-----------------------------------------------------------------------------
 void timer2_isr(void) __interrupt (5)
 {
-    //uint8_t lowByteSaved;
-    //uint8_t highByteSaved;
+    // track previous and new timer values so we can compute dfiference
     uint8_t lowByteOld;
     uint8_t highByteOld;
     static uint8_t lowByteNew  = 0;
     static uint8_t highByteNew = 0;
     
-    
-    bool        levelOld;
-    static bool levelNew = false;
-    
-    static uint8_t dataCount;
-    
-    const uint8_t maxDataCount = 24;
-    
-    static unsigned int repeatCount = 0;
-    static unsigned int changeCount = 0;
-    
-    const unsigned int separationLimit = 4300;
-    const unsigned int numProto = 1;
-    
-   
+    // for converting 8-bit timer values to 16-bits to allow subtraction
     uint16_t        previous;
     static uint16_t current = 0;
     
+    // this eventually represents the level duration in milliseconds (difference between edge transitions)
     unsigned long duration;
+    
+    // store previous level values so we can hook up oscilloscope channel on radio transmitter device
+    //  and another channel on reset pin to observe that edges are being captured on radio receiver
+    bool        levelOld;
+    static bool levelNew = false;
+    
 
-    static enum PULSE_DETECT_T state = FIRST_PULSE_LEVEL;
+    // rc-switch variables
+    static unsigned int repeatCount = 0;
+    static unsigned int changeCount = 0;
+
+    // FIXME: move to rcswitch.h
+    const unsigned int separationLimit = 4300;
+    const unsigned int numProto = 1;
+    
     
     
     // FIXME: function name is confusing
     levelOld = levelNew;
     levelNew = rdata_level();
     
-    // DEBUG: output pulses to compare to radio DO pin on oscilloscope (should match)
-    //if (levelNew)
-    //{
-    //    reset_pin_on();
-    //} else {
-    //    reset_pin_off();
-    //}
-    
     
 #if 1
 
+    // DEBUG: on oscilloscope
+    // we use edge transitions rather than absolute level for no particular reason
     if (!levelOld && levelNew)
     {
         // rising edge
@@ -335,9 +232,6 @@ void timer2_isr(void) __interrupt (5)
     
 #endif
 
-    // save in case check at end of interrupts reverts value
-    //lowByteSaved  = lowByteNew;
-    //highByteSaved = highByteNew;
     
     // we are always looking for pulse duration (i.e., difference), so need to store previous and new values
     lowByteOld  = lowByteNew;
@@ -414,44 +308,9 @@ void timer2_isr(void) __interrupt (5)
         repeatCount = 0;
     }
 
-    //RCSwitch::timings[changeCount++] = duration;
     timings[changeCount++] = duration;
     
-    //lastTime = time;
         
     //clear compare/capture 1 flag
     CCCON &= ~0x02;
 }
-
-
-    // In this approach we will capture the time between each transition coming from the demodulation circuit. The Input Capture
-    // function on a micro-controller is very useful for this because it will generate an interrupt, precise time measurements, and
-    // allow decision processing based on the elapsed counter value.
-    // 1. Set up timer to interrupt on every edge (may require changing edge trigger in the ISR)
-    // FIXME: done externally to interrupt so that's okay right?
-    
-    // 2. ISR routine should flag the edge occurred and store count value
-    
-    
-    // 3. Start timer, capture first edge and discard this.
-    // FIXME: we do not discard the first edge but should
-    
-    // 4. Capture next edge and check if stored count value equal 2T (T = ½ data rate)
-    
-    
-    // 5. Repeat step 4 until count value = 2T (This is now synchronized with the data clock)
-    // 6. Read current logic level of the incoming pin and save as current bit value (1 or 0)
-    // 7. Capture next edge
-    // a. Compare stored count value with T
-    // b. If value = T
-    // ● Capture next edge and make sure this value also = T (else error)
-    // ● Next bit = current bit
-    // ● Return next bit
-    // c. Else if value = 2T
-    // ● Next bit = opposite of current bit
-    // ● Return next bit
-    // d. Else
-    // ● Return error
-    // 8. Store next bit in buffer
-    // 9. If desired number of bits are decoded; exit to continue further processing
-    // 10. Else set current bit to next bit and loop to step 7

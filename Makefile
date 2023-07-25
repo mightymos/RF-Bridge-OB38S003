@@ -84,6 +84,7 @@ SRCS := \
     src/globals.c \
     src/initdevice.c \
 	src/main.c \
+    src/rcswitch.c \
     src/timer.c \
     src/uart.c
 

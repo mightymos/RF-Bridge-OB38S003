@@ -16,49 +16,27 @@
 
 #include "globals.h"
 #include "initdevice.h"
-//#include "..\inc\pca.h"
-//#include "..\inc\rtos.h"
+#include "rcswitch.h"
 #include "timer.h"
 #include "uart.h"
 //#include "wdt_0.h"
 
 //#include "..\inc\rf_handling.h"
-#include "rf_protocols.h"
+//#include "rf_protocols.h"
 
 
 // DEBUG: bench sensor
 //15:12:45.080 MQT: tele/tasmota_4339CA/RESULT = {"Time":"2023-02-27T15:12:45","RfReceived":{"Sync":10250,"Low":340,"High":1010,"Data":"4AF10A","RfKey":"None"}}
 //15:12:49.186 MQT: tele/tasmota_4339CA/RESULT = {"Time":"2023-02-27T15:12:49","RfReceived":{"Sync":10250,"Low":340,"High":1000,"Data":"4AF10E","RfKey":"None"}}
-#define RADIO_STARTUP_TIME 500
-#define TX_REPEAT_TRANSMISSIONS 1
 
+
+// FIXME: move or remove this comment
 // removed SYN470R radio receiver on one of my boards and tied reset pin to rdata input pin for testing purposes
 // so basically enabling loopback uses reset pin to apply radio transmission signals, as opposed to tdata pin
 
 
-// TODO:
-typedef enum {
-    START_FIRST_LEVEL,
-    START_SECOND_LEVEL,
-    RF_BITS,
-} RADIO_DECODE_STATE_T;
-
-typedef enum {
-    STARTUP,
-    FIRST_PULSE_LEVEL,
-    SECOND_PULSE_LEVEL,
-    INITIALIZE_SEND,
-    SEND_DATA,
-    ONE_FIRST_LEVEL,
-    ONE_SECOND_LEVEL,
-    ZERO_FIRST_LEVEL,
-    ZERO_SECOND_LEVEL,
-    FINISHED
-} RADIO_TX_STATE_T;
-
 // sdccman sec. 3.8.1 indicates isr prototype must appear in the file containing main
 extern void timer0_isr(void) __interrupt (1);
-//extern void rtos_timer(void) __interrupt (1);
 extern void timer1_isr(void) __interrupt (3);
 extern void uart_isr(void)   __interrupt (4);
 extern void timer2_isr(void) __interrupt (5);
@@ -240,126 +218,6 @@ void uart_state_machine(const unsigned int rxdata)
     }
 }
 
-
-/*
-
-//-----------------------------------------------------------------------------
-//-----------------------------------------------------------------------------
-void radio_decode_state_machine(unsigned long diff)
-{
-    static RADIO_DECODE_STATE_T currentState = START_FIRST_LEVEL;
-    
-    static uint8_t bitIndex    = 0;
-    static uint8_t periodIndex = 0;
-    
-    // FIXME: add comment
-    static uint16_t firstPeriod;
-    static uint16_t secondPeriod;
-
-    // state machine begins by looking for sync pulse and then stores duration of data bits
-    switch (currentState)
-    {
-        // only begin saving durations if expected start pulse timings are observed
-        //   as an initial attempt to ignore noise pulses
-        case START_FIRST_LEVEL:
-            //if ( abs(diff - gTimings[0]) < TOLERANCE_MIN )
-            //{
-                gPacket.syncFirstDuration = diff;
-                gPacket.syncFirstFlag = true;
-                currentState = START_SECOND_LEVEL;
-                
-                periodIndex = 0;
-                bitIndex    = 0;
-                gPacket.errors = 0;
-                
-                //led_toggle();
-            //} else {
-                //DEBUG:
-                //reset_pin_off();
-            //}
-            break;
-            
-        case START_SECOND_LEVEL:
-            
-            //if ( abs(diff - gTimings[2]) < TOLERANCE_MAX )
-            //{
-                gPacket.syncSecondDuration = diff;
-                gPacket.syncSecondFlag = true;
-
-                currentState = RF_BITS;
-            //} else {
-            //    currentState = START_FIRST_LEVEL;
-            //}
-            break;
-            
-        case RF_BITS:
-        
-            // check if index is even or odd
-            if ((periodIndex % 2) == 0)
-            {
-                //firstPeriod  = gPacket.duration[periodIndex - 1];
-                //secondPeriod = gPacket.duration[periodIndex];
-                firstPeriod = diff;
-            } else {
-                secondPeriod = diff;
-                
-                // FIXME: support inverted protocols (or does it matter since it is duration only?)
-                if (abs(firstPeriod - gTimings[1]) < TOLERANCE_MIN && abs(secondPeriod - gTimings[0]) < TOLERANCE_MIN)
-                {
-                    gPacket.radioBits[bitIndex++] = 1;
-                } else if (abs(firstPeriod - gTimings[0]) < TOLERANCE_MIN && abs(secondPeriod - gTimings[1]) < TOLERANCE_MIN) {
-                        gPacket.radioBits[bitIndex++] = 0;
-                } else {
-                        // error condition
-                        //printf("error: %u\r\n", periodIndex);
-                        //printf("%u\r\n", firstPeriod);
-                        //printf("%u\r\n", secondPeriod);
-                        
-                        gPacket.errors++;
-
-                        // reset state to beginning
-                        //currentState = START_FIRST_LEVEL;
-                }
-            }
-            
-            periodIndex++;
-
-            
-            if (periodIndex >= MAX_PERIOD_COUNT)
-            {
-                //firstPeriod  = gPacket.duration[periodIndex - 1];
-                
-                if (abs(firstPeriod - gTimings[1]) < TOLERANCE_MIN)
-                {
-                    gPacket.radioBits[TOTAL_RF_DATA_BITS - 1] = 1;
-                } else {
-                    if (abs(firstPeriod - gTimings[0]) < TOLERANCE_MIN)
-                    {
-                        gPacket.radioBits[TOTAL_RF_DATA_BITS - 1] = 0;
-                    }
-                }
-            
-                gPacket.captureDone = true;
-                
-                currentState = START_FIRST_LEVEL;
-                
-                // FIXME:
-                // we may never get another transition if level remains the same
-                // e.g. last bit is low level and default signal level is also low
-                // so save last level here
-                //gPacket.lastLevel = !is_rdata_low();
-            }
-            
-            break;
-            
-        default:
-            break;
-    }
-}
-
-
-*/
-
 //-----------------------------------------------------------------------------
 // toggle reset and led pins so that timing can be inspected on oscilloscope
 // ----------------------------------------------------------------------------
@@ -395,6 +253,7 @@ void blink_task(void)
 //-----------------------------------------------------------------------------
 // simulates sending a radio packet by toggling the reset pin (which we bridge to radio receive pin)
 // use timings from ReedTripRadio project
+// use blocking send (instead of task style) because we disable receiving during sending anyway to avoid self feedback
 // ----------------------------------------------------------------------------
 bool send_radio_blocking(const uint8_t totalRepeats)
 {
@@ -508,12 +367,6 @@ int main (void)
     __idata unsigned char* stackStart;
 
     
-
-    // FIXME: add comment
-    uint8_t index;
-    uint8_t arrayIndex;
-    uint8_t bitIndex;
-    
     
     // track elapsed time for doing something periodically (e.g., every 10 seconds)
     unsigned long previousTimeSendRadio = 0;
@@ -528,13 +381,8 @@ int main (void)
  	unsigned int rxdata = UART_NO_DATA;
     
     
-    //_fn fn;
-    //int ok;
-    
     stackStart = (__idata unsigned char*) SP + 1;
     
-    // init hardware and rtos
-    //init_hardware();
 
 	// hardware initialization
     set_clock_1t_mode();
@@ -633,6 +481,7 @@ int main (void)
 
 
 #if 1
+
     if (available())
     {
 
