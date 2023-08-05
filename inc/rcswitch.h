@@ -40,6 +40,7 @@ struct RC_SWITCH_T
     unsigned int nReceivedDelay;
     unsigned int nReceivedProtocol;
     int nReceiveTolerance;
+    const unsigned int nSeparationLimit;
 };
 
 
@@ -68,13 +69,6 @@ struct Protocol
     struct HighLow zero;
     struct HighLow one;
     
-    //uint8_t syncFactorHigh;
-    //uint8_t syncFactorLow;
-    //uint8_t zeroHigh;
-    //uint8_t zeroLow;
-    //uint8_t oneHigh;
-    //uint8_t oneLow;
-
     /**
      * If true, interchange high and low logic levels in all transmissions.
      *
@@ -109,9 +103,12 @@ unsigned int getReceivedProtocol();
 //void setProtocol(int nProtocol);
 //void setProtocol(int nProtocol, int nPulseLength);
 
-extern __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
-extern __xdata struct RC_SWITCH_T gRCSwitch;
-extern const struct Protocol protocols[];
+extern bool receiveProtocol(const int p, unsigned int changeCount);
 
+extern volatile __xdata struct RC_SWITCH_T gRCSwitch;
+extern volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
+
+extern const struct Protocol protocols[];
+extern const unsigned int numProto;
 
 #endif // RC_SWITCH_H

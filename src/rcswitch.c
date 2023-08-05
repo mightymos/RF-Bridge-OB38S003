@@ -1,11 +1,14 @@
+#include <stdlib.h>
+
+
 #include "rcswitch.h"
 
 // we are basically following the same decoding approach used by the rc-switch project
 // https://github.com/sui77/rc-switch
 // https://github.com/1technophile/rc-switch
 
-__xdata struct RC_SWITCH_T gRCSwitch;
-__xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
+volatile __xdata struct RC_SWITCH_T gRCSwitch = {0, 0, 0, 0, 60, 4300};
+volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
 
 
 
@@ -30,9 +33,10 @@ const struct Protocol protocols[] = {
   { 320, { 36,  1 }, {  1,  2 }, {  2,  1 }, true }      // protocol 12 (SM5212)
 };
 
-enum {
-   numProto = sizeof(protocols) / sizeof(protocols[0])
-};
+
+// count of number of protocol entries
+const unsigned int numProto = sizeof(protocols) / sizeof(protocols[0]);
+
 
 
 
@@ -65,4 +69,75 @@ unsigned int getReceivedDelay()
 unsigned int getReceivedProtocol()
 {
     return gRCSwitch.nReceivedProtocol;
+}
+
+
+bool receiveProtocol(const int p, unsigned int changeCount)
+{
+
+//    Protocol pro;
+//    memcpy_P(&pro, &proto[p-1], sizeof(Protocol));
+
+    struct Protocol* pro = protocols;
+    
+    // the first procotol is considered p=1 but is at index 0
+    unsigned int index = p - 1;
+    
+    unsigned long code = 0;
+    
+    // assuming the longer pulse length is the pulse captured in timings[0]
+    const unsigned int syncLengthInPulses = ((pro[index].syncFactor.low) > (pro[index].syncFactor.high)) ? (pro[index].syncFactor.low) : (pro[index].syncFactor.high);    
+    const unsigned int delay = timings[0] / syncLengthInPulses;
+    const unsigned int delayTolerance = delay * gRCSwitch.nReceiveTolerance / 100;
+    
+    
+    
+    /* For protocols that start low, the sync period looks like
+     *               _________
+     * _____________|         |XXXXXXXXXXXX|
+     *
+     * |--1st dur--|-2nd dur-|-Start data-|
+     *
+     * The 3rd saved duration starts the data.
+     *
+     * For protocols that start high, the sync period looks like
+     *
+     *  ______________
+     * |              |____________|XXXXXXXXXXXXX|
+     *
+     * |-filtered out-|--1st dur--|--Start data--|
+     *
+     * The 2nd saved duration starts the data
+     */
+    const unsigned int firstDataTiming = (pro[index].invertedSignal) ? (2) : (1);
+
+    for (unsigned int i = firstDataTiming; i < changeCount - 1; i += 2)
+    {
+        code <<= 1;
+        
+        if (abs(timings[i] - delay * pro[index].zero.high) < delayTolerance &&
+            abs(timings[i + 1] - delay * pro[index].zero.low) < delayTolerance) {
+            // zero
+        } else if (abs(timings[i] - delay * pro[index].one.high) < delayTolerance &&
+            abs(timings[i + 1] - delay * pro[index].one.low) < delayTolerance) {
+            // one
+            code |= 1;
+        } else {
+            // failed
+            return false;
+        }
+    }
+
+    // ignore very short transmissions: no device sends them, so this must be noise
+    if (changeCount > 7)
+    {
+        gRCSwitch.nReceivedValue = code;
+        gRCSwitch.nReceivedBitlength = (changeCount - 1) / 2;
+        gRCSwitch.nReceivedDelay = delay;
+        gRCSwitch.nReceivedProtocol = p;
+        
+        return true;
+    }
+
+    return false;
 }

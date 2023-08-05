@@ -19,10 +19,6 @@
 #include "rcswitch.h"
 #include "timer.h"
 #include "uart.h"
-//#include "wdt_0.h"
-
-//#include "..\inc\rf_handling.h"
-//#include "rf_protocols.h"
 
 
 // DEBUG: bench sensor
@@ -380,7 +376,7 @@ int main (void)
     // upper eight bits hold error or no data flags
  	unsigned int rxdata = UART_NO_DATA;
     
-    
+    // this is kind of a holdover from trying an rtos...
     stackStart = (__idata unsigned char*) SP + 1;
     
 
@@ -420,9 +416,11 @@ int main (void)
     delay1ms(500);
     led_off();
     
+    // just demonstrate serial uart is working basically
     printf("Startup...\r\n");
     printf("Start of stack: %p\r\n", stackStart);
 
+    printf("num. of protocols: %u\r\n", numProto);
 
     // DEBUG: demonstrates that we cannot write above SP (stack pointer)
     //*gStackStart       = 0x5a;
@@ -484,9 +482,12 @@ int main (void)
 
     if (available())
     {
-
+        // this is needed to avoid corrupting the currently received packet
+        // a better way would be some type of queue probably
+        disable_global_interrupts();
+        
         printf("Received: ");
-        printf("%lu", getReceivedValue() );
+        printf("0x%lx", getReceivedValue() );
         printf(" / ");
         printf("%u", getReceivedBitlength() );
         printf("bit ");
@@ -496,6 +497,8 @@ int main (void)
         printf("\r\n");
 
         resetAvailable();
+        
+        enable_global_interrupts();
     }
     
 #endif
@@ -536,14 +539,7 @@ int main (void)
 
         if (triggerRadioSendTask)
         {            
-            //if (gIsTimerOneFinished)
-            //{
-                //triggerRadioSendTask = send_radio_task(4);
-                
-                triggerRadioSendTask = send_radio_blocking(4);
-                
-                //gIsTimerOneFinished = false;
-            //}
+            triggerRadioSendTask = send_radio_blocking(4);
         }
 #endif 
       

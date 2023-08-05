@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+
 #include "globals.h"
 #include "rcswitch.h"
 #include "timer.h"
@@ -57,79 +58,6 @@ unsigned long get_elapsed_time(unsigned long previousTime)
     return elapsed;
 }
 
-
-bool receiveProtocol(const int p, unsigned int changeCount) {
-
-//    Protocol pro;
-//    memcpy_P(&pro, &proto[p-1], sizeof(Protocol));
-
-    struct Protocol* pro = protocols;
-    unsigned int index = p - 1;
-    
-    unsigned long code = 0;
-    
-    // assuming the longer pulse length is the pulse captured in timings[0]
-    const unsigned int syncLengthInPulses = ((pro[index].syncFactor.low) > (pro[index].syncFactor.high)) ? (pro[index].syncFactor.low) : (pro[index].syncFactor.high);
-    //const unsigned int syncLengthInPulses = 31;
-    
-    const unsigned int delay = timings[0] / syncLengthInPulses;
-    //const unsigned int delay = 350;
-    
-    // FIXME: use variable
-    //const unsigned int delayTolerance = delay * gRCSwitch.nReceiveTolerance / 100;
-    const unsigned int delayTolerance = delay * 60 / 100;
-    
-    
-    
-    /* For protocols that start low, the sync period looks like
-     *               _________
-     * _____________|         |XXXXXXXXXXXX|
-     *
-     * |--1st dur--|-2nd dur-|-Start data-|
-     *
-     * The 3rd saved duration starts the data.
-     *
-     * For protocols that start high, the sync period looks like
-     *
-     *  ______________
-     * |              |____________|XXXXXXXXXXXXX|
-     *
-     * |-filtered out-|--1st dur--|--Start data--|
-     *
-     * The 2nd saved duration starts the data
-     */
-    const unsigned int firstDataTiming = (pro[index].invertedSignal) ? (2) : (1);
-
-    for (unsigned int i = firstDataTiming; i < changeCount - 1; i += 2)
-    {
-        code <<= 1;
-        
-        if (abs(timings[i] - delay * pro[index].zero.high) < delayTolerance &&
-            abs(timings[i + 1] - delay * pro[index].zero.low) < delayTolerance) {
-            // zero
-        } else if (abs(timings[i] - delay * pro[index].one.high) < delayTolerance &&
-            abs(timings[i + 1] - delay * pro[index].one.low) < delayTolerance) {
-            // one
-            code |= 1;
-        } else {
-            // failed
-            return false;
-        }
-    }
-
-    // ignore very short transmissions: no device sends them, so this must be noise
-    if (changeCount > 7)
-    {
-        gRCSwitch.nReceivedValue = code;
-        gRCSwitch.nReceivedBitlength = (changeCount - 1) / 2;
-        gRCSwitch.nReceivedDelay = delay;
-        gRCSwitch.nReceivedProtocol = p;
-        
-        return true;
-    }
-
-    return false;
-}
 
 void reload_timer1(unsigned char high, unsigned char low)
 {
@@ -193,7 +121,7 @@ void timer2_isr(void) __interrupt (5)
     uint16_t        previous;
     static uint16_t current = 0;
     
-    // this eventually represents the level duration in milliseconds (difference between edge transitions)
+    // this eventually represents the level duration in microseconds (difference between edge transitions)
     unsigned long duration;
     
     // store previous level values so we can hook up oscilloscope channel on radio transmitter device
@@ -207,8 +135,9 @@ void timer2_isr(void) __interrupt (5)
     static unsigned int changeCount = 0;
 
     // FIXME: move to rcswitch.h
-    const unsigned int separationLimit = 4300;
-    const unsigned int numProto = 1;
+    const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
+    //const unsigned int separationLimit = 11000;
+    //const unsigned int numProto = 1;
     
     
     
