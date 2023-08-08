@@ -22,8 +22,8 @@
 
 
 // DEBUG: bench sensor
-//15:12:45.080 MQT: tele/tasmota_4339CA/RESULT = {"Time":"2023-02-27T15:12:45","RfReceived":{"Sync":10250,"Low":340,"High":1010,"Data":"4AF10A","RfKey":"None"}}
-//15:12:49.186 MQT: tele/tasmota_4339CA/RESULT = {"Time":"2023-02-27T15:12:49","RfReceived":{"Sync":10250,"Low":340,"High":1000,"Data":"4AF10E","RfKey":"None"}}
+//21:47:05.533 RSL: RESULT = {"Time":"2023-08-05T21:47:05","RfReceived":{"Sync":10280,"Low":340,"High":1010,"Data":"80650A","RfKey":"None"}}
+//19:16:47.313 RSL: RESULT = {"Time":"2023-08-05T19:16:47","RfReceived":{"Sync":10280,"Low":340,"High":1010,"Data":"80650E","RfKey":"None"}}
 
 
 // FIXME: move or remove this comment
@@ -152,6 +152,7 @@ void uart_state_machine(const unsigned int rxdata)
                 case SINGLE_STEP_DEBUG:
                     //gSingleStep = true;
                     break;
+
                     
                 // wait until data got transfered
                 case RF_FINISHED:
@@ -183,9 +184,10 @@ void uart_state_machine(const unsigned int rxdata)
             //    // stop sniffing while handling received data
             //    pca_stop_sniffing();
             //    state = RECEIVING;
-            //}
-            //else
+            //} else {
             //    state = SYNC_FINISH;
+            //}
+            
             break;
 
         // receiving UART data
@@ -247,7 +249,7 @@ void blink_task(void)
 
 
 //-----------------------------------------------------------------------------
-// simulates sending a radio packet by toggling the reset pin (which we bridge to radio receive pin)
+// transmits or simulates transmitting a radio packet by toggling the reset pin (which we bridge to radio receive pin)
 // use timings from ReedTripRadio project
 // use blocking send (instead of task style) because we disable receiving during sending anyway to avoid self feedback
 // ----------------------------------------------------------------------------
@@ -349,8 +351,50 @@ bool send_radio_blocking(const uint8_t totalRepeats)
     return false;
 }
 
+// FIXME: some of these function names really need fixing
+void radio_decode_report(void)
+{
+	uint8_t i = 0;
+	uint8_t b = 0;
 
+    printf("%c", RF_CODE_START);
+    printf("%c", RF_CODE_RFIN);
+    
+    // sync, low, high timings
+    printf("%c", (timings[0] >> 8) & 0xFF);
+    printf("%c", timings[0] & 0xFF);
+    
+    // FIXME: not sure if we should compute an average or something
+    // FIXME: handle inverted signal?
+    printf("%c", (timings[2] >> 8) & 0xFF);
+    printf("%c",  timings[2] & 0xFF);
+    printf("%c", (timings[1] >> 8) & 0xFF);
+    printf("%c",  timings[1] & 0xFF);
+    
+    // data
+    // FIXME: super strange that shifting by ZERO works but ommitting does not
+    printf("%c", (getReceivedValue() >> 16) & 0xFF);
+    printf("%c", (getReceivedValue() >>  8) & 0xFF);
+    printf("%c", (getReceivedValue() >>  0) & 0xFF);
+    
+    
+    printf("%c", RF_CODE_STOP);
+    
+    
+}
 
+void radio_decode_debug(void)
+{
+    printf("Received: ");
+    printf("0x%lx", getReceivedValue() );
+    printf(" / ");
+    printf("%u", getReceivedBitlength() );
+    printf("bit ");
+    printf("Protocol: ");
+    printf("%u", getReceivedProtocol() );
+    
+    printf("\r\n");
+}
 
 //-----------------------------------------------------------------------------
 // main() Routine
@@ -417,10 +461,10 @@ int main (void)
     led_off();
     
     // just demonstrate serial uart is working basically
-    printf("Startup...\r\n");
-    printf("Start of stack: %p\r\n", stackStart);
-
-    printf("num. of protocols: %u\r\n", numProto);
+    //printf("Startup...\r\n");
+    
+    //printf("Start of stack: %p\r\n", stackStart);
+    //printf("num. of protocols: %u\r\n", numProto);
 
     // DEBUG: demonstrates that we cannot write above SP (stack pointer)
     //*gStackStart       = 0x5a;
@@ -486,15 +530,9 @@ int main (void)
         // a better way would be some type of queue probably
         disable_global_interrupts();
         
-        printf("Received: ");
-        printf("0x%lx", getReceivedValue() );
-        printf(" / ");
-        printf("%u", getReceivedBitlength() );
-        printf("bit ");
-        printf("Protocol: ");
-        printf("%u", getReceivedProtocol() );
-        
-        printf("\r\n");
+        radio_decode_report();
+        //radio_decode_debug();
+
 
         resetAvailable();
         
