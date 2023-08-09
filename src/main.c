@@ -248,108 +248,6 @@ void blink_task(void)
 }
 
 
-//-----------------------------------------------------------------------------
-// transmits or simulates transmitting a radio packet by toggling the reset pin (which we bridge to radio receive pin)
-// use timings from ReedTripRadio project
-// use blocking send (instead of task style) because we disable receiving during sending anyway to avoid self feedback
-// ----------------------------------------------------------------------------
-bool send_radio_blocking(const uint8_t totalRepeats)
-{
-    // 0x4a, 0xf1, 0x08
-    __code const bool bitLevels[] = {0,1,0,0, 1,0,1,0, 1,1,1,1, 0,0,0,1, 0,0,0,0, 1,0,0,0};
-    
-    // since sync pulse is two bits, we need 24 more for data bits
-    const uint8_t indexEnd = 24;
-    
-    
-    uint8_t index;
-    uint8_t repeatIndex;    
-    
-    //enable_radio_vdd();
-    //delay(RADIO_STARTUP_TIME);
-    //delay(500);
-    
-    //DEBUG
-    //printf("index: %u\r\n", index);
-    
-    
-    for (repeatIndex = 0; repeatIndex < totalRepeats; repeatIndex++)
-    {
-    
-        // sync pulse
-        // allow attaching oscilloscope probe to a convenient location (reset) and also actually driving radio transmit pin
-        reset_pin_on();
-        tdata_on();
-        
-        //reload_timer1(35);
-        reload_timer1(0xff, 0xcf);
-        while(!gIsTimerOneFinished);
-        gIsTimerOneFinished = false;
-        
-        // sync pulse
-        reset_pin_off();
-        tdata_off();
-        
-        //reload_timer1(1085);
-        reload_timer1(0xf8, 0xef);
-        while(!gIsTimerOneFinished);
-        gIsTimerOneFinished = false;
-    
-        for (index = 0; index < indexEnd; index++)
-        {
-            
-            // bit is one
-            if (bitLevels[index])
-            {
-                reset_pin_on();
-                tdata_on();
-                    
-                //reload_timer1(105);
-                reload_timer1(0xff, 0x50);
-                while(!gIsTimerOneFinished);
-                gIsTimerOneFinished = false;
-
-                reset_pin_off();
-                tdata_off();
-                
-                //reload_timer1(35);
-                reload_timer1(0xff, 0xcf);
-                while(!gIsTimerOneFinished);
-                gIsTimerOneFinished = false;
-
-            } else {
-
-                reset_pin_on();
-                tdata_on();
-                
-                //reload_timer1(35);
-                reload_timer1(0xff, 0xcf);
-                while(!gIsTimerOneFinished);
-                gIsTimerOneFinished = false;
-
-                reset_pin_off();
-                tdata_off();
-                
-                //reload_timer1(105);
-                reload_timer1(0xff, 0x50);
-                while(!gIsTimerOneFinished);
-                gIsTimerOneFinished = false;
-            }
-            
-        }
-
-        // 30 millisecond gap between repeat transmissions
-        reset_pin_off();
-        tdata_off();
-        reload_timer1(0xec, 0x77);
-        while(!gIsTimerOneFinished);
-        gIsTimerOneFinished = false;
-
-    }
-    
-    // we are always finished because this is blocking (different than task version of the same function)
-    return false;
-}
 
 // FIXME: some of these function names really need fixing
 void radio_decode_report(void)
@@ -396,6 +294,37 @@ void radio_decode_debug(void)
     printf("\r\n");
 }
 
+void startup_debug(const __idata unsigned char* stackStart)
+{
+    // just demonstrate serial uart is working basically
+    printf("Startup...\r\n");
+    
+    printf("Start of stack: %p\r\n", stackStart);
+    printf("num. of protocols: %u\r\n", numProto);
+
+    // DEBUG: demonstrates that we cannot write above SP (stack pointer)
+    //*gStackStart       = 0x5a;
+    //*(gStackStart + 1) = 0x5a;
+    //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart,   *gStackStart);
+    //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart+1, *(gStackStart + 1));
+}
+
+void startup_beep()
+{
+    // FIXME: startup beep helpful or annoying?
+    buzzer_on();
+    delay1ms(20);
+    buzzer_off();   
+}
+
+void startup_blink()
+{
+    // startup blink
+    led_on();
+    delay1ms(500);
+    led_off();
+}
+
 //-----------------------------------------------------------------------------
 // main() Routine
 // ----------------------------------------------------------------------------
@@ -404,7 +333,8 @@ int main (void)
     // FIXME: avoid magic numbers
     __xdata uint8_t radioBytes[3];
 
-    __idata unsigned char* stackStart;
+    // holdover from when we considered using rtos
+    const __idata unsigned char* stackStart = (__idata unsigned char*) SP + 1;
 
     
     
@@ -421,7 +351,7 @@ int main (void)
  	unsigned int rxdata = UART_NO_DATA;
     
     // this is kind of a holdover from trying an rtos...
-    stackStart = (__idata unsigned char*) SP + 1;
+    //stackStart = (__idata unsigned char*) SP + 1;
     
 
 	// hardware initialization
@@ -449,28 +379,9 @@ int main (void)
     // DEBUG: disable radio (not working, does not set pin high?)
     //radio_on();
     
-
-    // FIXME: startup beep helpful or annoying?
-    //buzzer_on();
-    //delay1ms(20);
-    //buzzer_off();
-    
-    // startup blink
-    led_on();
-    delay1ms(500);
-    led_off();
-    
-    // just demonstrate serial uart is working basically
-    //printf("Startup...\r\n");
-    
-    //printf("Start of stack: %p\r\n", stackStart);
-    //printf("num. of protocols: %u\r\n", numProto);
-
-    // DEBUG: demonstrates that we cannot write above SP (stack pointer)
-    //*gStackStart       = 0x5a;
-    //*(gStackStart + 1) = 0x5a;
-    //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart,   *gStackStart);
-    //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart+1, *(gStackStart + 1));
+    //startup_beep();
+    //startup_debug(stackStart);
+    startup_blink();
 
 	// enable interrupts
     enable_global_interrupts();
@@ -485,8 +396,6 @@ int main (void)
         // try to get one byte from uart rx buffer
 		rxdata = uart_getc();
         
-        // FIXME: figure out why this allows state machine echoes to work properly
-        //delay_hacky(10);
         
         // DEBUG: echo back received character
         //delay1ms(500);

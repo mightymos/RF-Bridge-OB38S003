@@ -1,12 +1,14 @@
 #include <stdlib.h>
 
-
+#include "globals.h"
 #include "rcswitch.h"
+#include "timer.h"
 
 // we are basically following the same decoding approach used by the rc-switch project
 // https://github.com/sui77/rc-switch
 // https://github.com/1technophile/rc-switch
 
+// FIXME: explain constants
 volatile __xdata struct RC_SWITCH_T gRCSwitch = {0, 0, 0, 0, 60, 4300};
 volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
 
@@ -139,5 +141,108 @@ bool receiveProtocol(const int p, unsigned int changeCount)
         return true;
     }
 
+    return false;
+}
+
+//-----------------------------------------------------------------------------
+// transmits or simulates transmitting a radio packet by toggling the reset pin (which we bridge to radio receive pin)
+// use timings from ReedTripRadio project
+// use blocking send (instead of task style) because we disable receiving during sending anyway to avoid self feedback
+// ----------------------------------------------------------------------------
+bool send_radio_blocking(const uint8_t totalRepeats)
+{
+    // 0x4a, 0xf1, 0x08
+    __code const bool bitLevels[] = {0,1,0,0, 1,0,1,0, 1,1,1,1, 0,0,0,1, 0,0,0,0, 1,0,0,0};
+    
+    // since sync pulse is two bits, we need 24 more for data bits
+    const uint8_t indexEnd = 24;
+    
+    
+    uint8_t index;
+    uint8_t repeatIndex;    
+    
+    //enable_radio_vdd();
+    //delay(RADIO_STARTUP_TIME);
+    //delay(500);
+    
+    //DEBUG
+    //printf("index: %u\r\n", index);
+    
+    
+    for (repeatIndex = 0; repeatIndex < totalRepeats; repeatIndex++)
+    {
+    
+        // sync pulse
+        // allow attaching oscilloscope probe to a convenient location (reset) and also actually driving radio transmit pin
+        reset_pin_on();
+        tdata_on();
+        
+        //reload_timer1(35);
+        reload_timer1(0xff, 0xcf);
+        while(!gIsTimerOneFinished);
+        gIsTimerOneFinished = false;
+        
+        // sync pulse
+        reset_pin_off();
+        tdata_off();
+        
+        //reload_timer1(1085);
+        reload_timer1(0xf8, 0xef);
+        while(!gIsTimerOneFinished);
+        gIsTimerOneFinished = false;
+    
+        for (index = 0; index < indexEnd; index++)
+        {
+            
+            // bit is one
+            if (bitLevels[index])
+            {
+                reset_pin_on();
+                tdata_on();
+                    
+                //reload_timer1(105);
+                reload_timer1(0xff, 0x50);
+                while(!gIsTimerOneFinished);
+                gIsTimerOneFinished = false;
+
+                reset_pin_off();
+                tdata_off();
+                
+                //reload_timer1(35);
+                reload_timer1(0xff, 0xcf);
+                while(!gIsTimerOneFinished);
+                gIsTimerOneFinished = false;
+
+            } else {
+
+                reset_pin_on();
+                tdata_on();
+                
+                //reload_timer1(35);
+                reload_timer1(0xff, 0xcf);
+                while(!gIsTimerOneFinished);
+                gIsTimerOneFinished = false;
+
+                reset_pin_off();
+                tdata_off();
+                
+                //reload_timer1(105);
+                reload_timer1(0xff, 0x50);
+                while(!gIsTimerOneFinished);
+                gIsTimerOneFinished = false;
+            }
+            
+        }
+
+        // 30 millisecond gap between repeat transmissions
+        reset_pin_off();
+        tdata_off();
+        reload_timer1(0xec, 0x77);
+        while(!gIsTimerOneFinished);
+        gIsTimerOneFinished = false;
+
+    }
+    
+    // we are always finished because this is blocking (different than task version of the same function)
     return false;
 }
