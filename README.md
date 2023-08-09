@@ -18,3 +18,6 @@ Captures of the erase/write/verify programming cycle have been captured here:
 https://github.com/mightymos/msm9066_capture
 
 Use of a cheaper flasher or using Tasmota itself is probably required for widespread use.  
+
+Sonoff R2 v2.2 bridge hardware is discussed here:  
+https://github.com/arendst/Tasmota/discussions/13283
