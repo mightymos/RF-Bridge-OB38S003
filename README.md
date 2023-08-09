@@ -21,3 +21,8 @@ Use of a cheaper flasher or using Tasmota itself is probably required for widesp
 
 Sonoff R2 v2.2 bridge hardware is discussed here:  
 https://github.com/arendst/Tasmota/discussions/13283
+
+
+# Special Thanks
+We continue to thank Vincent Defert for the use of modified makefiles:  
+https://github.com/area-8051/uni-STC
