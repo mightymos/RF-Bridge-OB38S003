@@ -64,7 +64,6 @@ void uart_state_machine(const unsigned int rxdata)
     uint16_t idleResetCount = 0;
 
     // FIXME: this seems to reset state machine if we do not receive data after some time
-/*
     if (rxdata == UART_NO_DATA)
     {
         if (state == IDLE)
@@ -88,7 +87,6 @@ void uart_state_machine(const unsigned int rxdata)
         idleResetCount = 0;
         
     }
-*/
     
     // state machine for UART
     switch(state)
@@ -257,10 +255,15 @@ void radio_decode_report(void)
 
     printf("%c", RF_CODE_START);
     printf("%c", RF_CODE_RFIN);
+    //uart_putc(RF_CODE_START);
+    //uart_putc(RF_CODE_RFIN);
     
     // sync, low, high timings
     printf("%c", (timings[0] >> 8) & 0xFF);
     printf("%c", timings[0] & 0xFF);
+    //uart_putc((timings[0] >> 8) & 0xFF);
+    //uart_putc(timings[0] & 0xFF);
+
     
     // FIXME: not sure if we should compute an average or something
     // FIXME: handle inverted signal?
@@ -268,17 +271,23 @@ void radio_decode_report(void)
     printf("%c",  timings[2] & 0xFF);
     printf("%c", (timings[1] >> 8) & 0xFF);
     printf("%c",  timings[1] & 0xFF);
+    //uart_putc((timings[2] >> 8) & 0xFF);
+    //uart_putc( timings[2] & 0xFF);
+    //uart_putc((timings[1] >> 8) & 0xFF);
+    //uart_putc( timings[1] & 0xFF);
     
     // data
     // FIXME: super strange that shifting by ZERO works but ommitting does not
     printf("%c", (getReceivedValue() >> 16) & 0xFF);
     printf("%c", (getReceivedValue() >>  8) & 0xFF);
     printf("%c", (getReceivedValue() >>  0) & 0xFF);
+    //uart_putc((getReceivedValue() >> 16) & 0xFF);
+    //uart_putc((getReceivedValue() >>  8) & 0xFF);
+    //uart_putc((getReceivedValue() >>  0) & 0xFF);
     
     
     printf("%c", RF_CODE_STOP);
-    
-    
+    //uart_putc(RF_CODE_STOP);
 }
 
 void radio_decode_debug(void)
@@ -364,7 +373,7 @@ int main (void)
 
     // individual interrupts
     init_capture_interrupt();
-    //init_serial_interrupt();
+    init_serial_interrupt();
 
 
 	// set default pin levels
@@ -389,14 +398,14 @@ int main (void)
 
 	while (true)
 	{
-		// reset watch dog timer
+		// FIXME: enable watch dog timer functionality
 		//WDT0_feed();
 
 
         // try to get one byte from uart rx buffer
 		rxdata = uart_getc();
         
-        
+#if 0
         // DEBUG: echo back received character
         //delay1ms(500);
         //if (rxdata != UART_NO_DATA)
@@ -405,8 +414,10 @@ int main (void)
         //    led_toggle();
         //    uart_putc(rxdata);
         //}
-        
-#if 0
+#endif     
+
+     
+#if 1
         // check if serial transmit buffer is empty
         if(!is_uart_tx_buffer_empty())
         {
@@ -421,7 +432,7 @@ int main (void)
 
         
 
-#if 0
+#if 1
         // process serial receive data
         if (rxdata != UART_NO_DATA)
         {
@@ -490,28 +501,6 @@ int main (void)
         }
 #endif 
       
-        
-
-// DEBUG: include or exclude radio receiver processing in order to check radio transmission only
-#if 0
-        if (gPacket.length > 0)
-        {
-            //printf("debug: radio decode...\r\n");
-            led_toggle();
-            
-            radio_decode_state_machine(gPacket.diff[gPacket.readPosition]);
-            
-            gPacket.readPosition++;
-            
-            // handle wrap around
-            if (gPacket.readPosition == BUFFER_SIZE)
-            {
-                gPacket.readPosition = 0;
-            }
-            
-            gPacket.length--;
-        }
-#endif
         
         
 

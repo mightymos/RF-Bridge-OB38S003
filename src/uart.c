@@ -41,11 +41,13 @@ void uart_transmitCompleteCb()
     
 }
 
-#if 0
+#if 1
     int putchar(int c)
     {
         // basically acts as wrapper to ring buffer
         uart_putc(c);
+        
+        return c;
     }
 
 #else
