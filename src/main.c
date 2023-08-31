@@ -36,7 +36,7 @@
 
 // sdccman sec. 3.8.1 indicates isr prototype must appear in the file containing main
 extern void timer0_isr(void) __interrupt (1);
-//extern void timer1_isr(void) __interrupt (3);
+extern void timer1_isr(void) __interrupt (3);
 extern void uart_isr(void)   __interrupt (4);
 extern void timer2_isr(void) __interrupt (5);
 
@@ -257,14 +257,14 @@ void radio_decode_report(void)
 
     //printf("%c", RF_CODE_START);
     //printf("%c", RF_CODE_RFIN);
-    uart_putc(RF_CODE_START);
-    uart_putc(RF_CODE_RFIN);
+    putchar(RF_CODE_START);
+    putchar(RF_CODE_RFIN);
     
     // sync, low, high timings
     //printf("%c", (timings[0] >> 8) & 0xFF);
     //printf("%c", timings[0] & 0xFF);
-    uart_putc((timings[0] >> 8) & 0xFF);
-    uart_putc(timings[0] & 0xFF);
+    putchar((timings[0] >> 8) & 0xFF);
+    putchar(timings[0] & 0xFF);
 
     
     // FIXME: not sure if we should compute an average or something
@@ -273,23 +273,23 @@ void radio_decode_report(void)
     //printf("%c",  timings[2] & 0xFF);
     //printf("%c", (timings[1] >> 8) & 0xFF);
     //printf("%c",  timings[1] & 0xFF);
-    uart_putc((timings[2] >> 8) & 0xFF);
-    uart_putc( timings[2] & 0xFF);
-    uart_putc((timings[1] >> 8) & 0xFF);
-    uart_putc( timings[1] & 0xFF);
+    putchar((timings[2] >> 8) & 0xFF);
+    putchar( timings[2] & 0xFF);
+    putchar((timings[1] >> 8) & 0xFF);
+    putchar( timings[1] & 0xFF);
     
     // data
     // FIXME: super strange that shifting by ZERO works but omitting the shift does not
     //printf("%c", (get_received_value() >> 16) & 0xFF);
     //printf("%c", (get_received_value() >>  8) & 0xFF);
     //printf("%c", (get_received_value() >>  0) & 0xFF);
-    uart_putc((get_received_value() >> 16) & 0xFF);
-    uart_putc((get_received_value() >>  8) & 0xFF);
-    uart_putc((get_received_value() >>  0) & 0xFF);
+    putchar((get_received_value() >> 16) & 0xFF);
+    putchar((get_received_value() >>  8) & 0xFF);
+    putchar((get_received_value() >>  0) & 0xFF);
     
     
     //printf("%c", RF_CODE_STOP);
-    uart_putc(RF_CODE_STOP);
+    putchar(RF_CODE_STOP);
 }
 
 #if 0
@@ -377,7 +377,7 @@ int main (void)
     // provides one millisecond tick
     init_timer0();
     
-    // FIXME: comment
+    // provides ten microsecond tick
     //init_timer1();
     
     //captures pulse lengths for received radio signals
@@ -394,11 +394,9 @@ int main (void)
     tdata_off();
     reset_pin_off();
     
-    // FIXME: need to set startup reset pin state in case it is used?
-    //reset_off();
     
-    // DEBUG: disable radio (not working, does not set pin high?)
-    //radio_on();
+    // FIXME: disable radio (not working, does not set pin high?)
+    radio_receiver_off();
     
     //startup_beep();
     //startup_debug(stackStart);
@@ -454,7 +452,7 @@ int main (void)
 #endif
 
 
-#if 1
+#if 0
 
     // have we received a succesfully decoded radio packet
     if (available())
@@ -483,7 +481,7 @@ int main (void)
 #if 0
         // DEBUG:
         // display serial message about every 10 seconds
-        elapsedTimeHeartbeat = get_elapsed_time(previousTimeHeartbeat);
+        elapsedTimeHeartbeat = get_elapsed_timer0(previousTimeHeartbeat);
 
         if (elapsedTimeHeartbeat >= 10000)
         {
@@ -491,7 +489,7 @@ int main (void)
             //printf("heartbeat (count): %lu\r\n", heartbeat);
         
             
-            previousTimeHeartbeat = get_current_time();
+            previousTimeHeartbeat = get_current_timer0();
             
             heartbeat++;
         }
@@ -504,20 +502,25 @@ int main (void)
         // FIXME: should we check to see if we are in the middle of receiving?
         
         // periodically send out a radio transmission for a sort of loopback test
-        elapsedTimeSendRadio = get_elapsed_time(previousTimeSendRadio);
+        elapsedTimeSendRadio = get_elapsed_timer0(previousTimeSendRadio);
 
         if (elapsedTimeSendRadio >= 20000)
         {
+            // FIXME: not sure if we NEED to disable radio receiver but we probably should (to avoid loopback)
             //disable_capture_interrupt();
-            disable_global_interrupts();
+            //disable_global_interrupts();
+            
+            // FIXME: other protocols are not working
+            const uint8_t repeats = 8;
+            const uint8_t protocolId = 1;
             
             // FIXME: avoid magic numbers
-            radio_tx_blocking(4, 0);
+            radio_tx_blocking(repeats, protocolId);
             
             //enable_capture_interrupt();
-            enable_global_interrupts();
+            //enable_global_interrupts();
             
-            previousTimeSendRadio = get_current_time();
+            previousTimeSendRadio = get_current_timer0();
         }
         
 #endif 

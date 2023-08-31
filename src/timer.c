@@ -18,9 +18,10 @@
 
 // track time since startup in one millisecond increments
 static unsigned long gTimeMilliseconds = 0;
+static unsigned long gTimeTenMicroseconds = 0;
 
 
-unsigned long get_current_time(void)
+unsigned long get_current_timer0(void)
 {
     unsigned long currentTime;
     
@@ -38,12 +39,48 @@ unsigned long get_current_time(void)
 }
 
 
-unsigned long get_elapsed_time(unsigned long previousTime)
+unsigned long get_elapsed_timer0(unsigned long previousTime)
 {
     unsigned long currentTime;
     unsigned long elapsed;
     
-    currentTime = get_current_time();
+    currentTime = get_current_timer0();
+    
+    //printf("currentTime: %lu\r\n", currentTime);
+    
+    // handle typical versus wraparound condition
+    if (previousTime <= currentTime)
+    {
+        elapsed = currentTime - previousTime;
+    } else {
+        elapsed = ULONG_MAX - previousTime + currentTime;
+    }
+    
+    return elapsed;
+}
+
+unsigned long get_current_timer1(void)
+{
+    unsigned long currentTime;
+    
+
+    ET1 = 0;
+    
+    // FIXME: compute the proper conversion from counts to microseconds
+    currentTime = gTimeTenMicroseconds;
+    
+    ET1 = 1;
+    
+    return currentTime;
+}
+
+
+unsigned long get_elapsed_timer1(unsigned long previousTime)
+{
+    unsigned long currentTime;
+    unsigned long elapsed;
+    
+    currentTime = get_current_timer1();
     
     //printf("currentTime: %lu\r\n", currentTime);
     
@@ -59,13 +96,6 @@ unsigned long get_elapsed_time(unsigned long previousTime)
 }
 
 
-//void reload_timer1(unsigned char high, unsigned char low)
-//{
-//    gIsTimerOneFinished = false;
-//    
-//    TH1 = high;
-//    TL1 = low;
-//}
 
 
 void timer0_isr(void) __interrupt (1)
@@ -83,18 +113,15 @@ void timer0_isr(void) __interrupt (1)
 
 
 // timer 1 interrupt
-//void timer1_isr(void) __interrupt (3)
-//{
-//
-//    gIsTimerOneFinished = true;
-//    
-//    // tracks time since timer enabled, used to track long periods of time
-//    //gTimerOneElapsed++;
-//    
-//    // ten microseconds to overflow
-//    //TH1 = 0xff;
-//    //TL1 = 0x5f;
-//}
+void timer1_isr(void) __interrupt (3)
+{
+    // tracks time since timer enabled, used to track long periods of time
+    gTimeTenMicroseconds++;
+    
+    // ten microseconds to overflow
+    TH1 = 0xff;
+    TL1 = 0x5f;
+}
 
 //-----------------------------------------------------------------------------
 // timer 2 should previously be set in capture mode 0 - pg. 32 of OB38S003 datasheet

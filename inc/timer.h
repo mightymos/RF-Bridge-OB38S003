@@ -12,11 +12,11 @@
 //#define BUFFER_SIZE 24
 
 
-extern unsigned long get_current_time(void);
-extern unsigned long get_elapsed_time(unsigned long previousTime);
-//extern void reload_timer1(unsigned int reload);
-//extern void reload_timer1(unsigned char high, unsigned char low);
+extern unsigned long get_current_timer0(void);
+extern unsigned long get_elapsed_timer0(unsigned long previousTime);
 
+extern unsigned long get_current_timer1(void);
+extern unsigned long get_elapsed_timer1(unsigned long previousTime);
 
 
 #endif

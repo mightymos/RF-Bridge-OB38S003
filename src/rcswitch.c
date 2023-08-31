@@ -13,6 +13,8 @@
 volatile __xdata struct RC_SWITCH_T gRCSwitch = {0, 0, 0, 0, 60, 4300};
 volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
 
+static __xdata struct TRANSMIT_PACKET_T gTxPacket;
+
 
 //
 const struct Protocol protocols[] = {
@@ -156,17 +158,22 @@ bool receive_protocol(const int p, unsigned int changeCount)
 // use timings from ReedTripRadio project
 // use blocking send (instead of task style) because we disable receiving during sending anyway to avoid self feedback
 // ----------------------------------------------------------------------------
-bool radio_tx_blocking(const uint8_t totalRepeats, const unsigned int protocolID)
+bool radio_tx_blocking(const uint8_t totalRepeats, const int ident)
 {
+    unsigned int pulseLength;
+    
+    const int id = ident - 1;
+    
+    // FIXME: it seems like possibly if the first bit is not one, transmission is not received
     // 0x4a, 0xf1, 0x08
     //__code const bool bitLevels[] = {0,1,0,0, 1,0,1,0, 1,1,1,1, 0,0,0,1, 0,0,0,0, 1,0,0,0};
     //__code const bool bitLevels[] = {0,1,0,1, 1,0,1,0, 0,1,0,1, 1,0,1,0, 0,1,0,1, 1,0,1,0};
-    //__code const bool bitLevels[] = {1,0,1,0, 0,1,0,1, 1,0,1,0, 0,1,0,1, 1,0,1,0, 1,0,1,0};
+    __code const bool bitLevels[] = {1,0,1,0, 0,1,0,1, 1,0,1,0, 0,1,0,1, 1,0,1,0, 1,0,1,0};
     
     
     //05:49:32.304 RSL: RESULT = {"Time":"2023-08-17T05:49:32","RfReceived":{"Sync":20428,"Low":644,"High":1952,"Data":"80650A","RfKey":"None"}}
     //05:49:38.903 RSL: RESULT = {"Time":"2023-08-17T05:49:38","RfReceived":{"Sync":20474,"Low":644,"High":1952,"Data":"80650E","RfKey":"None"}}
-    __code const bool bitLevels[] = {1,0,0,0, 0,0,0,0, 0,1,1,0, 0,1,0,1, 0,0,0,0, 1,1,1,0};
+    //__code const bool bitLevels[] = {1,0,0,0, 0,0,0,0, 0,1,1,0, 0,1,0,1, 0,0,0,0, 1,1,1,0};
     
     // time in milliseconds to delay between transmissions
     const unsigned int repetitionDelay = 30;
@@ -174,31 +181,51 @@ bool radio_tx_blocking(const uint8_t totalRepeats, const unsigned int protocolID
     // since sync pulse is two bits, we need 24 more for data bits
     const uint8_t indexEnd = 24;
     
-    unsigned int milliDelay;
-    unsigned int microDelay;
+    
+    //unsigned long previousTime = 0;
+    //unsigned long elapsedTime;
     
     // FIXME: avoid indexing outside of array
-    //if (protocolID >= numProto)
+    //if (ident >= numProto)
     //{
     //    return 0;
     //}
     
     // 10 microsecond increments (e.g., 350 microseconds delay is invoked with delay10us(35) below)
-    const unsigned int pulseLength = protocols[protocolID].pulseLength / 10;
+    pulseLength = protocols[id].pulseLength / 10;
     
     // FIXME: probably need to split up really long pulse times between calls to delay1ms() followed by delay10us()
-    //        because many loops in delay10us() is surely accumulates error
-    const unsigned int pulseHigh = pulseLength * protocols[protocolID].syncFactor.high;
-    const unsigned int pulseLow  = pulseLength * protocols[protocolID].syncFactor.low;
+    //        because many loops in delay10us() surely accumulates error
+    gTxPacket.syncHigh = pulseLength * protocols[id].syncFactor.high;
+    gTxPacket.syncLow  = pulseLength * protocols[id].syncFactor.low;
     
-    const unsigned int zeroHigh  = pulseLength * protocols[protocolID].zero.high;
-    const unsigned int zeroLow   = pulseLength * protocols[protocolID].zero.low;
-    const unsigned int oneHigh   = pulseLength * protocols[protocolID].one.high;
-    const unsigned int oneLow    = pulseLength * protocols[protocolID].one.low;
+    gTxPacket.zeroHigh  = pulseLength * protocols[id].zero.high;
+    gTxPacket.zeroLow   = pulseLength * protocols[id].zero.low;
+    gTxPacket.oneHigh   = pulseLength * protocols[id].one.high;
+    gTxPacket.oneLow    = pulseLength * protocols[id].one.low;
     
+    // store millisecond and microsecond portions of delays separately
+    gTxPacket.syncHighMS = (pulseLength * protocols[id].syncFactor.high) / 100;
+    gTxPacket.syncHighUS = (pulseLength * protocols[id].syncFactor.high) % 100;
     
+    gTxPacket.syncLowMS = (pulseLength * protocols[id].syncFactor.low) / 100;
+    gTxPacket.syncLowUS = (pulseLength * protocols[id].syncFactor.low) % 100;
     
+    gTxPacket.zeroHighMS = (pulseLength * protocols[id].zero.high) / 100;
+    gTxPacket.zeroHighUS = (pulseLength * protocols[id].zero.high) % 100;
+    
+    gTxPacket.zeroLowMS = (pulseLength * protocols[id].zero.low) / 100;
+    gTxPacket.zeroLowUS = (pulseLength * protocols[id].zero.low) % 100;
+    
+    gTxPacket.oneHighMS = (pulseLength * protocols[id].one.high) / 100;
+    gTxPacket.oneHighUS = (pulseLength * protocols[id].one.high) % 100;
+    
+    gTxPacket.oneLowMS = (pulseLength * protocols[id].one.low) / 100;
+    gTxPacket.oneLowUS = (pulseLength * protocols[id].one.low) % 100;
+    
+    // bit index
     uint8_t index;
+    // track packet repetition
     uint8_t repeatIndex;    
     
     // FIXME: do not know if the transmit IC is constantly powered or not
@@ -217,29 +244,29 @@ bool radio_tx_blocking(const uint8_t totalRepeats, const unsigned int protocolID
         tdata_on();
         
         
-        //milliDelay = pulseHigh / 100;
-        //microDelay = pulseHigh % 100;
-        milliDelay = 0;
-        microDelay = 35;
-        
-        //delay1ms(milliDelay);
-        delay10us(microDelay);
 
+        delay1ms(gTxPacket.syncHighMS);
+        delay10us(gTxPacket.syncHighUS);
+        //previousTime = get_current_timer1();
+        //do
+        //{
+        //    elapsedTime = get_elapsed_timer1(previousTime);
+        //} while (elapsedTime <= gTxPacket.syncHigh);
         
         // sync pulse
         reset_pin_off();
         tdata_off();
         
         
-        //milliDelay = pulseLow / 100;
-        //microDelay = pulseLow % 100;
-        milliDelay = 10;
-        microDelay = 85;
+        delay1ms(gTxPacket.syncLowMS);
+        delay10us(gTxPacket.syncLowUS);
+        //previousTime = get_current_timer1();
+        //while (elapsedTime <= gTxPacket.syncLow)
+        //{
+        //    elapsedTime = get_elapsed_timer1(previousTime);
+        //}
 
-        delay1ms(milliDelay);
-        delay10us(microDelay);
-
-    
+        // cycle through all the bits
         for (index = 0; index < indexEnd; index++)
         {
             
@@ -248,23 +275,33 @@ bool radio_tx_blocking(const uint8_t totalRepeats, const unsigned int protocolID
             {
                 reset_pin_on();
                 tdata_on();
-                delay10us(oneHigh);
+                
+
+                delay1ms(gTxPacket.oneHighMS);
+                delay10us(gTxPacket.oneHighUS);
 
 
                 reset_pin_off();
                 tdata_off();
-                delay10us(oneLow);
+                
+
+                delay1ms(gTxPacket.oneLowMS);
+                delay10us(gTxPacket.oneLowUS);
 
             } else {
 
                 reset_pin_on();
                 tdata_on();
-                delay10us(zeroHigh);
+                
+                delay1ms(gTxPacket.zeroHighMS);
+                delay10us(gTxPacket.zeroHighUS);
 
 
                 reset_pin_off();
                 tdata_off();
-                delay10us(zeroLow);
+                
+                delay1ms(gTxPacket.zeroLowMS);
+                delay10us(gTxPacket.zeroLowUS);
 
             }
             
