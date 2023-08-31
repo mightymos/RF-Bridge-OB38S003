@@ -76,13 +76,12 @@ typedef enum
 
 // public prototypes
 extern void uart_init_tx_polling(void);
+extern bool is_uart_tx_finished(void);
 extern bool is_uart_tx_buffer_empty(void);
 extern unsigned int uart_getc(void);
 extern void uart_putc(uint8_t txdata);
 extern void uart_write(uint8_t value);
 extern void uart_put_command(uint8_t command);
 
-
-extern volatile bool gTXFinished;
 
 #endif // INC_UART_H_

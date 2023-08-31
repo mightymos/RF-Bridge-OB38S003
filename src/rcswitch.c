@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "delay.h"
 #include "globals.h"
 #include "rcswitch.h"
 #include "timer.h"
@@ -11,12 +12,6 @@
 // FIXME: explain constants
 volatile __xdata struct RC_SWITCH_T gRCSwitch = {0, 0, 0, 0, 60, 4300};
 volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
-
-
-
-// rc-switch protocol 1
-//const uint16_t gTimings [] = { 350, 1050, 10850 };
-//const uint16_t gTimings [] = { 1000, 1000, 1000 };
 
 
 //
@@ -47,34 +42,39 @@ bool available()
     return gRCSwitch.nReceivedValue != 0;
 }
 
-void resetAvailable()
+void reset_available()
 {
     gRCSwitch.nReceivedValue = 0;
 }
 
 
-unsigned long getReceivedValue()
+unsigned long get_received_value()
 {
     return gRCSwitch.nReceivedValue;
 }
 
-unsigned int getReceivedBitlength()
+unsigned int get_received_bitlength()
 {
     return gRCSwitch.nReceivedBitlength;
 }
 
-unsigned int getReceivedDelay()
+unsigned int get_received_delay()
 {
     return gRCSwitch.nReceivedDelay;
 }
 
-unsigned int getReceivedProtocol()
+unsigned int get_received_protocol()
 {
     return gRCSwitch.nReceivedProtocol;
 }
 
+int get_received_tolerance()
+{
+    return gRCSwitch.nReceiveTolerance;
+}
 
-bool receiveProtocol(const int p, unsigned int changeCount)
+
+bool receive_protocol(const int p, unsigned int changeCount)
 {
 
 //    Protocol pro;
@@ -90,8 +90,15 @@ bool receiveProtocol(const int p, unsigned int changeCount)
     // assuming the longer pulse length is the pulse captured in timings[0]
     const unsigned int syncLengthInPulses = ((pro[index].syncFactor.low) > (pro[index].syncFactor.high)) ? (pro[index].syncFactor.low) : (pro[index].syncFactor.high);    
     const unsigned int delay = timings[0] / syncLengthInPulses;
-    const unsigned int delayTolerance = delay * gRCSwitch.nReceiveTolerance / 100;
+    const unsigned int delayTolerance = delay * get_received_tolerance() / 100;
     
+    // FIXME: avoid out of bounds index
+    //if (p >= 1)
+    //{
+    //    index = p - 1;
+    //} else {
+    //    return false;
+    //}
     
     
     /* For protocols that start low, the sync period looks like
@@ -149,26 +156,58 @@ bool receiveProtocol(const int p, unsigned int changeCount)
 // use timings from ReedTripRadio project
 // use blocking send (instead of task style) because we disable receiving during sending anyway to avoid self feedback
 // ----------------------------------------------------------------------------
-bool send_radio_blocking(const uint8_t totalRepeats)
+bool radio_tx_blocking(const uint8_t totalRepeats, const unsigned int protocolID)
 {
     // 0x4a, 0xf1, 0x08
-    __code const bool bitLevels[] = {0,1,0,0, 1,0,1,0, 1,1,1,1, 0,0,0,1, 0,0,0,0, 1,0,0,0};
+    //__code const bool bitLevels[] = {0,1,0,0, 1,0,1,0, 1,1,1,1, 0,0,0,1, 0,0,0,0, 1,0,0,0};
+    //__code const bool bitLevels[] = {0,1,0,1, 1,0,1,0, 0,1,0,1, 1,0,1,0, 0,1,0,1, 1,0,1,0};
+    //__code const bool bitLevels[] = {1,0,1,0, 0,1,0,1, 1,0,1,0, 0,1,0,1, 1,0,1,0, 1,0,1,0};
     
+    
+    //05:49:32.304 RSL: RESULT = {"Time":"2023-08-17T05:49:32","RfReceived":{"Sync":20428,"Low":644,"High":1952,"Data":"80650A","RfKey":"None"}}
+    //05:49:38.903 RSL: RESULT = {"Time":"2023-08-17T05:49:38","RfReceived":{"Sync":20474,"Low":644,"High":1952,"Data":"80650E","RfKey":"None"}}
+    __code const bool bitLevels[] = {1,0,0,0, 0,0,0,0, 0,1,1,0, 0,1,0,1, 0,0,0,0, 1,1,1,0};
+    
+    // time in milliseconds to delay between transmissions
+    const unsigned int repetitionDelay = 30;
+
     // since sync pulse is two bits, we need 24 more for data bits
     const uint8_t indexEnd = 24;
+    
+    unsigned int milliDelay;
+    unsigned int microDelay;
+    
+    // FIXME: avoid indexing outside of array
+    //if (protocolID >= numProto)
+    //{
+    //    return 0;
+    //}
+    
+    // 10 microsecond increments (e.g., 350 microseconds delay is invoked with delay10us(35) below)
+    const unsigned int pulseLength = protocols[protocolID].pulseLength / 10;
+    
+    // FIXME: probably need to split up really long pulse times between calls to delay1ms() followed by delay10us()
+    //        because many loops in delay10us() is surely accumulates error
+    const unsigned int pulseHigh = pulseLength * protocols[protocolID].syncFactor.high;
+    const unsigned int pulseLow  = pulseLength * protocols[protocolID].syncFactor.low;
+    
+    const unsigned int zeroHigh  = pulseLength * protocols[protocolID].zero.high;
+    const unsigned int zeroLow   = pulseLength * protocols[protocolID].zero.low;
+    const unsigned int oneHigh   = pulseLength * protocols[protocolID].one.high;
+    const unsigned int oneLow    = pulseLength * protocols[protocolID].one.low;
+    
     
     
     uint8_t index;
     uint8_t repeatIndex;    
     
+    // FIXME: do not know if the transmit IC is constantly powered or not
     //enable_radio_vdd();
     //delay(RADIO_STARTUP_TIME);
     //delay(500);
     
-    //DEBUG
-    //printf("index: %u\r\n", index);
     
-    
+    // FIXME: we need to handle inverted protocols
     for (repeatIndex = 0; repeatIndex < totalRepeats; repeatIndex++)
     {
     
@@ -177,19 +216,29 @@ bool send_radio_blocking(const uint8_t totalRepeats)
         reset_pin_on();
         tdata_on();
         
-        //reload_timer1(35);
-        reload_timer1(0xff, 0xcf);
-        while(!gIsTimerOneFinished);
-        gIsTimerOneFinished = false;
+        
+        //milliDelay = pulseHigh / 100;
+        //microDelay = pulseHigh % 100;
+        milliDelay = 0;
+        microDelay = 35;
+        
+        //delay1ms(milliDelay);
+        delay10us(microDelay);
+
         
         // sync pulse
         reset_pin_off();
         tdata_off();
         
-        //reload_timer1(1085);
-        reload_timer1(0xf8, 0xef);
-        while(!gIsTimerOneFinished);
-        gIsTimerOneFinished = false;
+        
+        //milliDelay = pulseLow / 100;
+        //microDelay = pulseLow % 100;
+        milliDelay = 10;
+        microDelay = 85;
+
+        delay1ms(milliDelay);
+        delay10us(microDelay);
+
     
         for (index = 0; index < indexEnd; index++)
         {
@@ -199,47 +248,37 @@ bool send_radio_blocking(const uint8_t totalRepeats)
             {
                 reset_pin_on();
                 tdata_on();
-                    
-                //reload_timer1(105);
-                reload_timer1(0xff, 0x50);
-                while(!gIsTimerOneFinished);
-                gIsTimerOneFinished = false;
+                delay10us(oneHigh);
+
 
                 reset_pin_off();
                 tdata_off();
-                
-                //reload_timer1(35);
-                reload_timer1(0xff, 0xcf);
-                while(!gIsTimerOneFinished);
-                gIsTimerOneFinished = false;
+                delay10us(oneLow);
 
             } else {
 
                 reset_pin_on();
                 tdata_on();
-                
-                //reload_timer1(35);
-                reload_timer1(0xff, 0xcf);
-                while(!gIsTimerOneFinished);
-                gIsTimerOneFinished = false;
+                delay10us(zeroHigh);
+
 
                 reset_pin_off();
                 tdata_off();
-                
-                //reload_timer1(105);
-                reload_timer1(0xff, 0x50);
-                while(!gIsTimerOneFinished);
-                gIsTimerOneFinished = false;
+                delay10us(zeroLow);
+
             }
             
         }
 
-        // 30 millisecond gap between repeat transmissions
+        // transmission gap
         reset_pin_off();
         tdata_off();
-        reload_timer1(0xec, 0x77);
-        while(!gIsTimerOneFinished);
-        gIsTimerOneFinished = false;
+        
+        // 30 millisecond gap between repeat transmissions
+        // this was essentially just picked in ReedTripRadio but reason is not remembered...
+        delay1ms(repetitionDelay);
+        
+
 
     }
     

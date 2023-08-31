@@ -50,13 +50,13 @@ inline void led_toggle(void)
 }
 
 
-inline void radio_off(void)
+inline void radio_rcv_off(void)
 {
     RF_ENABLE = 1;
 }
 
 
-inline void radio_on(void)
+inline void radio_rcv_on(void)
 {
     RF_ENABLE = 0;
 }

@@ -92,18 +92,21 @@ struct Protocol
 
 
 bool available();
-void resetAvailable();
+void reset_available();
 
-unsigned long getReceivedValue();
-unsigned int getReceivedBitlength();
-unsigned int getReceivedDelay();
-unsigned int getReceivedProtocol();
+unsigned long get_received_value();
+unsigned int  get_received_bitlength();
+unsigned int  get_received_delay();
+unsigned int  get_received_protocol();
+int           get_received_tolerance();
+
 
 //void setProtocol(struct Protocol protocol);
 //void setProtocol(int nProtocol);
 //void setProtocol(int nProtocol, int nPulseLength);
 
-extern bool receiveProtocol(const int p, unsigned int changeCount);
+extern bool receive_protocol(const int p, unsigned int changeCount);
+extern bool radio_tx_blocking(const uint8_t totalRepeats, const unsigned int protocolID);
 
 extern volatile __xdata struct RC_SWITCH_T gRCSwitch;
 extern volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];

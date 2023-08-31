@@ -14,7 +14,8 @@
 #include <stdio.h>
 
 
-// SFRs
+// SFRs for OB38S003
+// FIXME: this seems like a bad place to stores these
 __sfr __at (0x8E) CKCON;
 
 
@@ -75,8 +76,8 @@ extern bool rdata_level(void);
 extern void led_on(void);
 extern void led_off(void);
 extern void led_toggle(void);
-extern void radio_off(void);
-extern void radio_on(void);
+extern void radio_rcv_off(void);
+extern void radio_rcv_on(void);
 extern bool get_radio_wake(void);
 extern void reset_pin_on(void);
 extern void reset_pin_off(void);

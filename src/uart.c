@@ -26,7 +26,7 @@ static volatile uint8_t UART_Buffer_Write_Position = 0;
 static volatile uint8_t UART_Buffer_Write_Len = 0;
 static volatile uint8_t lastRxError;
 
-volatile bool gTXFinished = true;
+static volatile bool gTXFinished = true;
 
 //-----------------------------------------------------------------------------
 // UART ISR Callbacks
@@ -51,7 +51,7 @@ void uart_transmitCompleteCb()
     }
 
 #else
-    // for supporting printf()
+    // for supporting printf() directly with no ring buffer
     int putchar(int c)
     {
         // assumes a polled operation (i.e., no serial interrupt)
@@ -141,10 +141,10 @@ void uart_isr(void) __interrupt (4)
 //	while(!gTXFinished);
 //}
 
-//bool is_uart_tx_finished(void)
-//{
-//    return gTXFinished;
-//}
+bool is_uart_tx_finished(void)
+{
+    return gTXFinished;
+}
 
 bool is_uart_tx_buffer_empty(void)
 {
@@ -157,6 +157,7 @@ bool is_uart_tx_buffer_empty(void)
     
     return isBufferEmpty;
 }
+
 
 //************************************************************************
 //Function: uart_getc()

@@ -11,10 +11,10 @@
 
 
 // track count of timer 1 which is decremented
-uint16_t gTimerOneCount = 0;
+//uint16_t gTimerOneCount = 0;
 
 // finally when timer reaches zero, set flag to false
-bool gIsTimerOneFinished = true;
+//bool gIsTimerOneFinished = true;
 
 // track time since startup in one millisecond increments
 static unsigned long gTimeMilliseconds = 0;
@@ -59,13 +59,13 @@ unsigned long get_elapsed_time(unsigned long previousTime)
 }
 
 
-void reload_timer1(unsigned char high, unsigned char low)
-{
-    gIsTimerOneFinished = false;
-    
-    TH1 = high;
-    TL1 = low;
-}
+//void reload_timer1(unsigned char high, unsigned char low)
+//{
+//    gIsTimerOneFinished = false;
+//    
+//    TH1 = high;
+//    TL1 = low;
+//}
 
 
 void timer0_isr(void) __interrupt (1)
@@ -83,34 +83,27 @@ void timer0_isr(void) __interrupt (1)
 
 
 // timer 1 interrupt
-void timer1_isr(void) __interrupt (3)
-{
-    // one shot type count essentially used to implement non-blocking delays
-    //if (gTimerOneCount > 0)
-    //{
-    //    gTimerOneCount--;
-    //    
-    //    if (gTimerOneCount == 0)
-    //    {
-    //        gIsTimerOneFinished = true;
-    //    }
-    //}
-    
-    gIsTimerOneFinished = true;
-    
-    // tracks time since timer enabled, used to track long periods of time
-    //gTimerOneElapsed++;
-    
-    // ten microseconds to overflow
-    //TH1 = 0xff;
-    //TL1 = 0x5f;
-}
+//void timer1_isr(void) __interrupt (3)
+//{
+//
+//    gIsTimerOneFinished = true;
+//    
+//    // tracks time since timer enabled, used to track long periods of time
+//    //gTimerOneElapsed++;
+//    
+//    // ten microseconds to overflow
+//    //TH1 = 0xff;
+//    //TL1 = 0x5f;
+//}
 
 //-----------------------------------------------------------------------------
 // timer 2 should previously be set in capture mode 0 - pg. 32 of OB38S003 datasheet
 //-----------------------------------------------------------------------------
 void timer2_isr(void) __interrupt (5)
 {
+    const uint8_t gapMagicNumber  = 200;
+    const uint8_t repeatThreshold   = 2;
+    
     // track previous and new timer values so we can compute dfiference
     uint8_t lowByteOld;
     uint8_t highByteOld;
@@ -136,8 +129,6 @@ void timer2_isr(void) __interrupt (5)
 
     // FIXME: move to rcswitch.h
     const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
-    //const unsigned int separationLimit = 11000;
-    //const unsigned int numProto = 1;
     
     
     
@@ -146,7 +137,7 @@ void timer2_isr(void) __interrupt (5)
     levelNew = rdata_level();
     
     
-#if 1
+#if 0
 
     // DEBUG: on oscilloscope
     // we use edge transitions rather than absolute level for no particular reason
@@ -205,7 +196,7 @@ void timer2_isr(void) __interrupt (5)
     {
         // A long stretch without signal level change occurred. This could
         // be the gap between two transmission.
-        if ((repeatCount == 0) || (abs(duration - timings[0]) < 200))
+        if ((repeatCount == 0) || (abs(duration - timings[0]) < gapMagicNumber))
         {
           // This long signal is close in length to the long signal which
           // started the previously recorded timings; this suggests that
@@ -214,11 +205,11 @@ void timer2_isr(void) __interrupt (5)
           // with roughly the same gap between them).
           repeatCount++;
           
-          if (repeatCount == 2)
+          if (repeatCount == repeatThreshold)
           {
             for(unsigned int i = 1; i <= numProto; i++)
             {
-              if (receiveProtocol(i, changeCount))
+              if (receive_protocol(i, changeCount))
               {
                 // receive succeeded for protocol i
                 break;

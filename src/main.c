@@ -5,11 +5,14 @@
 // Includes
 //-----------------------------------------------------------------------------
 // SFR declarations
-//#include <SI_EFM8BB1_Register_Enums.h>
 #include <8052.h>
+
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdio.h>
+
+// printf() requires a decent amount of code space and ram which we would like to avoid
+// and printf is not particularly helpful once we follow serial packet structure required of esp8286 wifi chip
+//#include <stdio.h>
 
 // borrowed from area-8051 uni-stc HAL...
 #include "delay.h"
@@ -33,7 +36,7 @@
 
 // sdccman sec. 3.8.1 indicates isr prototype must appear in the file containing main
 extern void timer0_isr(void) __interrupt (1);
-extern void timer1_isr(void) __interrupt (3);
+//extern void timer1_isr(void) __interrupt (3);
 extern void uart_isr(void)   __interrupt (4);
 extern void timer2_isr(void) __interrupt (5);
 
@@ -60,8 +63,8 @@ void uart_state_machine(const unsigned int rxdata)
     // FIXME: need to know what initialization value is appropriate
 	uint8_t position = 0;
     
-    // track time since we last received any data
-    uint16_t idleResetCount = 0;
+    // track count of entries into function
+    static uint16_t idleResetCount = 0;
 
     // FIXME: this seems to reset state machine if we do not receive data after some time
     if (rxdata == UART_NO_DATA)
@@ -241,8 +244,7 @@ void blink_task(void)
     //reload_timer1(50000);
     
     // about six milliseconds
-    //reload_timer1(600);
-    reload_timer1(0xfc, 0x17);
+    delay1ms(6);
 }
 
 
@@ -253,70 +255,75 @@ void radio_decode_report(void)
 	uint8_t i = 0;
 	uint8_t b = 0;
 
-    printf("%c", RF_CODE_START);
-    printf("%c", RF_CODE_RFIN);
-    //uart_putc(RF_CODE_START);
-    //uart_putc(RF_CODE_RFIN);
+    //printf("%c", RF_CODE_START);
+    //printf("%c", RF_CODE_RFIN);
+    uart_putc(RF_CODE_START);
+    uart_putc(RF_CODE_RFIN);
     
     // sync, low, high timings
-    printf("%c", (timings[0] >> 8) & 0xFF);
-    printf("%c", timings[0] & 0xFF);
-    //uart_putc((timings[0] >> 8) & 0xFF);
-    //uart_putc(timings[0] & 0xFF);
+    //printf("%c", (timings[0] >> 8) & 0xFF);
+    //printf("%c", timings[0] & 0xFF);
+    uart_putc((timings[0] >> 8) & 0xFF);
+    uart_putc(timings[0] & 0xFF);
 
     
     // FIXME: not sure if we should compute an average or something
     // FIXME: handle inverted signal?
-    printf("%c", (timings[2] >> 8) & 0xFF);
-    printf("%c",  timings[2] & 0xFF);
-    printf("%c", (timings[1] >> 8) & 0xFF);
-    printf("%c",  timings[1] & 0xFF);
-    //uart_putc((timings[2] >> 8) & 0xFF);
-    //uart_putc( timings[2] & 0xFF);
-    //uart_putc((timings[1] >> 8) & 0xFF);
-    //uart_putc( timings[1] & 0xFF);
+    //printf("%c", (timings[2] >> 8) & 0xFF);
+    //printf("%c",  timings[2] & 0xFF);
+    //printf("%c", (timings[1] >> 8) & 0xFF);
+    //printf("%c",  timings[1] & 0xFF);
+    uart_putc((timings[2] >> 8) & 0xFF);
+    uart_putc( timings[2] & 0xFF);
+    uart_putc((timings[1] >> 8) & 0xFF);
+    uart_putc( timings[1] & 0xFF);
     
     // data
-    // FIXME: super strange that shifting by ZERO works but ommitting does not
-    printf("%c", (getReceivedValue() >> 16) & 0xFF);
-    printf("%c", (getReceivedValue() >>  8) & 0xFF);
-    printf("%c", (getReceivedValue() >>  0) & 0xFF);
-    //uart_putc((getReceivedValue() >> 16) & 0xFF);
-    //uart_putc((getReceivedValue() >>  8) & 0xFF);
-    //uart_putc((getReceivedValue() >>  0) & 0xFF);
+    // FIXME: super strange that shifting by ZERO works but omitting the shift does not
+    //printf("%c", (get_received_value() >> 16) & 0xFF);
+    //printf("%c", (get_received_value() >>  8) & 0xFF);
+    //printf("%c", (get_received_value() >>  0) & 0xFF);
+    uart_putc((get_received_value() >> 16) & 0xFF);
+    uart_putc((get_received_value() >>  8) & 0xFF);
+    uart_putc((get_received_value() >>  0) & 0xFF);
     
     
-    printf("%c", RF_CODE_STOP);
-    //uart_putc(RF_CODE_STOP);
+    //printf("%c", RF_CODE_STOP);
+    uart_putc(RF_CODE_STOP);
 }
 
-void radio_decode_debug(void)
-{
-    printf("Received: ");
-    printf("0x%lx", getReceivedValue() );
-    printf(" / ");
-    printf("%u", getReceivedBitlength() );
-    printf("bit ");
-    printf("Protocol: ");
-    printf("%u", getReceivedProtocol() );
-    
-    printf("\r\n");
-}
+#if 0
+    // we avoid use of printf but may be able to adapt this to wifi serial protocol format?
+    void radio_decode_debug(void)
+    {
+        printf("Received: ");
+        printf("0x%lx", get_received_value() );
+        printf(" / ");
+        printf("%u", get_received_bitlength() );
+        printf("bit ");
+        printf("Protocol: ");
+        printf("%u", get_received_protocol() );
+        
+        printf("\r\n");
+    }
+#endif
 
-void startup_debug(const __idata unsigned char* stackStart)
-{
-    // just demonstrate serial uart is working basically
-    printf("Startup...\r\n");
-    
-    printf("Start of stack: %p\r\n", stackStart);
-    printf("num. of protocols: %u\r\n", numProto);
+#if 0
+    void startup_debug(const __idata unsigned char* stackStart)
+    {
+        // just demonstrate serial uart is working basically
+        //printf("Startup...\r\n");
+        
+        //printf("Start of stack: %p\r\n", stackStart);
+        //printf("num. of protocols: %u\r\n", numProto);
 
-    // DEBUG: demonstrates that we cannot write above SP (stack pointer)
-    //*gStackStart       = 0x5a;
-    //*(gStackStart + 1) = 0x5a;
-    //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart,   *gStackStart);
-    //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart+1, *(gStackStart + 1));
-}
+        // DEBUG: demonstrates that we cannot write above SP (stack pointer)
+        //*gStackStart       = 0x5a;
+        //*(gStackStart + 1) = 0x5a;
+        //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart,   *gStackStart);
+        //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart+1, *(gStackStart + 1));
+    }
+#endif
 
 void startup_beep()
 {
@@ -340,7 +347,7 @@ void startup_blink()
 int main (void)
 {
     // FIXME: avoid magic numbers
-    __xdata uint8_t radioBytes[3];
+    //__xdata uint8_t radioBytes[3];
 
     // holdover from when we considered using rtos
     const __idata unsigned char* stackStart = (__idata unsigned char*) SP + 1;
@@ -354,7 +361,6 @@ int main (void)
     unsigned long elapsedTimeHeartbeat;
     unsigned long heartbeat = 0;
     
-    bool triggerRadioSendTask = false;
     
     // upper eight bits hold error or no data flags
  	unsigned int rxdata = UART_NO_DATA;
@@ -367,8 +373,14 @@ int main (void)
     set_clock_1t_mode();
 	init_port_pins();
     init_uart();
+    
+    // provides one millisecond tick
     init_timer0();
-    init_timer1();
+    
+    // FIXME: comment
+    //init_timer1();
+    
+    //captures pulse lengths for received radio signals
     init_timer2_capture();
 
     // individual interrupts
@@ -421,7 +433,7 @@ int main (void)
         // check if serial transmit buffer is empty
         if(!is_uart_tx_buffer_empty())
         {
-            if (gTXFinished)
+            if (is_uart_tx_finished())
             {
                 // if not empty, set TI, which triggers interrupt to actually transmit
                 uart_init_tx_polling();
@@ -444,18 +456,24 @@ int main (void)
 
 #if 1
 
+    // have we received a succesfully decoded radio packet
     if (available())
     {
         // this is needed to avoid corrupting the currently received packet
         // a better way would be some type of queue probably
+        //disable_capture_interrupt();
         disable_global_interrupts();
         
+        // formatted for tasmota
         radio_decode_report();
+        
+        // formatted like rc-switch example
         //radio_decode_debug();
 
 
-        resetAvailable();
+        reset_available();
         
+        //enable_capture_interrupt();
         enable_global_interrupts();
     }
     
@@ -469,8 +487,8 @@ int main (void)
 
         if (elapsedTimeHeartbeat >= 10000)
         {
-            printf("elapsedTime (ms): %lu\r\n", elapsedTimeHeartbeat);
-            printf("heartbeat (count): %lu\r\n", heartbeat);
+            //printf("elapsedTime (ms): %lu\r\n", elapsedTimeHeartbeat);
+            //printf("heartbeat (count): %lu\r\n", heartbeat);
         
             
             previousTimeHeartbeat = get_current_time();
@@ -482,23 +500,26 @@ int main (void)
         
      
      
-#if 0
+#if 1
+        // FIXME: should we check to see if we are in the middle of receiving?
+        
         // periodically send out a radio transmission for a sort of loopback test
         elapsedTimeSendRadio = get_elapsed_time(previousTimeSendRadio);
 
         if (elapsedTimeSendRadio >= 20000)
         {
-            printf("triggering send radio task...\r\n");
-            triggerRadioSendTask = true;
+            //disable_capture_interrupt();
+            disable_global_interrupts();
+            
+            // FIXME: avoid magic numbers
+            radio_tx_blocking(4, 0);
+            
+            //enable_capture_interrupt();
+            enable_global_interrupts();
             
             previousTimeSendRadio = get_current_time();
         }
         
-
-        if (triggerRadioSendTask)
-        {            
-            triggerRadioSendTask = send_radio_blocking(4);
-        }
 #endif 
       
         

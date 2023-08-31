@@ -12,15 +12,10 @@
 //#define BUFFER_SIZE 24
 
 
-extern uint16_t gTimerOneCount;
-extern bool     gIsTimerOneFinished;
-
-
-
 extern unsigned long get_current_time(void);
 extern unsigned long get_elapsed_time(unsigned long previousTime);
 //extern void reload_timer1(unsigned int reload);
-extern void reload_timer1(unsigned char high, unsigned char low);
+//extern void reload_timer1(unsigned char high, unsigned char low);
 
 
 
