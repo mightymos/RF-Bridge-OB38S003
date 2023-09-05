@@ -19,24 +19,24 @@
 __xdata volatile uint8_t UART_RX_Buffer[UART_RX_BUFFER_SIZE];
 __xdata volatile uint8_t UART_TX_Buffer[UART_TX_BUFFER_SIZE];
 
-static volatile uint8_t UART_RX_Buffer_Position = 0;
-static volatile uint8_t UART_TX_Buffer_Position = 0;
-static volatile uint8_t UART_Buffer_Read_Position = 0;
-static volatile uint8_t UART_Buffer_Write_Position = 0;
-static volatile uint8_t UART_Buffer_Write_Len = 0;
-static volatile uint8_t lastRxError;
+__xdata static volatile uint8_t UART_RX_Buffer_Position = 0;
+__xdata static volatile uint8_t UART_TX_Buffer_Position = 0;
+__xdata static volatile uint8_t UART_Buffer_Read_Position = 0;
+__xdata static volatile uint8_t UART_Buffer_Write_Position = 0;
+__xdata static volatile uint8_t UART_Buffer_Write_Len = 0;
+__xdata static volatile uint8_t lastRxError;
 
-static volatile bool gTXFinished = true;
+__xdata static volatile bool gTXFinished = true;
 
 //-----------------------------------------------------------------------------
 // UART ISR Callbacks
 //-----------------------------------------------------------------------------
-void uart_receiveCompleteCb()
+void uart_receiveCompleteCb(void)
 {
     
 }
 
-void uart_transmitCompleteCb()
+void uart_transmitCompleteCb(void)
 {
     
 }
@@ -76,7 +76,7 @@ void uart_write(uint8_t value)
 	SBUF = value;
 }
 
-void uart_init_tx_polling()
+void uart_init_tx_polling(void)
 {
   TI = 1;
 }

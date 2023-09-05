@@ -15,12 +15,12 @@
 
 
 // SFRs for OB38S003
-// FIXME: this seems like a bad place to stores these
+// FIXME: this seems like a bad place to store these
 __sfr __at (0x8E) CKCON;
 
+__sfr __at (0x9A) IEN2;
 
 __sfr __at (0xA8) IEN0;
-
 
 __sfr __at (0xD2) P0M0;
 __sfr __at (0xD3) P0M1;
@@ -32,7 +32,9 @@ __sfr __at (0xDB) P3M1;
 __sfr __at (0x91) AUX;
 __sfr __at (0xAA) SRELL;
 __sfr __at (0xBA) SRELH;
-__sfr __at (0x9A) IEN2;
+__sfr __at (0xB6) WDTC;
+__sfr __at (0xB7) WDTK;
+
 
 // Timer2 Compare/Capture control register
 __sfr __at (0xC1) CCEN;
@@ -50,6 +52,7 @@ __sfr __at (0xCB) CRCH;
 __sfr __at (0xCC) TL2;
 __sfr __at (0xCD) TH2;
 
+__sfr __at (0xF7) TAKEY;
 
 //sfr16 CC1   = 0xC2;
 //sfr16 CC2   = 0xC4;
@@ -64,9 +67,12 @@ __sfr __at (0xCD) TH2;
 //#define INCLUDE_BUCKET_SNIFFING 1
 //#define INCLUDE_BUCKET_SNIFFING 0
 
-// FIXME: define a similar macro in delay.h
+// FIXME: we instead define a similar macro in delay.h
 //#define SYSCLK 16000000
-//
+
+
+// this is returned along with an ack to a specific serial command
+// good demonstration that serial pins and web interface in tasmota is working
 #define FIRMWARE_VERSION 0x03
 
 

@@ -12,6 +12,8 @@
 
 extern void set_clock_1t_mode(void);
 extern void set_clock_6t_mode(void);
+extern void enable_watchdog(void);
+extern void refresh_watchdog(void);
 extern void init_port_pins(void);
 extern void init_serial_interrupt(void);
 extern void init_capture_interrupt(void);

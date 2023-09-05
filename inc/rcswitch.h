@@ -117,14 +117,14 @@ struct Protocol
 
 
 
-bool available();
-void reset_available();
+extern bool available(void);
+extern void reset_available(void);
 
-unsigned long get_received_value();
-unsigned int  get_received_bitlength();
-unsigned int  get_received_delay();
-unsigned int  get_received_protocol();
-int           get_received_tolerance();
+extern unsigned long get_received_value(void);
+extern unsigned int  get_received_bitlength(void);
+extern unsigned int  get_received_delay(void);
+extern unsigned int  get_received_protocol(void);
+extern int           get_received_tolerance(void);
 
 
 //void setProtocol(struct Protocol protocol);

@@ -39,38 +39,38 @@ const unsigned int numProto = sizeof(protocols) / sizeof(protocols[0]);
 
 
 
-bool available()
+bool available(void)
 {
     return gRCSwitch.nReceivedValue != 0;
 }
 
-void reset_available()
+void reset_available(void)
 {
     gRCSwitch.nReceivedValue = 0;
 }
 
 
-unsigned long get_received_value()
+unsigned long get_received_value(void)
 {
     return gRCSwitch.nReceivedValue;
 }
 
-unsigned int get_received_bitlength()
+unsigned int get_received_bitlength(void)
 {
     return gRCSwitch.nReceivedBitlength;
 }
 
-unsigned int get_received_delay()
+unsigned int get_received_delay(void)
 {
     return gRCSwitch.nReceivedDelay;
 }
 
-unsigned int get_received_protocol()
+unsigned int get_received_protocol(void)
 {
     return gRCSwitch.nReceivedProtocol;
 }
 
-int get_received_tolerance()
+int get_received_tolerance(void)
 {
     return gRCSwitch.nReceiveTolerance;
 }
@@ -182,9 +182,6 @@ bool radio_tx_blocking(const uint8_t totalRepeats, const int ident)
     const uint8_t indexEnd = 24;
     
     
-    //unsigned long previousTime = 0;
-    //unsigned long elapsedTime;
-    
     // FIXME: avoid indexing outside of array
     //if (ident >= numProto)
     //{
@@ -195,7 +192,7 @@ bool radio_tx_blocking(const uint8_t totalRepeats, const int ident)
     pulseLength = protocols[id].pulseLength / 10;
     
     // FIXME: probably need to split up really long pulse times between calls to delay1ms() followed by delay10us()
-    //        because many loops in delay10us() surely accumulates error
+    //        because too many loops using only delay10us() surely accumulates error
     gTxPacket.syncHigh = pulseLength * protocols[id].syncFactor.high;
     gTxPacket.syncLow  = pulseLength * protocols[id].syncFactor.low;
     
@@ -243,15 +240,10 @@ bool radio_tx_blocking(const uint8_t totalRepeats, const int ident)
         reset_pin_on();
         tdata_on();
         
-        
 
         delay1ms(gTxPacket.syncHighMS);
         delay10us(gTxPacket.syncHighUS);
-        //previousTime = get_current_timer1();
-        //do
-        //{
-        //    elapsedTime = get_elapsed_timer1(previousTime);
-        //} while (elapsedTime <= gTxPacket.syncHigh);
+
         
         // sync pulse
         reset_pin_off();
@@ -260,11 +252,7 @@ bool radio_tx_blocking(const uint8_t totalRepeats, const int ident)
         
         delay1ms(gTxPacket.syncLowMS);
         delay10us(gTxPacket.syncLowUS);
-        //previousTime = get_current_timer1();
-        //while (elapsedTime <= gTxPacket.syncLow)
-        //{
-        //    elapsedTime = get_elapsed_timer1(previousTime);
-        //}
+
 
         // cycle through all the bits
         for (index = 0; index < indexEnd; index++)

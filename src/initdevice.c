@@ -22,6 +22,24 @@ void set_clock_6t_mode(void)
     CKCON = 0x50;
 }
 
+// pg. 44 - once the watchdog is started it cannot be stopped
+void enable_watchdog(void)
+{
+    // changes WDTC from read only
+    TAKEY = 0x55;
+    TAKEY = 0xAA;
+    TAKEY = 0x5A;
+    
+    // sets WDTE bit
+    WDTC |= 0x20;
+}
+
+void refresh_watchdog(void)
+{
+    // pg. 46 - Clear WDT timer to 0.
+    WDTK = 0x55;
+}
+
 void init_port_pins(void)
 {
     // buzzer push pull

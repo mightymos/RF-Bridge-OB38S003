@@ -11,8 +11,8 @@
 #include <stdlib.h>
 
 // printf() requires a decent amount of code space and ram which we would like to avoid
-// and printf is not particularly helpful once we follow serial packet structure required of esp8286 wifi chip
-//#include <stdio.h>
+// and printf is not particularly once tasmota packet format is used
+#include <stdio.h>
 
 // borrowed from area-8051 uni-stc HAL...
 #include "delay.h"
@@ -42,13 +42,120 @@ extern void timer2_isr(void) __interrupt (5);
 
 
 //-----------------------------------------------------------------------------
-// FIXME: this is sometimes needed to initialize external ram, etc.
+// FIXME: this is sometimes needed to initialize external ram, setup watch dog timer, etc.
 //-----------------------------------------------------------------------------
-void _sdcc_external_startup(void)
+void __sdcc_external_startup(void)
 {
 
 }
 
+#if 0
+
+/*! \brief Check if XRAM was properly initialized.
+ *         Uses up four bytes of XRAM.
+ *
+ * 'XRAMArray' should be initialized to "DEADBEEF" if XRAM
+ *  was enabled properly (by sdcc_external_startup()).
+ *  Function performs a sanity check to be sure that this is the case.
+ */
+int8_t xram_test(void)
+{   
+    /* be sure this variable is defined with __xdata keyword
+	   - if the following routine fails start by suspecting hardware connections if appropriate
+		  (ex. for external memory) and sdcc_external_startup() routine first
+    */
+	__xdata uint8_t XRAMArray[] = {0xDE,0xAD,0xBE,0xEF};
+	
+    /* stored in read only code ROM -> string "DEADBEEF" */
+    const uint8_t  ROMArray[] = {0xDE,0xAD,0xBE,0xEF};
+	
+    int8_t result = 0;
+    uint8_t length;
+    uint8_t i;
+	
+	/* obtain number of elements in array stored in ROM */
+    length = sizeof(ROMArray) / sizeof(uint8_t);
+    
+	/* loop thru all array positions */
+    for (i = 0; i < length; i++)
+    {
+        /* check if __xdata variable matches expected initialization value mirrored in ROM */
+        if (XRAMArray[i] != ROMArray[i])
+        {
+            result = -1;
+        }
+    }
+    
+    /* NOTE: could indicate error with an assert() too possibly versus return value... */
+    
+    return result;
+}
+
+#endif
+
+
+
+/*! \brief Check if XRAM is working across all address lines
+ *	NOTE: it is important to make some variables used here 'volatile'
+ *   so that the optimizing compiler does not modify logic depending
+ *   on these variables
+ */
+ int8_t extended_xram_test(void)
+{   
+	/* size of external sram chip */
+	/* note: magic number is max. size of our external SRAM (32 KB) */
+	const unsigned int length = 256;
+	//const unsigned int length = 65535;
+	
+	/* pointer to external memory mapped space */
+	volatile __xdata unsigned char * __data ptr;
+	
+	/* value to write to external sram memory */
+	volatile unsigned char testValue;
+	
+	/* index variable */
+	unsigned int i;
+	
+	/* track read/write errors */
+	unsigned int errorCount;
+	
+	/* display test info. */
+	//printf_fast("extended_xram_test()\r\n");
+	
+	/* initialize memory pointer - assumes we can start at 0 address */
+	ptr = 0x0;
+	testValue = 0x0;
+	errorCount = 0;
+	
+	/* display the amount of memory to be considered */
+	printf_fast("xram: %u\r\n", length);
+	
+	/* write memory and then read it back */
+    for (i = 0; i < length; i++)
+    {
+		/* write memory location - using array notation here */
+		ptr[i] = testValue;
+		
+		
+		// error in reading back value?
+		if (ptr[i] != testValue)
+		{
+			/* do not allow variable to overflow */
+			if (errorCount != length)
+			{
+				errorCount++;
+			}
+		}
+		
+		/* this will overflow every 256 increments on our processor */
+		testValue++;
+    }
+	
+	/* display number of errors encountered (if any) */
+	printf_fast("errors: %u\r\n", errorCount);
+    
+    return 0;
+}
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -217,36 +324,6 @@ void uart_state_machine(const unsigned int rxdata)
     }
 }
 
-//-----------------------------------------------------------------------------
-// toggle reset and led pins so that timing can be inspected on oscilloscope
-// ----------------------------------------------------------------------------
-void blink_task(void)
-{
-    static bool pinState = true;
-    
-    // DEBUG:
-    //printf("blink_task()\r\n");
-    
-    if (pinState)
-    {
-        led_on();
-        reset_pin_on();
-        //tdata_on();
-    } else {
-        led_off();
-        reset_pin_off();
-        //tdata_off();
-    }
-    
-    pinState = !pinState;
-    
-    // about half a second
-    //reload_timer1(50000);
-    
-    // about six milliseconds
-    delay1ms(6);
-}
-
 
 
 // FIXME: some of these function names really need fixing
@@ -255,40 +332,29 @@ void radio_decode_report(void)
 	uint8_t i = 0;
 	uint8_t b = 0;
 
-    //printf("%c", RF_CODE_START);
-    //printf("%c", RF_CODE_RFIN);
+    // packet start sequence
     putchar(RF_CODE_START);
     putchar(RF_CODE_RFIN);
     
     // sync, low, high timings
-    //printf("%c", (timings[0] >> 8) & 0xFF);
-    //printf("%c", timings[0] & 0xFF);
     putchar((timings[0] >> 8) & 0xFF);
     putchar(timings[0] & 0xFF);
 
     
     // FIXME: not sure if we should compute an average or something
     // FIXME: handle inverted signal?
-    //printf("%c", (timings[2] >> 8) & 0xFF);
-    //printf("%c",  timings[2] & 0xFF);
-    //printf("%c", (timings[1] >> 8) & 0xFF);
-    //printf("%c",  timings[1] & 0xFF);
     putchar((timings[2] >> 8) & 0xFF);
     putchar( timings[2] & 0xFF);
     putchar((timings[1] >> 8) & 0xFF);
     putchar( timings[1] & 0xFF);
     
     // data
-    // FIXME: super strange that shifting by ZERO works but omitting the shift does not
-    //printf("%c", (get_received_value() >> 16) & 0xFF);
-    //printf("%c", (get_received_value() >>  8) & 0xFF);
-    //printf("%c", (get_received_value() >>  0) & 0xFF);
+    // FIXME: strange that shifting by ZERO works but omitting the shift does not
     putchar((get_received_value() >> 16) & 0xFF);
     putchar((get_received_value() >>  8) & 0xFF);
     putchar((get_received_value() >>  0) & 0xFF);
     
-    
-    //printf("%c", RF_CODE_STOP);
+    // packet stop
     putchar(RF_CODE_STOP);
 }
 
@@ -296,15 +362,15 @@ void radio_decode_report(void)
     // we avoid use of printf but may be able to adapt this to wifi serial protocol format?
     void radio_decode_debug(void)
     {
-        printf("Received: ");
-        printf("0x%lx", get_received_value() );
-        printf(" / ");
-        printf("%u", get_received_bitlength() );
-        printf("bit ");
-        printf("Protocol: ");
-        printf("%u", get_received_protocol() );
+        printf_fast("Received: ");
+        printf_fast("0x%lx", get_received_value());
+        printf_fast(" / ");
+        printf_fast("%u", get_received_bitlength() );
+        printf_fast("bit ");
+        printf_fast("Protocol: ");
+        printf_fast("%u", get_received_protocol() );
         
-        printf("\r\n");
+        printf_fast("\r\n");
     }
 #endif
 
@@ -312,20 +378,20 @@ void radio_decode_report(void)
     void startup_debug(const __idata unsigned char* stackStart)
     {
         // just demonstrate serial uart is working basically
-        //printf("Startup...\r\n");
+        //printf_fast("Startup...\r\n");
         
-        //printf("Start of stack: %p\r\n", stackStart);
-        //printf("num. of protocols: %u\r\n", numProto);
+        //printf_fast("Start of stack: %p\r\n", stackStart);
+        //printf_fast("num. of protocols: %u\r\n", numProto);
 
         // DEBUG: demonstrates that we cannot write above SP (stack pointer)
         //*gStackStart       = 0x5a;
         //*(gStackStart + 1) = 0x5a;
-        //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart,   *gStackStart);
-        //printf("gStackStart[%p]: 0x%02x\r\n", gStackStart+1, *(gStackStart + 1));
+        //printf_fast("gStackStart[%p]: 0x%02x\r\n", gStackStart,   *gStackStart);
+        //printf_fast("gStackStart[%p]: 0x%02x\r\n", gStackStart+1, *(gStackStart + 1));
     }
 #endif
 
-void startup_beep()
+void startup_beep(void)
 {
     // FIXME: startup beep helpful or annoying?
     buzzer_on();
@@ -333,7 +399,7 @@ void startup_beep()
     buzzer_off();   
 }
 
-void startup_blink()
+void startup_blink(void)
 {
     // startup blink
     led_on();
@@ -346,20 +412,20 @@ void startup_blink()
 // ----------------------------------------------------------------------------
 int main (void)
 {
-    // FIXME: avoid magic numbers
-    //__xdata uint8_t radioBytes[3];
 
     // holdover from when we considered using rtos
     const __idata unsigned char* stackStart = (__idata unsigned char*) SP + 1;
 
-    
+    // FIXME: other protocols are not working
+    const uint8_t repeats = 8;
+    const uint8_t protocolId = 1;
     
     // track elapsed time for doing something periodically (e.g., every 10 seconds)
     unsigned long previousTimeSendRadio = 0;
     unsigned long previousTimeHeartbeat = 0;
     unsigned long elapsedTimeSendRadio;
-    unsigned long elapsedTimeHeartbeat;
-    unsigned long heartbeat = 0;
+    //unsigned long elapsedTimeHeartbeat;
+    //unsigned long heartbeat = 0;
     
     
     // upper eight bits hold error or no data flags
@@ -395,8 +461,8 @@ int main (void)
     reset_pin_off();
     
     
-    // FIXME: disable radio (not working, does not set pin high?)
-    radio_receiver_off();
+    // FIXME: disable radio receiver (not working, does not set pin high?)
+    //radio_receiver_off();
     
     //startup_beep();
     //startup_debug(stackStart);
@@ -405,13 +471,16 @@ int main (void)
 	// enable interrupts
     enable_global_interrupts();
     
+    //extended_xram_test();
+    
+    // reset unless we periodically clear the watchdog
+    enable_watchdog();
 
 	while (true)
 	{
-		// FIXME: enable watch dog timer functionality
-		//WDT0_feed();
 
-
+        refresh_watchdog();
+        
         // try to get one byte from uart rx buffer
 		rxdata = uart_getc();
         
@@ -452,9 +521,9 @@ int main (void)
 #endif
 
 
-#if 0
+#if 1
 
-    // have we received a succesfully decoded radio packet
+    // have we received a succesfully decoded radio packet?
     if (available())
     {
         // this is needed to avoid corrupting the currently received packet
@@ -485,8 +554,8 @@ int main (void)
 
         if (elapsedTimeHeartbeat >= 10000)
         {
-            //printf("elapsedTime (ms): %lu\r\n", elapsedTimeHeartbeat);
-            //printf("heartbeat (count): %lu\r\n", heartbeat);
+            //printf_fast("elapsedTime (ms): %lu\r\n", elapsedTimeHeartbeat);
+            //printf_fast("heartbeat (count): %lu\r\n", heartbeat);
         
             
             previousTimeHeartbeat = get_current_timer0();
@@ -498,7 +567,7 @@ int main (void)
         
      
      
-#if 1
+#if 0
         // FIXME: should we check to see if we are in the middle of receiving?
         
         // periodically send out a radio transmission for a sort of loopback test
@@ -510,9 +579,6 @@ int main (void)
             //disable_capture_interrupt();
             //disable_global_interrupts();
             
-            // FIXME: other protocols are not working
-            const uint8_t repeats = 8;
-            const uint8_t protocolId = 1;
             
             // FIXME: avoid magic numbers
             radio_tx_blocking(repeats, protocolId);
