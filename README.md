@@ -18,6 +18,7 @@ For example door reed sensors - both stock and modified - have been successfully
 https://github.com/mightymos/ReedTripRadio
 
 Transmission also works - however, strange things happen when both transmission and receiving are enabled.  
+Therefore transmitting is disabled for now.  
 
 # Flasher
 Reprogramming the OB38S003 requires erasing the chip because the stock firmware is protected.  
