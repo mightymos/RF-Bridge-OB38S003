@@ -4,10 +4,10 @@
  *      Author: Jonathan Armstrong
  */
 
-//#include <SI_EFM8BB1_Register_Enums.h>
-//#include <string.h>
-#include "globals.h"
-//#include "rf_protocols.h"
+#include <8052.h>
+#include <stdint.h>
+
+#include "hal.h"
 #include "uart.h"
 
 //

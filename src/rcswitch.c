@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
 #include "delay.h"
-#include "globals.h"
+#include "hal.h"
 #include "rcswitch.h"
 #include "timer.h"
 

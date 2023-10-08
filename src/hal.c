@@ -1,13 +1,108 @@
-//=========================================================
-//=========================================================
+/*
+ *
+ *  Ported on: 02.16.2023
+ *      Author: Jonathan Armstrong
+ */
 
-// USER INCLUDES
-//#include <SI_EFM8BB1_Register_Enums.h>
 #include <8052.h>
-#include <stdint.h>
 
-#include "globals.h"
-#include "initdevice.h"
+ 
+#include "hal.h"
+#include "ob38s003.h"
+#include "sonoffr22_pins.h"
+
+
+
+inline void buzzer_on(void)
+{
+    BUZZER = 1;
+}
+
+inline void buzzer_off(void)
+{
+    BUZZER = 0;
+}
+
+inline bool rdata_level(void)
+{
+    return RDATA;
+}
+
+// setter prototypes
+inline void led_on(void)
+{
+    LED = 1;
+}
+
+inline void led_off(void)
+{
+    LED = 0;
+}
+
+inline void led_toggle(void)
+{
+    LED = !LED;
+}
+
+
+inline void radio_receiver_off(void)
+{
+    RF_ENABLE = 1;
+}
+
+
+inline void radio_receiver_on(void)
+{
+    RF_ENABLE = 0;
+}
+
+inline bool get_radio_wake(void)
+{
+    return RF_ENABLE;
+}
+
+inline void reset_pin_on(void)
+{
+    RESET_PIN = 1;
+}
+
+inline void reset_pin_off(void)
+{
+    RESET_PIN = 0;
+}
+
+inline void reset_pin_toggle(void)
+{
+    RESET_PIN = !RESET_PIN;
+}
+
+inline void tdata_on(void)
+{
+    TDATA = 1;
+}
+
+
+inline void tdata_off(void)
+{
+    TDATA = 0;
+}
+
+
+inline void uart_tx_pin_off(void)
+{
+    UART_TX_PIN = 0;
+}
+
+
+inline void uart_tx_pin_on(void)
+{
+    UART_TX_PIN = 1;
+}
+
+inline void uart_tx_pin_toggle(void)
+{
+    UART_TX_PIN = !UART_TX_PIN;
+}
 
 void set_clock_1t_mode(void)
 {
@@ -192,4 +287,56 @@ void disable_global_interrupts(void)
 bool global_interrupts_are_enabled(void)
 {
     return EA;
+}
+
+void enable_timer0_interrupt(void)
+{
+    ET0 = 1;
+}
+
+void disable_timer0_interrupt(void)
+{
+    ET0 = 0;
+}
+
+void enable_timer1_interrupt(void)
+{
+    ET1 = 1;
+}
+
+void disable_timer1_interrupt(void)
+{
+    ET1 = 0;
+}
+
+void load_timer0(unsigned int value)
+{
+    TH0 = (value >> 8) & 0xff;
+    TL0 = value & 0xff;
+}
+
+void load_timer1(unsigned int value)
+{
+    TH1 = (value >> 8) & 0xff;
+    TL1 = value & 0xff;
+}
+
+unsigned char get_timer2_low(void)
+{
+    return CCL1;
+}
+
+unsigned char get_timer2_high(void)
+{
+    return CCH1;
+}
+
+void clear_ccp1_flag(void)
+{
+    CCCON &= ~0x02;
+}
+
+unsigned char get_stack_pointer(void)
+{
+    return SP;
 }

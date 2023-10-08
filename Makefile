@@ -81,8 +81,7 @@ PROJECT_NAME := RF-Bridge-OB38S003
 
 SRCS := \
     src/delay.c \
-    src/globals.c \
-    src/initdevice.c \
+    src/hal.c \
 	src/main.c \
     src/rcswitch.c \
     src/timer.c \

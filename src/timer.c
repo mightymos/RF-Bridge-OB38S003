@@ -3,11 +3,9 @@
 #include <stdlib.h>
 
 
-#include "globals.h"
+#include "hal.h"
 #include "rcswitch.h"
 #include "timer.h"
-
-
 
 
 // track count of timer 1 which is decremented
@@ -27,13 +25,13 @@ unsigned long get_current_timer0(void)
     
     // FIXME: disable timer0 interrupt for atomic reading of variable
     //        consider check to see if interrupt was enabled in the first place
-    ET0 = 0;
+    disable_timer0_interrupt();
     
     // FIXME: compute the proper conversion from counts to milliseconds
     currentTime = gTimeMilliseconds;
     
     // re-enable timer0 interrupt
-    ET0 = 1;
+    enable_timer0_interrupt();
     
     return currentTime;
 }
@@ -64,12 +62,12 @@ unsigned long get_current_timer1(void)
     unsigned long currentTime;
     
 
-    ET1 = 0;
+    disable_timer1_interrupt();
     
     // FIXME: compute the proper conversion from counts to microseconds
     currentTime = gTimeTenMicroseconds;
     
-    ET1 = 1;
+    enable_timer1_interrupt();
     
     return currentTime;
 }
@@ -103,8 +101,9 @@ void timer0_isr(void) __interrupt (1)
     gTimeMilliseconds++;
 
     // one millisecond to overflow
-    TH0 = 0xc1;
-    TL0 = 0x7f;
+    //TH0 = 0xc1;
+    //TL0 = 0x7f;
+    load_timer0(0xc17f);
     
     // ten microseconds to overflow
     //TH0 = 0xff;
@@ -119,8 +118,9 @@ void timer1_isr(void) __interrupt (3)
     gTimeTenMicroseconds++;
     
     // ten microseconds to overflow
-    TH1 = 0xff;
-    TL1 = 0x5f;
+    //TH1 = 0xff;
+    //TL1 = 0x5f;
+    load_timer1(0xff5f);
 }
 
 //-----------------------------------------------------------------------------
@@ -185,8 +185,8 @@ void timer2_isr(void) __interrupt (5)
     highByteOld = highByteNew;
     
     // this stores timer 2 value without stopping timer 2
-    lowByteNew  = CCL1;
-    highByteNew = CCH1;
+    lowByteNew  = get_timer2_low();
+    highByteNew = get_timer2_high();
     
     // go from 8-bit to 16-bit variables
     previous = current;
@@ -259,5 +259,6 @@ void timer2_isr(void) __interrupt (5)
     
         
     //clear compare/capture 1 flag
-    CCCON &= ~0x02;
+    //CCCON &= ~0x02;
+    clear_ccp1_flag();
 }

@@ -8,7 +8,7 @@
 #ifndef INC_UART_H_
 #define INC_UART_H_
 
-#include "globals.h"
+//#include "globals.h"
 
 //-----------------------------------------------------------------------------
 // Global Constants
