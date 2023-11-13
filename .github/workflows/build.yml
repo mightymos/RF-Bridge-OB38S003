@@ -20,6 +20,6 @@ jobs:
       uses: jason2866/action-gh-release@v1.2
       with:
         tag_name: ${{ env.RELEASE_VERSION }}
-        files: ./uni-STC/demos/RF-Bridge-OB38S003/build/*
+        files: ./RF-Bridge-OB38S003/build/*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

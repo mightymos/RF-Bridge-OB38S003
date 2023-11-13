@@ -71,7 +71,7 @@ void uart_state_machine(const unsigned int rxdata)
     uint16_t bucket = 0;
 
     // FIXME: need to know what initialization value is appropriate
-	uint8_t position = 0;
+    uint8_t position = 0;
     
     // track count of entries into function
     static uint16_t idleResetCount = 0;
@@ -232,8 +232,8 @@ void uart_state_machine(const unsigned int rxdata)
 // FIXME: some of these function names really need fixing
 void radio_decode_report(void)
 {
-	uint8_t i = 0;
-	uint8_t b = 0;
+    uint8_t i = 0;
+    uint8_t b = 0;
 
     // packet start sequence
     putchar(RF_CODE_START);
@@ -281,9 +281,10 @@ void radio_decode_report(void)
     void startup_debug(const __idata unsigned char* stackStart)
     {
         // just demonstrate serial uart is working basically
-        //printf_fast("Startup...\r\n");
+        printf_fast("Startup...\r\n");
         
-        //printf_fast("Start of stack: %p\r\n", stackStart);
+        printf_fast("Start of stack: %p\r\n", stackStart);
+        
         //printf_fast("num. of protocols: %u\r\n", numProto);
 
         // DEBUG: demonstrates that we cannot write above SP (stack pointer)
@@ -332,12 +333,12 @@ int main (void)
     
     
     // upper eight bits hold error or no data flags
- 	unsigned int rxdata = UART_NO_DATA;
+    unsigned int rxdata = UART_NO_DATA;
     
 
-	// hardware initialization
+    // hardware initialization
     set_clock_1t_mode();
-	init_port_pins();
+    init_port_pins();
     init_uart();
     
     // provides one millisecond tick
@@ -354,7 +355,7 @@ int main (void)
     init_serial_interrupt();
 
 
-	// set default pin levels
+    // set default pin levels
     led_off();
     buzzer_off();
     tdata_off();
@@ -368,7 +369,7 @@ int main (void)
     //startup_debug(stackStart);
     startup_blink();
 
-	// enable interrupts
+    // enable interrupts
     enable_global_interrupts();
     
     //extended_xram_test();
@@ -376,13 +377,13 @@ int main (void)
     // reset unless we periodically clear the watchdog
     enable_watchdog();
 
-	while (true)
-	{
+    while (true)
+    {
 
         refresh_watchdog();
         
         // try to get one byte from uart rx buffer
-		rxdata = uart_getc();
+        rxdata = uart_getc();
         
 #if 0
         // DEBUG: echo back received character
@@ -393,7 +394,7 @@ int main (void)
         //    led_toggle();
         //    uart_putc(rxdata);
         //}
-#endif     
+#endif
 
      
 #if 1
@@ -409,7 +410,6 @@ int main (void)
         
 #endif
 
-        
 
 #if 1
         // process serial receive data
@@ -494,6 +494,6 @@ int main (void)
         
         
 
-	}
+    }
     
 }

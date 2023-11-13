@@ -101,8 +101,6 @@ void timer0_isr(void) __interrupt (1)
     gTimeMilliseconds++;
 
     // one millisecond to overflow
-    //TH0 = 0xc1;
-    //TL0 = 0x7f;
     load_timer0(0xc17f);
     
     // ten microseconds to overflow
@@ -118,8 +116,6 @@ void timer1_isr(void) __interrupt (3)
     gTimeTenMicroseconds++;
     
     // ten microseconds to overflow
-    //TH1 = 0xff;
-    //TL1 = 0x5f;
     load_timer1(0xff5f);
 }
 
@@ -259,6 +255,5 @@ void timer2_isr(void) __interrupt (5)
     
         
     //clear compare/capture 1 flag
-    //CCCON &= ~0x02;
     clear_ccp1_flag();
 }
