@@ -434,6 +434,8 @@ int main (void)
         // formatted for tasmota
         radio_decode_report();
         
+        led_toggle();
+        
         // formatted like rc-switch example
         //radio_decode_debug();
 
