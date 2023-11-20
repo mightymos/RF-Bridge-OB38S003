@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <string.h>
+
 
 #include "delay.h"
 #include "hal.h"
@@ -55,7 +57,7 @@ unsigned long get_received_value(void)
     return gRCSwitch.nReceivedValue;
 }
 
-unsigned int get_received_bitlength(void)
+unsigned char get_received_bitlength(void)
 {
     return gRCSwitch.nReceivedBitlength;
 }
@@ -65,7 +67,7 @@ unsigned int get_received_delay(void)
     return gRCSwitch.nReceivedDelay;
 }
 
-unsigned int get_received_protocol(void)
+unsigned char get_received_protocol(void)
 {
     return gRCSwitch.nReceivedProtocol;
 }
@@ -78,29 +80,18 @@ int get_received_tolerance(void)
 
 bool receive_protocol(const int p, unsigned int changeCount)
 {
+    // FIXME: do we copy to ram from flash so check is faster in loops below?
+    struct Protocol pro;
 
-//    Protocol pro;
-//    memcpy_P(&pro, &proto[p-1], sizeof(Protocol));
-
-    struct Protocol* pro = protocols;
-    
-    // the first procotol is considered p=1 but is at index 0
-    unsigned int index = p - 1;
+    // FIXME: we should probably check for out of bound index e.g. p = 0
+    memcpy(&pro, &protocols[p-1], sizeof(struct Protocol));
     
     unsigned long code = 0;
     
     // assuming the longer pulse length is the pulse captured in timings[0]
-    const unsigned int syncLengthInPulses = ((pro[index].syncFactor.low) > (pro[index].syncFactor.high)) ? (pro[index].syncFactor.low) : (pro[index].syncFactor.high);    
+    const unsigned int syncLengthInPulses = ((pro.syncFactor.low) > (pro.syncFactor.high)) ? (pro.syncFactor.low) : (pro.syncFactor.high);
     const unsigned int delay = timings[0] / syncLengthInPulses;
     const unsigned int delayTolerance = delay * get_received_tolerance() / 100;
-    
-    // FIXME: avoid out of bounds index
-    //if (p >= 1)
-    //{
-    //    index = p - 1;
-    //} else {
-    //    return false;
-    //}
     
     
     /* For protocols that start low, the sync period looks like
@@ -120,17 +111,17 @@ bool receive_protocol(const int p, unsigned int changeCount)
      *
      * The 2nd saved duration starts the data
      */
-    const unsigned int firstDataTiming = (pro[index].invertedSignal) ? (2) : (1);
+    const unsigned int firstDataTiming = (pro.invertedSignal) ? (2) : (1);
 
     for (unsigned int i = firstDataTiming; i < changeCount - 1; i += 2)
     {
         code <<= 1;
         
-        if (abs(timings[i] - delay * pro[index].zero.high) < delayTolerance &&
-            abs(timings[i + 1] - delay * pro[index].zero.low) < delayTolerance) {
+        if (abs(timings[i] - delay * pro.zero.high) < delayTolerance &&
+            abs(timings[i + 1] - delay * pro.zero.low) < delayTolerance) {
             // zero
-        } else if (abs(timings[i] - delay * pro[index].one.high) < delayTolerance &&
-            abs(timings[i + 1] - delay * pro[index].one.low) < delayTolerance) {
+        } else if (abs(timings[i] - delay * pro.one.high) < delayTolerance &&
+            abs(timings[i + 1] - delay * pro.one.low) < delayTolerance) {
             // one
             code |= 1;
         } else {
@@ -237,7 +228,7 @@ bool radio_tx_blocking(const uint8_t totalRepeats, const int ident)
     
         // sync pulse
         // allow attaching oscilloscope probe to a convenient location (reset) and also actually driving radio transmit pin
-        reset_pin_on();
+        //reset_pin_on();
         tdata_on();
         
 
@@ -246,7 +237,7 @@ bool radio_tx_blocking(const uint8_t totalRepeats, const int ident)
 
         
         // sync pulse
-        reset_pin_off();
+        //reset_pin_off();
         tdata_off();
         
         
@@ -261,7 +252,7 @@ bool radio_tx_blocking(const uint8_t totalRepeats, const int ident)
             // bit is one
             if (bitLevels[index])
             {
-                reset_pin_on();
+                //reset_pin_on();
                 tdata_on();
                 
 
@@ -269,7 +260,7 @@ bool radio_tx_blocking(const uint8_t totalRepeats, const int ident)
                 delay10us(gTxPacket.oneHighUS);
 
 
-                reset_pin_off();
+                //reset_pin_off();
                 tdata_off();
                 
 
@@ -278,14 +269,14 @@ bool radio_tx_blocking(const uint8_t totalRepeats, const int ident)
 
             } else {
 
-                reset_pin_on();
+                //reset_pin_on();
                 tdata_on();
                 
                 delay1ms(gTxPacket.zeroHighMS);
                 delay10us(gTxPacket.zeroHighUS);
 
 
-                reset_pin_off();
+                //reset_pin_off();
                 tdata_off();
                 
                 delay1ms(gTxPacket.zeroLowMS);
@@ -296,7 +287,7 @@ bool radio_tx_blocking(const uint8_t totalRepeats, const int ident)
         }
 
         // transmission gap
-        reset_pin_off();
+        //reset_pin_off();
         tdata_off();
         
         // 30 millisecond gap between repeat transmissions

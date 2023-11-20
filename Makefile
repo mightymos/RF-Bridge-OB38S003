@@ -57,7 +57,7 @@
 
 # Target MCU settings --------------------------------------------------
 # for OB38S003 used in Sonoff v2.2 receivers (white color)
-#MCU_FREQ_KHZ := 24000
+MCU_FREQ_KHZ := 16000
 #STACK_SIZE := 16
 
 
@@ -85,7 +85,8 @@ SRCS := \
 	src/main.c \
     src/rcswitch.c \
     src/timer.c \
-    src/uart.c
+    src/uart.c \
+    src/uart_software.c
 
 CONSOLE_BAUDRATE := 19200
 CONSOLE_PORT := ttyUSB0

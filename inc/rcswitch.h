@@ -32,13 +32,15 @@
 //#define RF_TRANSMIT_REPEATS 8
 
 
-
+// FIXME: some of these probably need to be changed to uint8_t or uint16_t as needed
 struct RC_SWITCH_T
 {
+    // FIXME: we changed some ints to char so that printing over software uart was reasonable
+    // would we ever have more than 256 protocols or bit length anyway ?
     unsigned long nReceivedValue;
-    unsigned int nReceivedBitlength;
+    unsigned char nReceivedBitlength;
     unsigned int nReceivedDelay;
-    unsigned int nReceivedProtocol;
+    unsigned char nReceivedProtocol;
     int nReceiveTolerance;
     const unsigned int nSeparationLimit;
 };
@@ -121,9 +123,9 @@ extern bool available(void);
 extern void reset_available(void);
 
 extern unsigned long get_received_value(void);
-extern unsigned int  get_received_bitlength(void);
+extern unsigned char  get_received_bitlength(void);
 extern unsigned int  get_received_delay(void);
-extern unsigned int  get_received_protocol(void);
+extern unsigned char  get_received_protocol(void);
 extern int           get_received_tolerance(void);
 
 

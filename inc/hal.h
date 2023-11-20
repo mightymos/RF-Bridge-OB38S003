@@ -8,29 +8,112 @@
 #ifndef INC_HAL_H_
 #define INC_HAL_H_
 
+#include <8052.h>
+
 #include <stdbool.h>
 //#include <stdint.h>
 //#include <stdio.h>
 
+#include "sonoffr22_pins.h"
 
-extern void buzzer_on(void);
-extern void buzzer_off(void);
+
+// we place these directly in include file because
+// if placed in source file they do not get inlined
+// and so take up code space
+inline void buzzer_on(void)
+{
+    BUZZER = 1;
+}
+
+inline void buzzer_off(void)
+{
+    BUZZER = 0;
+}
+
+inline bool rdata_level(void)
+{
+    return RDATA;
+}
+
+// setter prototypes
+inline void led_on(void)
+{
+    LED = 1;
+}
+
+inline void led_off(void)
+{
+    LED = 0;
+}
+
+inline void led_toggle(void)
+{
+    LED = !LED;
+}
+
+
+inline void radio_receiver_off(void)
+{
+    RF_ENABLE = 1;
+}
+
+
+inline void radio_receiver_on(void)
+{
+    RF_ENABLE = 0;
+}
+
+inline bool get_radio_wake(void)
+{
+    return RF_ENABLE;
+}
+
+inline void reset_pin_on(void)
+{
+    RESET_PIN = 1;
+}
+
+inline void reset_pin_off(void)
+{
+    RESET_PIN = 0;
+}
+
+inline void reset_pin_toggle(void)
+{
+    RESET_PIN = !RESET_PIN;
+}
+
+inline void tdata_on(void)
+{
+    TDATA = 1;
+}
+
+
+inline void tdata_off(void)
+{
+    TDATA = 0;
+}
+
+
+inline void uart_tx_pin_off(void)
+{
+    UART_TX_PIN = 0;
+}
+
+
+inline void uart_tx_pin_on(void)
+{
+    UART_TX_PIN = 1;
+}
+
+inline void uart_tx_pin_toggle(void)
+{
+    UART_TX_PIN = !UART_TX_PIN;
+}
+
+
 extern bool get_radio_wake(void);
 extern unsigned char get_stack_pointer(void);
-extern void led_on(void);
-extern void led_off(void);
-extern void led_toggle(void);
-extern void radio_receiver_off(void);
-extern void radio_receiver_on(void);
-extern bool rdata_level(void);
-extern void reset_pin_on(void);
-extern void reset_pin_off(void);
-extern void reset_pin_toggle(void);
-extern void tdata_on(void);
-extern void tdata_off(void);
-extern void uart_tx_pin_off(void);
-extern void uart_tx_pin_on(void);
-extern void uart_tx_pin_toggle(void);
 
 
 extern void set_clock_1t_mode(void);
@@ -56,8 +139,8 @@ extern void enable_timer0_interrupt(void);
 extern void disable_timer1_interrupt(void);
 extern void enable_timer1_interrupt(void);
 
-extern void load_timer0(unsigned int value);
-extern void load_timer1(unsigned int value);
+extern void load_timer0(const unsigned int value);
+extern void load_timer1(const unsigned int value);
 
 extern unsigned char get_timer2_low(void);
 extern unsigned char get_timer2_high(void);

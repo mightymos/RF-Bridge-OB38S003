@@ -30,7 +30,7 @@
 //#include "project-defs.h"
 
 #include <8052.h>
-#include <stdint.h>
+//#include <stdint.h>
 
 #include "delay.h"
 

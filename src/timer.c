@@ -96,17 +96,17 @@ unsigned long get_elapsed_timer1(unsigned long previousTime)
 
 
 
-void timer0_isr(void) __interrupt (1)
-{
-    gTimeMilliseconds++;
-
-    // one millisecond to overflow
-    load_timer0(0xc17f);
-    
-    // ten microseconds to overflow
-    //TH0 = 0xff;
-    //TL0 = 0x5f;
-}
+//void timer0_isr(void) __interrupt (1)
+//{
+//    gTimeMilliseconds++;
+//
+//    // one millisecond to overflow
+//    load_timer0(0xc17f);
+//    
+//    // ten microseconds to overflow
+//    //TH0 = 0xff;
+//    //TL0 = 0x5f;
+//}
 
 
 // timer 1 interrupt

@@ -9,101 +9,10 @@
  
 #include "hal.h"
 #include "ob38s003.h"
-#include "sonoffr22_pins.h"
 
 
-
-inline void buzzer_on(void)
-{
-    BUZZER = 1;
-}
-
-inline void buzzer_off(void)
-{
-    BUZZER = 0;
-}
-
-inline bool rdata_level(void)
-{
-    return RDATA;
-}
-
-// setter prototypes
-inline void led_on(void)
-{
-    LED = 1;
-}
-
-inline void led_off(void)
-{
-    LED = 0;
-}
-
-inline void led_toggle(void)
-{
-    LED = !LED;
-}
-
-
-inline void radio_receiver_off(void)
-{
-    RF_ENABLE = 1;
-}
-
-
-inline void radio_receiver_on(void)
-{
-    RF_ENABLE = 0;
-}
-
-inline bool get_radio_wake(void)
-{
-    return RF_ENABLE;
-}
-
-inline void reset_pin_on(void)
-{
-    RESET_PIN = 1;
-}
-
-inline void reset_pin_off(void)
-{
-    RESET_PIN = 0;
-}
-
-inline void reset_pin_toggle(void)
-{
-    RESET_PIN = !RESET_PIN;
-}
-
-inline void tdata_on(void)
-{
-    TDATA = 1;
-}
-
-
-inline void tdata_off(void)
-{
-    TDATA = 0;
-}
-
-
-inline void uart_tx_pin_off(void)
-{
-    UART_TX_PIN = 0;
-}
-
-
-inline void uart_tx_pin_on(void)
-{
-    UART_TX_PIN = 1;
-}
-
-inline void uart_tx_pin_toggle(void)
-{
-    UART_TX_PIN = !UART_TX_PIN;
-}
-
+// pg. 3 of OB38S003 datasheet
+// high speed architecture of 1 clock/machine cycle runs up to 16MHz.
 void set_clock_1t_mode(void)
 {
     // default is 2T mode
@@ -222,6 +131,7 @@ void init_timer0(void)
     TMOD |= T0_M0;
     
     // FIXME: T0PS 0x10 prescaler fosc
+    // FIXME: this would not necessarily clear upper bit, so bad HAL
     PFCON |= 0x01;
     
     // one millisecond to overflow
@@ -246,11 +156,12 @@ void init_timer1(void)
     TMOD |= T1_M0;
     
     // T1PS prescaler fosc
+    // b10 = FOCS / 96
     PFCON |= 0x08;
     
     // ten microseconds to overflow
-    //TH1 = 0xff;
-    //TL1 = 0x5f;
+    TH1 = 0xff;
+    TL1 = 0x5f;
     
     // enable timer1 overflow interrupt
     ET1 = true;
@@ -274,12 +185,12 @@ void init_timer2_capture(void)
     T2CON = 0xD1;
 }
 
-void enable_global_interrupts(void)
+inline void enable_global_interrupts(void)
 {
     EA = 1;
 }
 
-void disable_global_interrupts(void)
+inline void disable_global_interrupts(void)
 {
     EA = 0;
 }
@@ -289,33 +200,33 @@ bool global_interrupts_are_enabled(void)
     return EA;
 }
 
-void enable_timer0_interrupt(void)
+inline void enable_timer0_interrupt(void)
 {
     ET0 = 1;
 }
 
-void disable_timer0_interrupt(void)
+inline void disable_timer0_interrupt(void)
 {
     ET0 = 0;
 }
 
-void enable_timer1_interrupt(void)
+inline void enable_timer1_interrupt(void)
 {
     ET1 = 1;
 }
 
-void disable_timer1_interrupt(void)
+inline void disable_timer1_interrupt(void)
 {
     ET1 = 0;
 }
 
-void load_timer0(unsigned int value)
+void load_timer0(const unsigned int value)
 {
     TH0 = (value >> 8) & 0xff;
     TL0 = value & 0xff;
 }
 
-void load_timer1(unsigned int value)
+void load_timer1(const unsigned int value)
 {
     TH1 = (value >> 8) & 0xff;
     TL1 = value & 0xff;

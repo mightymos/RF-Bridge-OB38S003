@@ -4,8 +4,8 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include <stdint.h>
-#include <stdlib.h>
+//#include <stdint.h>
+//#include <stdlib.h>
 
 // printf() requires a decent amount of code space and ram which we would like to avoid
 // and printf is not particularly once tasmota packet format is used
@@ -18,6 +18,7 @@
 #include "rcswitch.h"
 #include "timer.h"
 #include "uart.h"
+#include "uart_software.h"
 
 // constants
 
@@ -45,8 +46,11 @@
 // so basically enabling loopback uses reset pin to apply radio transmission signals, as opposed to tdata pin
 
 
-// sdccman sec. 3.8.1 indicates isr prototype must appear in the file containing main
-extern void timer0_isr(void) __interrupt (1);
+// sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
+// millisecond tick count
+//extern void timer0_isr(void) __interrupt (1);
+// software uart
+extern void tm0(void)        __interrupt (1);
 extern void timer1_isr(void) __interrupt (3);
 extern void uart_isr(void)   __interrupt (4);
 extern void timer2_isr(void) __interrupt (5);
@@ -328,8 +332,8 @@ int main (void)
     unsigned long previousTimeSendRadio = 0;
     unsigned long previousTimeHeartbeat = 0;
     unsigned long elapsedTimeSendRadio;
-    //unsigned long elapsedTimeHeartbeat;
-    //unsigned long heartbeat = 0;
+    unsigned long elapsedTimeHeartbeat;
+    unsigned long heartbeat = 0;
     
     
     // upper eight bits hold error or no data flags
@@ -339,27 +343,37 @@ int main (void)
     // hardware initialization
     set_clock_1t_mode();
     init_port_pins();
+    
+    // set default pin levels
+    led_off();
+    buzzer_off();
+    tdata_off();
+    reset_pin_on();
+    
+    // setup hardware serial
     init_uart();
     
+    // software serial
+    init_software_uart();
+    enable_timer0();
+    
+    
     // provides one millisecond tick
-    init_timer0();
+    // (warning: cannot be used at the same time as software uart for now)
+    //init_timer0();
     
     // provides ten microsecond tick
     //init_timer1();
     
-    //captures pulse lengths for received radio signals
+    //captures edges for determining pulse lengths from received radio signals
     init_timer2_capture();
 
     // individual interrupts
     init_capture_interrupt();
     init_serial_interrupt();
-
-
-    // set default pin levels
-    led_off();
-    buzzer_off();
-    tdata_off();
-    reset_pin_off();
+    
+    // tick style functionality
+    //enable_timer1_interrupt();
     
     
     // FIXME: disable radio receiver (not working, does not set pin high?)
@@ -372,8 +386,14 @@ int main (void)
     // enable interrupts
     enable_global_interrupts();
     
-    //extended_xram_test();
+    // just to give some startup time
+    delay1ms(500);
     
+    //extended_xram_test();
+
+    // test software uart
+    //putc(0xaa);
+        
     // reset unless we periodically clear the watchdog
     enable_watchdog();
 
@@ -403,7 +423,7 @@ int main (void)
         {
             if (is_uart_tx_finished())
             {
-                // if not empty, set TI, which triggers interrupt to actually transmit
+                // if not empty, set transmit interrupt flag, which triggers actual transmission
                 uart_init_tx_polling();
             }
         }
@@ -426,10 +446,11 @@ int main (void)
     // have we received a succesfully decoded radio packet?
     if (available())
     {
+        
         // this is needed to avoid corrupting the currently received packet
-        // a better way would be some type of queue probably
-        //disable_capture_interrupt();
-        disable_global_interrupts();
+        // a better way would be some type of lock or queue
+        disable_capture_interrupt();
+        //disable_global_interrupts();
         
         // formatted for tasmota
         radio_decode_report();
@@ -442,8 +463,22 @@ int main (void)
 
         reset_available();
         
-        //enable_capture_interrupt();
-        enable_global_interrupts();
+        enable_capture_interrupt();
+        //enable_global_interrupts();
+        
+        // DEBUG: using software uart
+        putc('b');
+        putc('0');
+        putc('x');
+        puthex2(get_received_bitlength());
+        putc(' ');
+        
+        putc('p');
+        putc('0');
+        putc('x');
+        puthex2(get_received_protocol());
+        putc('\r');
+        putc('\n');
     }
     
 #endif
@@ -452,15 +487,16 @@ int main (void)
 #if 0
         // DEBUG:
         // display serial message about every 10 seconds
-        elapsedTimeHeartbeat = get_elapsed_timer0(previousTimeHeartbeat);
+        elapsedTimeHeartbeat = get_elapsed_timer1(previousTimeHeartbeat);
 
-        if (elapsedTimeHeartbeat >= 10000)
+        if (elapsedTimeHeartbeat >= 1000000)
         {
             //printf_fast("elapsedTime (ms): %lu\r\n", elapsedTimeHeartbeat);
             //printf_fast("heartbeat (count): %lu\r\n", heartbeat);
-        
+            // test software uart
+            putc(0x4A);
             
-            previousTimeHeartbeat = get_current_timer0();
+            previousTimeHeartbeat = get_current_timer1();
             
             heartbeat++;
         }
