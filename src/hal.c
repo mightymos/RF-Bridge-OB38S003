@@ -8,7 +8,7 @@
 
  
 #include "hal.h"
-#include "ob38s003.h"
+#include "ob38s003_sfr.h"
 
 
 // pg. 3 of OB38S003 datasheet

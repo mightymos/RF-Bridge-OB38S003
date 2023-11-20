@@ -7,9 +7,6 @@
 #include "rcswitch.h"
 #include "timer.h"
 
-// we are basically following the same decoding approach used by the rc-switch project
-// https://github.com/sui77/rc-switch
-// https://github.com/1technophile/rc-switch
 
 // FIXME: explain constants
 volatile __xdata struct RC_SWITCH_T gRCSwitch = {0, 0, 0, 0, 60, 4300};
@@ -129,7 +126,7 @@ bool receive_protocol(const int p, unsigned int changeCount)
             return false;
         }
     }
-
+    
     // ignore very short transmissions: no device sends them, so this must be noise
     if (changeCount > 7)
     {

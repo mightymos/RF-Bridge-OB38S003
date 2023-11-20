@@ -4,7 +4,8 @@
 
 
 #include "hal.h"
-#include "rcswitch.h"
+//#include "rcswitch.h"
+#include "rcswitch_tasmota.h"
 #include "timer.h"
 
 
@@ -96,17 +97,17 @@ unsigned long get_elapsed_timer1(unsigned long previousTime)
 
 
 
-void timer0_isr(void) __interrupt (1)
-{
-    gTimeMilliseconds++;
-
-    // one millisecond to overflow
-    load_timer0(0xc17f);
-    
-    // ten microseconds to overflow
-    //TH0 = 0xff;
-    //TL0 = 0x5f;
-}
+//void timer0_isr(void) __interrupt (1)
+//{
+//    gTimeMilliseconds++;
+//
+//    // one millisecond to overflow
+//    load_timer0(0xc17f);
+//    
+//    // ten microseconds to overflow
+//    //TH0 = 0xff;
+//    //TL0 = 0x5f;
+//}
 
 
 // timer 1 interrupt
@@ -151,9 +152,9 @@ void timer2_isr(void) __interrupt (5)
     static unsigned int changeCount = 0;
 
     // FIXME: move to rcswitch.h
-    const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
+    const unsigned int separationLimit = RCSWITCH_SEPARATION_LIMIT;
     
-    
+    const uint8_t numProto = get_num_protos();
     
     // FIXME: function name is confusing
     levelOld = levelNew;
@@ -211,49 +212,80 @@ void timer2_isr(void) __interrupt (5)
     // e.g., (1/(16000000/24)) * dec(0xFFFF) = 98.30 milliseconds maximum can be counted
     duration = (duration * 3) / 2;
     
-    // from oscillscope readings it appears that first sync pulse of first radio packet is frequently not output properly by receiver
-    // this could be because radio receiver needs to "warm up" (despite already being enabled?)
-    // and it is known that radio packet transmissions are often repeated (between about four and twenty times) perhaps in part for this reason
-    if (duration > separationLimit)
-    {
-        // A long stretch without signal level change occurred. This could
-        // be the gap between two transmission.
-        if ((repeatCount == 0) || (abs(duration - timings[0]) < gapMagicNumber))
-        //if (abs(duration - timings[0]) < gapMagicNumber)
-        {
-          // This long signal is close in length to the long signal which
-          // started the previously recorded timings; this suggests that
-          // it may indeed by a a gap between two transmissions (we assume
-          // here that a sender will send the signal multiple times,
-          // with roughly the same gap between them).
-          repeatCount++;
-          
-          if (repeatCount == repeatThreshold)
-          {
-            for(unsigned int i = 1; i <= numProto; i++)
-            {
-              if (receive_protocol(i, changeCount))
-              {
-                // receive succeeded for protocol i
-                break;
-              }
+    buftimings[3] = buftimings[2];
+    buftimings[2] = buftimings[1];
+    buftimings[1] = buftimings[0];
+    buftimings[0] = duration;
+    
+    if (duration > separationLimit ||
+      changeCount == 156 ||
+      (abs(buftimings[3] - buftimings[2]) < 50 &&
+        abs(buftimings[2] - buftimings[1]) < 50 &&
+        changeCount > 25)) {
+    // принят длинный импульс продолжительностью более nSeparationLimit (4300)
+    // A long stretch without signal level change occurred. This could
+    // be the gap between two transmission.
+    if (abs(duration - timings[0]) < 400 ||
+        changeCount == 156 ||
+        (abs(buftimings[3] - timings[1]) < 50 &&
+          abs(buftimings[2] - timings[2]) < 50 &&
+          abs(buftimings[1] - timings[3]) < 50 &&
+          changeCount > 25)) {
+      // если его длительность отличается от первого импульса,
+      // который приняли раньше, менее чем на +-200 (исходно 200)
+      // то считаем это повторным пакетом и игнорируем его
+      // This long signal is close in length to the long signal which
+      // started the previously recorded timings; this suggests that
+      // it may indeed by a a gap between two transmissions (we assume
+      // here that a sender will send the signal multiple times,
+      // with roughly the same gap between them).
+
+      // количество повторных пакетов
+      repeatCount++;
+      // при приеме второго повторного начинаем анализ принятого первым
+      if (repeatCount == 1) {
+        unsigned long long thismask = 1;
+        for(unsigned int i = 1; i <= numProto; i++) {
+            if (((1ULL << numProto) - 1) & thismask) {
+          //if (nReceiveProtocolMask & thismask) {
+            if (receive_protocol(i, changeCount)) {
+              // receive succeeded for protocol i
+              break;
             }
-            
-            repeatCount = 0;
           }
+          thismask <<= 1;
         }
-        
-        changeCount = 0;
+        // очищаем количество повторных пакетов
+        repeatCount = 0;
+      }
+    }
+    // дительность отличается более чем на +-200 от первого
+    // принятого ранее, очищаем счетчик для приема нового пакета
+    changeCount = 0;
+    if (abs(buftimings[3] - buftimings[2]) < 50 &&
+        abs(buftimings[2] - buftimings[1]) < 50) {
+      timings[1] = buftimings[3];
+      timings[2] = buftimings[2];
+      timings[3] = buftimings[1];
+      changeCount = 4;
+    }
     }
 
     // detect overflow
-    if (changeCount >= RCSWITCH_MAX_CHANGES)
-    {
+    if (changeCount >= RCSWITCH_MAX_CHANGES) {
         changeCount = 0;
         repeatCount = 0;
     }
 
-    timings[changeCount++] = duration;
+    // заносим в массив длительность очередного принятого импульса
+    // игнорируем шумовые всплески менее 100 мкс
+    if (changeCount > 0 && duration < 100) {
+        timings[changeCount-1] += duration;
+    } else {
+        timings[changeCount++] = duration;
+    }
+
+
     
         
     //clear compare/capture 1 flag

@@ -322,18 +322,18 @@ int main (void)
 {
 
     // holdover from when we considered using rtos
-    const __idata unsigned char* stackStart = (__idata unsigned char*) get_stack_pointer() + 1;
+    //const __idata unsigned char* stackStart = (__idata unsigned char*) get_stack_pointer() + 1;
 
     // FIXME: other protocols are not working
-    const uint8_t repeats = 8;
-    const uint8_t protocolId = 1;
+    //const uint8_t repeats = 8;
+    //const uint8_t protocolId = 1;
     
     // track elapsed time for doing something periodically (e.g., every 10 seconds)
-    unsigned long previousTimeSendRadio = 0;
-    unsigned long previousTimeHeartbeat = 0;
-    unsigned long elapsedTimeSendRadio;
-    unsigned long elapsedTimeHeartbeat;
-    unsigned long heartbeat = 0;
+    //unsigned long previousTimeSendRadio = 0;
+    //unsigned long previousTimeHeartbeat = 0;
+    //unsigned long elapsedTimeSendRadio;
+    //unsigned long elapsedTimeHeartbeat;
+    //unsigned long heartbeat = 0;
     
     
     // upper eight bits hold error or no data flags
@@ -467,6 +467,7 @@ int main (void)
         //enable_global_interrupts();
         
         // DEBUG: using software uart
+        // FIXME: a little dangerous as-is because basically sits in a while() loop ?
         putc('b');
         putc('0');
         putc('x');

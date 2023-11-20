@@ -4,7 +4,7 @@
 #include <8052.h>
 
 
-#include "ob38s003.h"
+#include "ob38s003_sfr.h"
 #include "uart_software.h"
 
 #define RCNT_RELOAD 3

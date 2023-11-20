@@ -31,9 +31,7 @@
 # Besides make, his project requires: 
 #
 # - sdcc
-# - stcgal-patched
-# - minicom
-# - doxygen
+
 
 # Usage ----------------------------------------------------------------
 #
@@ -65,7 +63,6 @@ MCU_FREQ_KHZ := 16000
 MEMORY_SIZES = \
     --iram-size 256 \
     --xram-size 256 \
-#    --stack-size $(STACK_SIZE) \
     --code-size 8192
 
 #
