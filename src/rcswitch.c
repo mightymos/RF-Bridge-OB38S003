@@ -49,7 +49,7 @@ void reset_available(void)
 }
 
 
-unsigned long get_received_value(void)
+unsigned long long get_received_value(void)
 {
     return gRCSwitch.nReceivedValue;
 }
@@ -72,6 +72,11 @@ unsigned char get_received_protocol(void)
 int get_received_tolerance(void)
 {
     return gRCSwitch.nReceiveTolerance;
+}
+
+unsigned int* getReceivedRawdata(void)
+{
+    return timings;
 }
 
 

@@ -56,14 +56,13 @@ void init_port_pins(void)
     
     // radio incoming input only
     //P1M1 |=  0x40;
-    //P1M1 &= ~0x40;
+    //P1M0 &= ~0x40;
     
-    // DEBUG: try enabling pullup on data pin
-    //P1_6 = 1;
     
     // rf sleep/wake push pull
-    //P1M1 &= ~0x10;
-    //P1M1 |=  0x10;
+    // see sonoffr22_pins.h - pin attached to upper leg of resistor divider
+    P1M1 &= ~0x80;
+    P1M0 |=  0x80;
     
     // led push pull
     P3M1 &= ~0x01;
@@ -130,7 +129,7 @@ void init_timer0(void)
     // 16-bit mode
     TMOD |= T0_M0;
     
-    // FIXME: T0PS 0x10 prescaler fosc
+    // FIXME: T0PS 0x01 prescaler Fosc
     // FIXME: this would not necessarily clear upper bit, so bad HAL
     PFCON |= 0x01;
     
@@ -155,9 +154,9 @@ void init_timer1(void)
     // 16-bit mode
     TMOD |= T1_M0;
     
-    // T1PS prescaler fosc
-    // b10 = FOCS / 96
-    PFCON |= 0x08;
+    // T1PS prescaler Fosc
+    // b01 = FOCS
+    PFCON |= 0x04;
     
     // ten microseconds to overflow
     TH1 = 0xff;

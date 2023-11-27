@@ -265,6 +265,25 @@ void radio_decode_report(void)
     putchar(RF_CODE_STOP);
 }
 
+// FIXME: think Tasmota ignores this for now because command is unknown?
+void radio_timings(void)
+{
+    unsigned int index;
+    
+    for (index = 0; index < get_received_bitlength() * 2; index++)
+    {
+        // packet start sequence
+        putc(RF_CODE_START);
+        putc(0xAF);
+        
+        // sync, low, high timings
+        putc((timings[index] >> 8) & 0xFF);
+        putc(timings[index] & 0xFF);
+    }
+    
+    putc(RF_CODE_STOP);
+}
+
 #if 0
     // we avoid use of printf but may be able to adapt this to wifi serial protocol format?
     void radio_decode_debug(void)
@@ -315,6 +334,7 @@ void startup_blink(void)
     led_off();
 }
 
+
 //-----------------------------------------------------------------------------
 // main() Routine
 // ----------------------------------------------------------------------------
@@ -325,15 +345,15 @@ int main (void)
     //const __idata unsigned char* stackStart = (__idata unsigned char*) get_stack_pointer() + 1;
 
     // FIXME: other protocols are not working
-    //const uint8_t repeats = 8;
-    //const uint8_t protocolId = 1;
+    const uint8_t repeats = 8;
+    const uint8_t protocolId = 1;
     
     // track elapsed time for doing something periodically (e.g., every 10 seconds)
-    //unsigned long previousTimeSendRadio = 0;
-    //unsigned long previousTimeHeartbeat = 0;
-    //unsigned long elapsedTimeSendRadio;
-    //unsigned long elapsedTimeHeartbeat;
-    //unsigned long heartbeat = 0;
+    unsigned long previousTimeSendRadio = 0;
+    unsigned long previousTimeHeartbeat = 0;
+    unsigned long elapsedTimeSendRadio;
+    unsigned long elapsedTimeHeartbeat;
+    unsigned long heartbeat = 0;
     
     
     // upper eight bits hold error or no data flags
@@ -348,6 +368,8 @@ int main (void)
     led_off();
     buzzer_off();
     tdata_off();
+    
+    // default state is reset high if using software uart
     reset_pin_on();
     
     // setup hardware serial
@@ -363,7 +385,7 @@ int main (void)
     //init_timer0();
     
     // provides ten microsecond tick
-    //init_timer1();
+    init_timer1();
     
     //captures edges for determining pulse lengths from received radio signals
     init_timer2_capture();
@@ -373,34 +395,35 @@ int main (void)
     init_serial_interrupt();
     
     // tick style functionality
-    //enable_timer1_interrupt();
+    enable_timer1_interrupt();
     
     
-    // FIXME: disable radio receiver (not working, does not set pin high?)
-    //radio_receiver_off();
+    // FIXME: enable radio receiver
+    radio_receiver_on();
     
     //startup_beep();
     //startup_debug(stackStart);
     startup_blink();
-
-    // enable interrupts
-    enable_global_interrupts();
     
     // just to give some startup time
     delay1ms(500);
+
+    // enable interrupts
+    enable_global_interrupts();
     
     //extended_xram_test();
 
     // test software uart
     //putc(0xaa);
         
-    // reset unless we periodically clear the watchdog
-    enable_watchdog();
+    // enable forced reset, unless we periodically clear the watchdog
+    //enable_watchdog();
 
     while (true)
     {
 
-        refresh_watchdog();
+        // if this is not periodically called, watchdog will force microcontroller reset
+        //refresh_watchdog();
         
         // try to get one byte from uart rx buffer
         rxdata = uart_getc();
@@ -455,10 +478,14 @@ int main (void)
         // formatted for tasmota
         radio_decode_report();
         
-        led_toggle();
-        
-        // formatted like rc-switch example
+        // DEBUG: formatted like rc-switch example
         //radio_decode_debug();
+        
+        // DEBUG:
+        //radio_timings();
+        
+        // flickers as packets detected so nice feedback to human
+        led_toggle();
 
 
         reset_available();
@@ -468,16 +495,16 @@ int main (void)
         
         // DEBUG: using software uart
         // FIXME: a little dangerous as-is because basically sits in a while() loop ?
-        putc('b');
-        putc('0');
-        putc('x');
-        puthex2(get_received_bitlength());
-        putc(' ');
-        
+        // protocol index
         putc('p');
-        putc('0');
         putc('x');
         puthex2(get_received_protocol());
+        putc(' ');
+
+        // bits received
+        putc('b');
+        putc('x');
+        puthex2(get_received_bitlength());
         putc('\r');
         putc('\n');
     }
@@ -485,7 +512,7 @@ int main (void)
 #endif
         
         
-#if 0
+#if 1
         // DEBUG:
         // display serial message about every 10 seconds
         elapsedTimeHeartbeat = get_elapsed_timer1(previousTimeHeartbeat);
@@ -495,7 +522,11 @@ int main (void)
             //printf_fast("elapsedTime (ms): %lu\r\n", elapsedTimeHeartbeat);
             //printf_fast("heartbeat (count): %lu\r\n", heartbeat);
             // test software uart
-            putc(0x4A);
+            puthex2(heartbeat);
+            putc('\r');
+            putc('\n');
+            
+            led_toggle();
             
             previousTimeHeartbeat = get_current_timer1();
             
@@ -509,23 +540,23 @@ int main (void)
 #if 0
         // FIXME: should we check to see if we are in the middle of receiving?
         
-        // periodically send out a radio transmission for a sort of loopback test
-        elapsedTimeSendRadio = get_elapsed_timer0(previousTimeSendRadio);
+        // periodically send out a radio transmission
+        elapsedTimeSendRadio = get_elapsed_timer1(previousTimeSendRadio);
 
-        if (elapsedTimeSendRadio >= 20000)
+        if (elapsedTimeSendRadio >= 2000000)
         {
             // FIXME: not sure if we NEED to disable radio receiver but we probably should (to avoid loopback)
-            //disable_capture_interrupt();
-            //disable_global_interrupts();
+            //radio_receiver_off();
             
+            led_toggle();
             
             // FIXME: avoid magic numbers
             radio_tx_blocking(repeats, protocolId);
             
-            //enable_capture_interrupt();
-            //enable_global_interrupts();
             
-            previousTimeSendRadio = get_current_timer0();
+            //radio_receiver_on();
+            
+            previousTimeSendRadio = get_current_timer1();
         }
         
 #endif 

@@ -13,7 +13,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define RCSWITCH_MAX_CHANGES 67
+// FIXME: how much can we save ?
+#define RCSWITCH_MAX_CHANGES 64
 
 // bucket sniffing constants
 //#define MIN_FOOTER_LENGTH	300
@@ -37,7 +38,7 @@ struct RC_SWITCH_T
 {
     // FIXME: we changed some ints to char so that printing over software uart was reasonable
     // would we ever have more than 256 protocols or bit length anyway ?
-    unsigned long nReceivedValue;
+    unsigned long long nReceivedValue;
     unsigned char nReceivedBitlength;
     unsigned int nReceivedDelay;
     unsigned char nReceivedProtocol;
@@ -122,11 +123,11 @@ struct Protocol
 extern bool available(void);
 extern void reset_available(void);
 
-extern unsigned long get_received_value(void);
-extern unsigned char  get_received_bitlength(void);
-extern unsigned int  get_received_delay(void);
-extern unsigned char  get_received_protocol(void);
-extern int           get_received_tolerance(void);
+extern unsigned long long get_received_value(void);
+extern unsigned char      get_received_bitlength(void);
+extern unsigned int       get_received_delay(void);
+extern unsigned char      get_received_protocol(void);
+extern int                get_received_tolerance(void);
 
 
 //void setProtocol(struct Protocol protocol);
