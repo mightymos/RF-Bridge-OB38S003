@@ -83,6 +83,11 @@ inline void reset_pin_toggle(void)
     RESET_PIN = !RESET_PIN;
 }
 
+inline bool reset_level(void)
+{
+    return RESET_PIN;
+}
+
 inline void tdata_on(void)
 {
     TDATA = 1;
@@ -109,6 +114,11 @@ inline void uart_tx_pin_on(void)
 inline void uart_tx_pin_toggle(void)
 {
     UART_TX_PIN = !UART_TX_PIN;
+}
+
+inline bool uart_rx_pin_level(void)
+{
+    return UART_RX_PIN;
 }
 
 

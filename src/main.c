@@ -22,10 +22,6 @@
 
 // constants
 
-// option is not including the 0xB1 bucket sniffing as this is only needed to define new protocols
-// FIXME: this seems to overflow ram, needs testing
-//#define INCLUDE_BUCKET_SNIFFING 1
-//#define INCLUDE_BUCKET_SNIFFING 0
 
 // FIXME: we instead define a similar macro in delay.h
 //#define SYSCLK 16000000
@@ -41,10 +37,15 @@
 //19:16:47.313 RSL: RESULT = {"Time":"2023-08-05T19:16:47","RfReceived":{"Sync":10280,"Low":340,"High":1010,"Data":"80650E","RfKey":"None"}}
 
 
-// FIXME: move or remove this comment
-// removed SYN470R radio receiver on one of my boards and tied reset pin to rdata input pin for testing purposes
-// so basically enabling loopback uses reset pin to apply radio transmission signals, as opposed to tdata pin
+// FIXME: these defines do not do anything yet
+// this decodes radio packets on the microcontroller
+//#define RCSWITCH_MODE 0
 
+// this simply monitors signal levels in/out from radio receiver/transmitter chips and mirrors the levels on the TXD/RXD pins going to ESP8265
+// radio packet decoding is then the responsibility of the ESP8265
+//#define MIRROR_MODE 1
+
+const bool gMirrorMode = true;
 
 // sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
 // millisecond tick count
@@ -359,6 +360,11 @@ int main (void)
     // upper eight bits hold error or no data flags
     unsigned int rxdata = UART_NO_DATA;
     
+    // look for level transitions on pins rather than absolute level, so that we can count signal edges
+    //bool        rdataLevelOld;
+    //static bool rdataLevelNew = false;
+    
+    //unsigned char rdataEdgeCount = 0;
 
     // hardware initialization
     set_clock_1t_mode();
@@ -369,36 +375,46 @@ int main (void)
     buzzer_off();
     tdata_off();
     
+    // FIXME: would like to read a pin somewhere to choose mode?
+    //        and allow switching between modes?
+    // choose at startup if we want to mirror radio pins to esp8265 or enable uart to output decoded radio packet instead
+    if (!gMirrorMode)
+    {
+        // setup hardware serial
+        init_uart();
+        uart_rx_enabled();
+        
+        // hardware serial interrupt
+        init_serial_interrupt();
+    }
+    
+    // FIXME: pin used for now to read for determining mirror mode or decoding mode
     // default state is reset high if using software uart
     reset_pin_on();
-    
-    // setup hardware serial
-    init_uart();
     
     // software serial
     init_software_uart();
     enable_timer0();
-    
-    
+        
     // provides one millisecond tick
     // (warning: cannot be used at the same time as software uart for now)
     //init_timer0();
-    
+        
     // provides ten microsecond tick
     init_timer1();
     
-    //captures edges for determining pulse lengths from received radio signals
+    // timer supports compare and capture module for determining pulse lengths of received radio signals
     init_timer2_capture();
 
-    // individual interrupts
+    // radio receiver edge detection
     init_capture_interrupt();
-    init_serial_interrupt();
+
     
     // tick style functionality
     enable_timer1_interrupt();
     
     
-    // FIXME: enable radio receiver
+    // enable radio receiver
     radio_receiver_on();
     
     //startup_beep();
@@ -410,117 +426,121 @@ int main (void)
 
     // enable interrupts
     enable_global_interrupts();
-    
-    //extended_xram_test();
 
-    // test software uart
-    //putc(0xaa);
         
-    // enable forced reset, unless we periodically clear the watchdog
-    //enable_watchdog();
+    // watchdog will force a reset, unless we periodically write to it, demonstrating loop is not stuck somewhere
+    enable_watchdog();
 
     while (true)
     {
 
         // if this is not periodically called, watchdog will force microcontroller reset
-        //refresh_watchdog();
-        
-        // try to get one byte from uart rx buffer
-        rxdata = uart_getc();
-        
-#if 0
-        // DEBUG: echo back received character
-        //delay1ms(500);
-        //if (rxdata != UART_NO_DATA)
-        //{
-        //    // if buffer is not empty, echo back byte by transmitting
-        //    led_toggle();
-        //    uart_putc(rxdata);
-        //}
-#endif
-
-     
-#if 1
-        // check if serial transmit buffer is empty
-        if(!is_uart_tx_buffer_empty())
+        refresh_watchdog();
+    
+    
+        // mirror radio voltage levels to esp8265, otherwise output decoded serial data
+        if (gMirrorMode)
         {
-            if (is_uart_tx_finished())
+            // mirror radio pin levels to uart pins (used as gpio)
+            // so that esp8265 can effectively decode the same signals
+            
+            // radio receiver
+            if (rdata_level())
             {
-                // if not empty, set transmit interrupt flag, which triggers actual transmission
-                uart_init_tx_polling();
+                uart_tx_pin_on();
+            } else {
+                uart_tx_pin_off();
             }
+            
+            // radio transmitter
+            if (uart_rx_pin_level())
+            {
+                tdata_on();
+            } else {
+                tdata_off();
+            }
+        } else {
+
+            // try to get one byte from uart rx buffer
+            rxdata = uart_getc();
+
+         
+            // check if serial transmit buffer is empty
+            if(!is_uart_tx_buffer_empty())
+            {
+                if (is_uart_tx_finished())
+                {
+                    // if not empty, set transmit interrupt flag, which triggers actual transmission
+                    uart_init_tx_polling();
+                }
+            }
+            
+
+            // process serial receive data
+            if (rxdata != UART_NO_DATA)
+            {
+                uart_state_machine(rxdata);
+            }
+            
         }
-        
-#endif
 
 
-#if 1
-        // process serial receive data
-        if (rxdata != UART_NO_DATA)
+#if 0
+
+        // FIXME: we need to consider interactions when still doing this in mirror mode
+        // have we received a succesfully decoded radio packet?
+        if (available())
         {
-            uart_state_machine(rxdata);
+            
+            // this is needed to avoid corrupting the currently received packet
+            // a better way would be some type of lock or queue
+            disable_capture_interrupt();
+            //disable_global_interrupts();
+            
+            // formatted for tasmota
+            radio_decode_report();
+            
+            // DEBUG: formatted like rc-switch example
+            //radio_decode_debug();
+            
+            // DEBUG:
+            //radio_timings();
+            
+            // flickers as packets detected so nice feedback to human
+            led_toggle();
+
+
+            reset_available();
+            
+            enable_capture_interrupt();
+            //enable_global_interrupts();
+            
+            // DEBUG: using software uart
+            // FIXME: a little dangerous as-is because basically sits in a while() loop ?
+            // protocol index
+            putc('p');
+            putc('x');
+            puthex2(get_received_protocol());
+            putc(' ');
+
+            // bits received
+            putc('b');
+            putc('x');
+            puthex2(get_received_bitlength());
+            putc('\r');
+            putc('\n');
         }
-        
-#endif
-
-
-#if 1
-
-    // have we received a succesfully decoded radio packet?
-    if (available())
-    {
-        
-        // this is needed to avoid corrupting the currently received packet
-        // a better way would be some type of lock or queue
-        disable_capture_interrupt();
-        //disable_global_interrupts();
-        
-        // formatted for tasmota
-        radio_decode_report();
-        
-        // DEBUG: formatted like rc-switch example
-        //radio_decode_debug();
-        
-        // DEBUG:
-        //radio_timings();
-        
-        // flickers as packets detected so nice feedback to human
-        led_toggle();
-
-
-        reset_available();
-        
-        enable_capture_interrupt();
-        //enable_global_interrupts();
-        
-        // DEBUG: using software uart
-        // FIXME: a little dangerous as-is because basically sits in a while() loop ?
-        // protocol index
-        putc('p');
-        putc('x');
-        puthex2(get_received_protocol());
-        putc(' ');
-
-        // bits received
-        putc('b');
-        putc('x');
-        puthex2(get_received_bitlength());
-        putc('\r');
-        putc('\n');
-    }
     
 #endif
         
         
-#if 1
+#if 0
         // DEBUG:
         // display serial message about every 10 seconds
         elapsedTimeHeartbeat = get_elapsed_timer1(previousTimeHeartbeat);
 
         if (elapsedTimeHeartbeat >= 1000000)
         {
-            //printf_fast("elapsedTime (ms): %lu\r\n", elapsedTimeHeartbeat);
-            //printf_fast("heartbeat (count): %lu\r\n", heartbeat);
             // test software uart
             puthex2(heartbeat);
             putc('\r');
@@ -538,21 +558,20 @@ int main (void)
      
      
 #if 0
+        // FIXME: future use for transmitting
         // FIXME: should we check to see if we are in the middle of receiving?
         
         // periodically send out a radio transmission
         elapsedTimeSendRadio = get_elapsed_timer1(previousTimeSendRadio);
 
-        if (elapsedTimeSendRadio >= 2000000)
+        if (elapsedTimeSendRadio >= 30000)
         {
             // FIXME: not sure if we NEED to disable radio receiver but we probably should (to avoid loopback)
             //radio_receiver_off();
             
             led_toggle();
             
-            // FIXME: avoid magic numbers
-            radio_tx_blocking(repeats, protocolId);
-            
+            // FIXME: do stuff
             
             //radio_receiver_on();
             

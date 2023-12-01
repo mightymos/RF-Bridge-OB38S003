@@ -79,9 +79,6 @@ void init_uart(void)
     // mode 1, no parity bit SM0 = 0 and SM2 = 0 by default
     SM1 = 1;
     
-	// uart reception enabled
-    REN = 1;
-    
     // see formula below with SMOD = 1
     PCON |= SMOD;
     
@@ -99,6 +96,17 @@ void init_uart(void)
     // 19200
     SRELH = 0x03;
     SRELL = 0xcc;
+}
+
+void uart_rx_enabled(void)
+{
+	// uart reception enabled
+    REN = 1;
+}
+
+void uart_rx_disabled(void)
+{
+    REN = 0;
 }
 
 void init_serial_interrupt(void)

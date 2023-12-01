@@ -1,0 +1,22 @@
+Sonoff R2.2 Pinout Info
+
+J2 connector to ESP8265
+RX pin to GPIO3 (U0RXD)(pin 25)
+TX pin to GPIO1 (U0TXD)(pin 26)
+LOG pin to GPIO2 (pin 14) (UART TX during flash programming)
+
+
+J3 connector to ESP8265
+USBRXD to GPIO4 (pin 16)
+USBTXD to GPIO5 (pin 24)
+
+
+J3 connector to J2 connector
+RXD to TX (by way of R1 1 kohm)
+TXD to RX (by way of R2 1 kohm)
+
+
+ESP8255
+GPIO15 (pin 13) is pulled to pulled to ground through R18
+GPIO0 (pin 15) to push button
+GPIO13 (pin 12) to R22 to LED2 (wifi led)

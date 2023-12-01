@@ -7,13 +7,6 @@
 #include "rcswitch.h"
 #include "timer.h"
 
-
-// track count of timer 1 which is decremented
-//uint16_t gTimerOneCount = 0;
-
-// finally when timer reaches zero, set flag to false
-//bool gIsTimerOneFinished = true;
-
 // track time since startup in one millisecond increments
 static unsigned long gTimeMilliseconds = 0;
 static unsigned long gTimeTenMicroseconds = 0;
@@ -43,9 +36,7 @@ unsigned long get_elapsed_timer0(unsigned long previousTime)
     unsigned long elapsed;
     
     currentTime = get_current_timer0();
-    
-    //printf("currentTime: %lu\r\n", currentTime);
-    
+        
     // handle typical versus wraparound condition
     if (previousTime <= currentTime)
     {
@@ -94,8 +85,6 @@ unsigned long get_elapsed_timer1(unsigned long previousTime)
 }
 
 
-
-
 void timer0_isr(void) __interrupt (1)
 {
     gTimeMilliseconds++;
@@ -140,11 +129,6 @@ void timer2_isr(void) __interrupt (5)
     // this eventually represents the level duration in microseconds (difference between edge transitions)
     unsigned long duration;
     
-    // store previous level values so we can hook up oscilloscope channel on radio transmitter device
-    //  and another channel on reset pin to observe that edges are being captured on radio receiver
-    bool        levelOld;
-    static bool levelNew = false;
-    
 
     // rc-switch variables
     static unsigned int repeatCount = 0;
@@ -152,28 +136,6 @@ void timer2_isr(void) __interrupt (5)
 
     // FIXME: move to rcswitch.h
     const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
-    
-    
-    
-    // FIXME: function name is confusing
-    levelOld = levelNew;
-    levelNew = rdata_level();
-    
-    
-#if 0
-
-    // DEBUG: on oscilloscope
-    // we use edge transitions rather than absolute level for no particular reason
-    if (!levelOld && levelNew)
-    {
-        // rising edge
-        reset_pin_on();
-    } else if (levelOld && !levelNew) {
-        // falling edge
-        reset_pin_off();
-    }
-    
-#endif
 
     
     // we are always looking for pulse duration (i.e., difference), so need to store previous and new values
@@ -181,6 +143,7 @@ void timer2_isr(void) __interrupt (5)
     highByteOld = highByteNew;
     
     // this stores timer 2 value without stopping timer 2
+    // FIXME: I think read order is important here, double check
     lowByteNew  = get_timer2_low();
     highByteNew = get_timer2_high();
     
@@ -188,15 +151,10 @@ void timer2_isr(void) __interrupt (5)
     previous = current;
     current = (highByteNew << 8) | lowByteNew;
     
-    //printf("P: %u\r\n", previous);
-    //printf("C: %u\r\n", current);
     
     // check for overflow condition
     if (current < previous)
     {
-        // DEBUG:
-        //printf("Over:\r\n");
-        
         // FIXME: no magic numbers
         // if overflow, we must compute difference by taking into account wrap around at maximum variable size
         duration = USHRT_MAX  - previous + current;
