@@ -176,8 +176,7 @@ void timer2_isr(void) __interrupt (5)
     {
         // A long stretch without signal level change occurred. This could
         // be the gap between two transmission.
-        if ((repeatCount == 0) || (abs(duration - timings[0]) < gapMagicNumber))
-        //if (abs(duration - timings[0]) < gapMagicNumber)
+        if (abs(duration - timings[0]) < gapMagicNumber)
         {
           // This long signal is close in length to the long signal which
           // started the previously recorded timings; this suggests that

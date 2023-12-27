@@ -8,7 +8,7 @@ The OB38S003 was originally intended for radio decoding but lacked support for a
 As a consequence many people just bypass the microcontroller with a hardware modification:  
 https://github.com/arendst/Tasmota/discussions/13283  
 
-Decoding may then be done directly then on the ESP8265 (e.g., ESPHome supports rcswitch).  
+Decoding may then be done directly on the ESP8265 (e.g., ESPHome supports rcswitch).  
 
 
 The intent here is to avoid the need to perform hardware modification.  
@@ -18,7 +18,7 @@ This can be accomplished in two ways:
    (this essentially bypasses the microcontroller but using software instead of hardware modification)  
    
 2) microcontroller decodes radio packets and sends formatted to ESP8265 over uart/serial  
-   (similar to factory firmware but with source code protocols can be added, behavior modified, etc.)  
+   (similar to factory firmware but with ability for source code protocols to be added, behavior modified, etc.)  
    
 A benefit to keeping the microcontroller involved is that the radio LED and buzzer may still be controlled.  
 The downside is the effort required to develop firmware and flash by the end user.  
@@ -70,11 +70,8 @@ A MSM9066 programmer is required currently ($30 USD as of 7/14/2023 on AliExpres
 Logic analyzer decodings of several flasher operations/programming cycles have been captured:  
 https://github.com/mightymos/msm9066_capture  
 
-HELP is needed to create an alternative programmer/flasher:  
-https://github.com/mightymos/msm9066_capture/issues/1  
-
-
-Use of a cheaper flasher hardware or using Tasmota itself is probably required for widespread use.  
+TODO: ADD link to alternative flasher written for built in ESP8256
+TODO: ADD notes about limitations of flasher 
 
 
 # Special Thanks

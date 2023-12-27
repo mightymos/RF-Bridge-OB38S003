@@ -98,16 +98,7 @@ void init_uart(void)
     SRELL = 0xcc;
 }
 
-void uart_rx_enabled(void)
-{
-	// uart reception enabled
-    REN = 1;
-}
 
-void uart_rx_disabled(void)
-{
-    REN = 0;
-}
 
 void init_serial_interrupt(void)
 {
@@ -192,39 +183,9 @@ void init_timer2_capture(void)
     T2CON = 0xD1;
 }
 
-inline void enable_global_interrupts(void)
-{
-    EA = 1;
-}
-
-inline void disable_global_interrupts(void)
-{
-    EA = 0;
-}
-
 bool global_interrupts_are_enabled(void)
 {
     return EA;
-}
-
-inline void enable_timer0_interrupt(void)
-{
-    ET0 = 1;
-}
-
-inline void disable_timer0_interrupt(void)
-{
-    ET0 = 0;
-}
-
-inline void enable_timer1_interrupt(void)
-{
-    ET1 = 1;
-}
-
-inline void disable_timer1_interrupt(void)
-{
-    ET1 = 0;
 }
 
 void load_timer0(const unsigned int value)

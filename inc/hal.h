@@ -19,7 +19,7 @@
 
 // we place these directly in include file because
 // if placed in source file they do not get inlined
-// and so take up code space
+// and so take up additional code space
 inline void buzzer_on(void)
 {
     BUZZER = 1;
@@ -121,6 +121,47 @@ inline bool uart_rx_pin_level(void)
     return UART_RX_PIN;
 }
 
+inline void uart_rx_enabled(void)
+{
+	// uart reception enabled
+    REN = 1;
+}
+
+inline void uart_rx_disabled(void)
+{
+    REN = 0;
+}
+
+inline void enable_global_interrupts(void)
+{
+    EA = 1;
+}
+
+inline void disable_global_interrupts(void)
+{
+    EA = 0;
+}
+
+
+inline void enable_timer0_interrupt(void)
+{
+    ET0 = 1;
+}
+
+inline void disable_timer0_interrupt(void)
+{
+    ET0 = 0;
+}
+
+inline void enable_timer1_interrupt(void)
+{
+    ET1 = 1;
+}
+
+inline void disable_timer1_interrupt(void)
+{
+    ET1 = 0;
+}
 
 extern bool get_radio_wake(void);
 extern unsigned char get_stack_pointer(void);
@@ -139,15 +180,8 @@ extern void init_timer1(void);
 extern void init_timer2_capture(void);
 extern void enable_capture_interrupt(void);
 extern void disable_capture_interrupt(void);
-extern void enable_global_interrupts(void);
-extern void disable_global_interrupts(void);
 extern bool global_interrupts_are_enabled(void);
 
-extern void disable_timer0_interrupt(void);
-extern void enable_timer0_interrupt(void);
-
-extern void disable_timer1_interrupt(void);
-extern void enable_timer1_interrupt(void);
 
 extern void load_timer0(const unsigned int value);
 extern void load_timer1(const unsigned int value);

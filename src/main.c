@@ -15,6 +15,9 @@
 #include "delay.h"
 
 #include "hal.h"
+
+// FIXME: probably avoid this dependency later
+#include "ob38s003_sfr.h"
 #include "rcswitch.h"
 #include "timer.h"
 #include "uart.h"
@@ -335,6 +338,21 @@ void startup_blink(void)
     led_off();
 }
 
+void startup_reset_status(void)
+{
+    uint8_t index;
+    
+    for (index = 1; index <= RSTS; index++)
+    {
+        led_on();
+        //reset_pin_on();
+        delay1ms(1000);
+        led_off();
+        //reset_pin_off();
+        delay1ms(1000);
+    }
+}
+
 
 //-----------------------------------------------------------------------------
 // main() Routine
@@ -361,10 +379,12 @@ int main (void)
     unsigned int rxdata = UART_NO_DATA;
     
     // look for level transitions on pins rather than absolute level, so that we can count signal edges
-    //bool        rdataLevelOld;
-    //static bool rdataLevelNew = false;
+    bool        rdataLevelOld;
+    static bool rdataLevelNew = false;
     
-    //unsigned char rdataEdgeCount = 0;
+    bool        tdataLevelOld;
+    static bool tdataLevelNew = false;
+    
 
     // hardware initialization
     set_clock_1t_mode();
@@ -390,11 +410,11 @@ int main (void)
     
     // FIXME: pin used for now to read for determining mirror mode or decoding mode
     // default state is reset high if using software uart
-    reset_pin_on();
+    //reset_pin_on();
     
     // software serial
-    init_software_uart();
-    enable_timer0();
+    //init_software_uart();
+    //enable_timer0();
         
     // provides one millisecond tick
     // (warning: cannot be used at the same time as software uart for now)
@@ -403,15 +423,14 @@ int main (void)
     // provides ten microsecond tick
     init_timer1();
     
+    // tick style functionality
+    enable_timer1_interrupt();
+    
     // timer supports compare and capture module for determining pulse lengths of received radio signals
     init_timer2_capture();
 
     // radio receiver edge detection
     init_capture_interrupt();
-
-    
-    // tick style functionality
-    enable_timer1_interrupt();
     
     
     // enable radio receiver
@@ -419,7 +438,8 @@ int main (void)
     
     //startup_beep();
     //startup_debug(stackStart);
-    startup_blink();
+    //startup_blink();
+    startup_reset_status();
     
     // just to give some startup time
     delay1ms(500);
@@ -443,21 +463,37 @@ int main (void)
         {
             // mirror radio pin levels to uart pins (used as gpio)
             // so that esp8265 can effectively decode the same signals
+            rdataLevelOld = rdataLevelNew;
+            rdataLevelNew = rdata_level();
             
-            // radio receiver
-            if (rdata_level())
+            // look for a level change (i.e., an edge)
+            // because I am thinking expliciting setting pin output constantly, even with no change, is somehow a bad idea
+            if (rdataLevelOld != rdataLevelNew)
             {
-                uart_tx_pin_on();
-            } else {
-                uart_tx_pin_off();
+                // radio receiver
+                if (rdataLevelNew)
+                {
+                    uart_tx_pin_on();
+                } else {
+                    uart_tx_pin_off();
+                }
             }
+
+            // FIXME: variable name may need to be changed
+            //        (is actually uart rx pin level)
+            tdataLevelOld = tdataLevelNew;
+            tdataLevelNew = uart_rx_pin_level();
             
-            // radio transmitter
-            if (uart_rx_pin_level())
+            if (tdataLevelOld != tdataLevelNew)
             {
-                tdata_on();
-            } else {
-                tdata_off();
+                
+                // radio transmitter
+                if (tdataLevelNew)
+                {
+                    tdata_on();
+                } else {
+                    tdata_off();
+                }
             }
         } else {
 
@@ -485,17 +521,24 @@ int main (void)
         }
 
 
-#if 0
+#if 1
 
-        // FIXME: we need to consider interactions when still doing this in mirror mode
-        // have we received a succesfully decoded radio packet?
-        if (available())
+        // when in mirror mode, just use successful radio decode (onboard microcontroller)
+        // as sign to toggle led for human feedback
+        //
+        // otherwise send out decoded packet over serial port
+        if (available() && gMirrorMode)
         {
+            // flickers as packets detected so nice feedback to human
+            led_toggle();
             
+            // clears flag indicating packet was decoded
+            reset_available();
+        } else if (available() && !gMirrorMode)
+        {
+            // FIXME: there must be a better way to lock
             // this is needed to avoid corrupting the currently received packet
-            // a better way would be some type of lock or queue
             disable_capture_interrupt();
-            //disable_global_interrupts();
             
             // formatted for tasmota
             radio_decode_report();
@@ -506,14 +549,11 @@ int main (void)
             // DEBUG:
             //radio_timings();
             
-            // flickers as packets detected so nice feedback to human
             led_toggle();
-
 
             reset_available();
             
             enable_capture_interrupt();
-            //enable_global_interrupts();
             
             // DEBUG: using software uart
             // FIXME: a little dangerous as-is because basically sits in a while() loop ?
@@ -534,17 +574,16 @@ int main (void)
 #endif
         
         
-#if 0
-        // DEBUG:
-        // display serial message about every 10 seconds
+#if 1
+        // do something about every ten seconds to show loop is alive
         elapsedTimeHeartbeat = get_elapsed_timer1(previousTimeHeartbeat);
 
         if (elapsedTimeHeartbeat >= 1000000)
         {
             // test software uart
-            puthex2(heartbeat);
-            putc('\r');
-            putc('\n');
+            //puthex2(heartbeat);
+            //putc('\r');
+            //putc('\n');
             
             led_toggle();
             

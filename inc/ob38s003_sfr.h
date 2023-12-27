@@ -40,6 +40,8 @@ __sfr __at (0xCB) CRCH;
 __sfr __at (0xCC) TL2;
 __sfr __at (0xCD) TH2;
 
+__sfr __at (0xA1) RSTS;
+
 __sfr __at (0xF7) TAKEY;
 
 //sfr16 CC1   = 0xC2;
