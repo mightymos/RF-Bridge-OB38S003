@@ -64,7 +64,7 @@ https://github.com/arendst/Tasmota/tree/development/lib/lib_rf/rc-switch
 # Flasher
 Reprogramming the OB38S003 requires erasing the chip because the stock firmware is protected.  
 This means that, once erased, the stock firmware cannot be recovered because it has not been read out.  
-A MSM9066 programmer is required currently ($30 USD as of 7/14/2023 on AliExpress; $27 on eBay as of 11/20/2023).  
+A MSM9066 programmer costs $30 USD as of 7/14/2023 on AliExpress and $27 on eBay as of 11/20/2023.  
 
 # Flasher (alternative)
 Logic analyzer decodings of several flasher operations/programming cycles have been captured:  
