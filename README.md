@@ -70,9 +70,10 @@ A MSM9066 programmer is required currently ($30 USD as of 7/14/2023 on AliExpres
 Logic analyzer decodings of several flasher operations/programming cycles have been captured:  
 https://github.com/mightymos/msm9066_capture  
 
-TODO: ADD link to alternative flasher written for built in ESP8256
-TODO: ADD notes about limitations of flasher 
+An Arduino alternative flasher written for the built in ESP8265 is available:  
+https://github.com/mightymos/OnbrightFlasher
 
+However, it is very limited and cumbersome to use due to reset pin functionality being disabled.
 
 # Special Thanks
 We thank Vincent Defert for the use of modified makefiles and familiarity with 8051/8052 based microcontrollers:  
