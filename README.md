@@ -26,7 +26,11 @@ The downside is the effort required to develop firmware and flash by the end use
 The firmware radio decoding is inspired by 1) RF-Bridge-EFM8BB1 (Portisch) and 2) rc-switch projects.  
 
 # Status
-THIS IS A WORK IN PROGRESS and should not be used by typical users (yet).  
+THIS IS A WORK IN PROGRESS and should not be used by typical users.  
+
+Erasing and reprogramming the microcontroller is cumbersome without the official programmer.  
+I am using the microcontroller as a pass through to ESPHome now.  
+So the code is a mess for selecting other uses.  
 
 That said, decoding of protocols 1 and 2 seems to work reliably.  
 For example door reed sensors - both stock and modified - have been successfully decoded.  

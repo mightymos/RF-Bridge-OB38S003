@@ -31,7 +31,7 @@
 
 
 // this is returned along with an ack to a specific serial command
-// good demonstration that serial pins and web interface in tasmota is working
+// good demonstration that serial pins is working
 #define FIRMWARE_VERSION 0x03
 
 
@@ -48,12 +48,15 @@
 // radio packet decoding is then the responsibility of the ESP8265
 //#define MIRROR_MODE 1
 
+// uncomment only one line at a time
 const bool gMirrorMode = true;
+//const bool gMirrorMode = false;
 
 // sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
 // millisecond tick count
 //extern void timer0_isr(void) __interrupt (1);
 // software uart
+// FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
 extern void tm0(void)        __interrupt (1);
 extern void timer1_isr(void) __interrupt (3);
 extern void uart_isr(void)   __interrupt (4);
@@ -332,12 +335,17 @@ void startup_beep(void)
 
 void startup_blink(void)
 {
-    // startup blink
+    // double blink
     led_on();
-    delay1ms(500);
+    delay1ms(1000);
+    led_off();
+    
+    led_on();
+    delay1ms(1000);
     led_off();
 }
 
+// this can be pretty slow to blink out an eight bit reset register
 void startup_reset_status(void)
 {
     uint8_t index;
@@ -397,7 +405,9 @@ int main (void)
     
     // FIXME: would like to read a pin somewhere to choose mode?
     //        and allow switching between modes?
-    // choose at startup if we want to mirror radio pins to esp8265 or enable uart to output decoded radio packet instead
+    // selectively configuration hardware depending on if we want:
+    // [1] mirror radio pins to esp8265
+    // [2] or enable uart to output decoded radio packet instead
     if (!gMirrorMode)
     {
         // setup hardware serial
@@ -408,7 +418,7 @@ int main (void)
         init_serial_interrupt();
     }
     
-    // FIXME: pin used for now to read for determining mirror mode or decoding mode
+    // FIXME: consider reading pin state to select mirror mode or decoding mode
     // default state is reset high if using software uart
     //reset_pin_on();
     
@@ -427,10 +437,10 @@ int main (void)
     enable_timer1_interrupt();
     
     // timer supports compare and capture module for determining pulse lengths of received radio signals
-    init_timer2_capture();
+    //init_timer2_capture();
 
     // radio receiver edge detection
-    init_capture_interrupt();
+    //init_capture_interrupt();
     
     
     // enable radio receiver
@@ -438,14 +448,14 @@ int main (void)
     
     //startup_beep();
     //startup_debug(stackStart);
-    //startup_blink();
-    startup_reset_status();
+    startup_blink();
+    //startup_reset_status();
     
     // just to give some startup time
     delay1ms(500);
 
     // enable interrupts
-    enable_global_interrupts();
+    //enable_global_interrupts();
 
         
     // watchdog will force a reset, unless we periodically write to it, demonstrating loop is not stuck somewhere
@@ -521,7 +531,7 @@ int main (void)
         }
 
 
-#if 1
+#if 0
 
         // when in mirror mode, just use successful radio decode (onboard microcontroller)
         // as sign to toggle led for human feedback
@@ -574,7 +584,7 @@ int main (void)
 #endif
         
         
-#if 1
+#if 0
         // do something about every ten seconds to show loop is alive
         elapsedTimeHeartbeat = get_elapsed_timer1(previousTimeHeartbeat);
 
