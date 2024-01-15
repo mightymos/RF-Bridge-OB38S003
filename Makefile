@@ -79,11 +79,7 @@ PROJECT_NAME := RF-Bridge-OB38S003
 SRCS := \
     src/delay.c \
     src/hal.c \
-	src/main.c \
-    src/rcswitch.c \
-    src/timer.c \
-    src/uart.c \
-    src/uart_software.c
+	src/main.c
 
 CONSOLE_BAUDRATE := 19200
 CONSOLE_PORT := ttyUSB0
