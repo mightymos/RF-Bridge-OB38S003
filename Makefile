@@ -76,14 +76,24 @@ include makefiles/0-directories.mk
 # Project settings -----------------------------------------------------
 PROJECT_NAME := RF-Bridge-OB38S003
 
-SRCS := \
-    src/delay.c \
-    src/hal.c \
-	src/main.c \
-    src/rcswitch.c \
-    src/timer.c \
-    src/uart.c \
-    src/uart_software.c
+ifeq ($(PASSTHROUGH_MODE),1)
+    SRCS := \
+        src/delay.c \
+        src/hal.c \
+        src/main.c
+else
+    SRCS := \
+        src/delay.c \
+        src/hal.c \
+        src/main.c \
+        src/rcswitch.c \
+        src/state_machine.c \
+        src/timer.c \
+        src/uart.c \
+        src/uart_software.c
+endif
+
+
 
 CONSOLE_BAUDRATE := 19200
 CONSOLE_PORT := ttyUSB0
