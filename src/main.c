@@ -39,17 +39,7 @@
 
 // constants
 
-// FIXME: using both command line switch and define
-//#define PASSTHROUGH_MODE 0
-//#define PASSTHROUGH_MODE 1
-
-
-
-// DEBUG: bench sensor
-//21:47:05.533 RSL: RESULT = {"Time":"2023-08-05T21:47:05","RfReceived":{"Sync":10280,"Low":340,"High":1010,"Data":"80650A","RfKey":"None"}}
-//19:16:47.313 RSL: RESULT = {"Time":"2023-08-05T19:16:47","RfReceived":{"Sync":10280,"Low":340,"High":1010,"Data":"80650E","RfKey":"None"}}
-
-
+// FIXME: using both command line switch and define to produce two different hex files which can lead to all kinds of mistakes
 // FIXME: do not understand why compiler does not complain if passthrough_mode is not defined at all
 // this simply monitors signal levels in/out from radio receiver/transmitter chips and mirrors the levels on the TXD/RXD pins going to ESP8265
 // radio packet decoding is then the responsibility of the ESP8265
