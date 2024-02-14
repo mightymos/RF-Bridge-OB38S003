@@ -1,0 +1,234 @@
+# for use with the Sonoff v2.2 Radio to Wifi Bridge
+# modified using this firmware for the microcontroller
+# https://github.com/mightymos/RF-Bridge-OB38S003
+# or by hardware modification
+
+esphome:
+  name: rf-bridge
+  
+  # Automatically add the mac address to the name
+  # so you can use a single firmware for all devices
+  name_add_mac_suffix: true
+  
+esp8266:
+  board: esp8285
+  
+  # it was required to set this to true to avoid unhandled resets
+  # however, now set to false also appears to be okay
+  # possible that flash was not being erased or initialized or something after first flash?
+  restore_from_flash: true
+  #restore_from_flash: false
+
+# use this if hardware is a generic esp32 board combined with a receiver module
+# correct pin definitions below as appropriate
+#esp32:
+#  board: nodemcu-32s
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  
+  # do we want this seems to be bad downsides for distant APs?
+  fast_connect: false
+
+# Enable logging
+logger:
+  # this is default apparently
+  level: DEBUG
+  
+  # in other words the LOG pin on J2 connector
+  hardware_uart: UART1
+
+# Enable over-the-air updates.
+ota:
+  safe_mode: true
+  password: !secret ota_password
+  
+# Enable Home Assistant API
+api:
+  password: !secret api_password
+
+
+status_led:
+  # see sonoff_r2v2.2_connector_pinouts_fv1.txt for pin information
+  pin: GPIO13
+
+web_server:
+  port: 80
+  
+  # we do not authenticate web server so disable over the air updates
+  ota: false
+  local: true
+  
+
+# FIXME: add comment
+remote_receiver:
+  pin:
+    number: GPIO3
+    mode:
+      input: true
+      pullup: false
+      
+  # suggested on github
+  tolerance: 60%
+  filter: 4us
+  idle: 4ms
+  
+  # 
+  dump: rc_switch
+
+  
+# FIXME: add comment
+remote_transmitter:
+  pin: GPIO1
+  
+  # Set this to 50% if you’re working with IR LEDs and to 100% if working with other things like 433MHz transmitters
+  carrier_duty_percent: 100%
+
+
+switch:
+  - platform: template
+    name: RF Transmit Button
+    optimistic: true
+    turn_on_action:
+      - remote_transmitter.transmit_rc_switch_raw:
+          code: '10111100110001100101010110101'
+          protocol: 1
+          repeat:
+            times: 8
+            wait_time: 30ms 
+            
+binary_sensor:
+
+# bench sensor
+  - platform: remote_receiver
+    name: "door open"
+    internal: true
+    rc_switch_raw:
+      code: '001101010111001000001010'
+# model 101
+#      code: '010010101111000100001010'
+    on_press:
+      then:
+        - binary_sensor.template.publish:
+            id: bench_sensor
+            state: ON
+            
+  - platform: remote_receiver
+    name: "door close"
+    internal: true
+    rc_switch_raw:
+      code: '001101010111001000001110'
+# model 101
+#      code: '010010101111000100001110'
+    on_press:
+      then:
+        - binary_sensor.template.publish:
+            id: bench_sensor
+            state: OFF
+
+  - platform: template
+    name: "Bench Sensor"
+    id: bench_sensor
+    device_class: door
+    publish_initial_state : true
+    
+# front door
+  - platform: remote_receiver
+    name: "door open"
+    internal: true
+    rc_switch_raw:
+      code: '100101100111111100001010'
+    on_press:
+      then:
+        - binary_sensor.template.publish:
+            id: frontdoor_sensor
+            state: ON
+            
+  - platform: remote_receiver
+    name: "door close"
+    internal: true
+    rc_switch_raw:
+      code: '100101100111111100001110'
+    on_press:
+      then:
+        - binary_sensor.template.publish:
+            id: frontdoor_sensor
+            state: OFF
+
+  - platform: template
+    name: "Front Door Sensor"
+    id: frontdoor_sensor
+    device_class: door
+    publish_initial_state : true
+    
+
+# back door
+  - platform: remote_receiver
+    name: "door open"
+    internal: true
+    rc_switch_raw:
+      code: '000101101110000000001010'
+    on_press:
+      then:
+        - binary_sensor.template.publish:
+            id: backdoor_sensor
+            state: ON
+            
+  - platform: remote_receiver
+    name: "door close"
+    internal: true
+    rc_switch_raw:
+      code: '000101101110000000001110'
+    on_press:
+      then:
+        - binary_sensor.template.publish:
+            id: backdoor_sensor
+            state: OFF
+
+  - platform: template
+    name: "Back Door Sensor"
+    id: backdoor_sensor
+    device_class: door
+    publish_initial_state : true
+    
+    
+# laundry door
+  - platform: remote_receiver
+    name: "door open"
+    internal: true
+    rc_switch_raw:
+      code: '100000000110010100001010'
+    on_press:
+      then:
+        - binary_sensor.template.publish:
+            id: laundrydoor_sensor
+            state: ON
+            
+  - platform: remote_receiver
+    name: "door close"
+    internal: true
+    rc_switch_raw:
+      code: '100000000110010100001110'
+    on_press:
+      then:
+        - binary_sensor.template.publish:
+            id: laundrydoor_sensor
+            state: OFF
+
+  - platform: template
+    name: "Laundry Door Sensor"
+    id: laundrydoor_sensor
+    device_class: door
+    publish_initial_state : true
+    
+    
+#text:
+#  - platform: template
+#    name: Front Door Open Code
+#    id: frontdoor_open
+#    min_length: 0
+#    max_length: 24
+#    mode: text
+#    pattern: "[a-z]+"
+#    optimistic: true
