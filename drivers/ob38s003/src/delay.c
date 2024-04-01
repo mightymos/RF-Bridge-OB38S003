@@ -1,7 +1,7 @@
 /*
  * SPDX-License-Identifier: BSD-2-Clause
  * 
- * Copyright (c) 2022 Jonathan Armstrong. All rights reserved.
+ * Copyright (c) 2024 Jonathan Armstrong. All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without 
  * modification, are permitted provided that the following conditions 
@@ -27,14 +27,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  */
-//#include "project-defs.h"
-
-#include <8052.h>
-//#include <stdint.h>
-
 #include "delay.h"
 
-// these assume 1T mode @ 16 MHz
+// these assume 1T mode @ 16 MHz on OB38S003 microcontroller
 // in other words, they were tuned by observing oscilloscope traces
 // and are therefore useless with other clock modes or with another microcontroller
 

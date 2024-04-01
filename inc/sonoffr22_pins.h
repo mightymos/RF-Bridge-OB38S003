@@ -1,5 +1,7 @@
+#ifndef INC_SONOFFR22_PINS_H_
+#define INC_SONOFFR22_PINS_H_
+
 // pin defines
-// avoid exposing to other compilation units
 #define BUZZER      P0_0
 #define TDATA       P0_7
 #define UART_TX_PIN P1_0
@@ -15,3 +17,5 @@
 
 //
 #define LED         P3_0
+
+#endif

@@ -1,5 +1,32 @@
-//=========================================================
-//=========================================================
+/*
+ * SPDX-License-Identifier: BSD-2-Clause
+ * 
+ * Copyright (c) 2024 Jonathan Armstrong. All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without 
+ * modification, are permitted provided that the following conditions 
+ * are met:
+ * 
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * 
+ * 2. Redistributions in binary form must reproduce the above copyright 
+ * notice, this list of conditions and the following disclaimer in the 
+ * documentation and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE 
+ * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; 
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 //-----------------------------------------------------------------------------
 // Includes
@@ -19,7 +46,7 @@
 #include "hal.h"
 
 // additional special function registers not present in standard 8051/8052
-#include "ob38s003_sfr.h"
+#include "OB38S003.h"
 
 // the classic library for radio packet decoding
 #include "rcswitch.h"
@@ -36,30 +63,15 @@
 #include "uart_software.h"
 
 
-
-// constants
-
-// FIXME: using both command line switch and define to produce two different hex files which can lead to all kinds of mistakes
-// FIXME: do not understand why compiler does not complain if passthrough_mode is not defined at all
-// this simply monitors signal levels in/out from radio receiver/transmitter chips and mirrors the levels on the TXD/RXD pins going to ESP8265
-// radio packet decoding is then the responsibility of the ESP8265
-//#define PASSTHROUGH_MODE 0
-#define PASSTHROUGH_MODE 1
-
-
-#if !PASSTHROUGH_MODE
-
-    // sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
-    // millisecond tick count
-    //extern void timer0_isr(void) __interrupt (1);
-    // software uart
-    // FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
-    extern void tm0(void)        __interrupt (1);
-    extern void timer1_isr(void) __interrupt (3);
-    extern void uart_isr(void)   __interrupt (4);
-    extern void timer2_isr(void) __interrupt (5);
-    
-#endif
+// sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
+// millisecond tick count
+//extern void timer0_isr(void) __interrupt (1);
+// software uart
+// FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
+extern void tm0(void)        __interrupt (d_T0_Vector);
+extern void timer1_isr(void) __interrupt (d_T1_Vector);
+extern void uart_isr(void)   __interrupt (d_UART0_Vector);
+extern void timer2_isr(void) __interrupt (d_T2_Vector);
 
 
 //-----------------------------------------------------------------------------
@@ -170,12 +182,7 @@ int main (void)
     buzzer_off();
     tdata_off();
     
-
-    // conditional compilation on if we want hardware to:
-    // [1] mirror radio pins to esp8265
-    // [2] or enable uart to output decoded radio packet in serial format instead
     
-#if PASSTHROUGH_MODE
     // setup hardware serial
     init_uart();
     uart_rx_enabled();
@@ -202,12 +209,14 @@ int main (void)
     enable_timer1_interrupt();
     
     // timer supports compare and capture module for determining pulse lengths of received radio signals
-    //init_timer2_capture();
+    init_timer2_capture();
 
     // radio receiver edge detection
-    //init_capture_interrupt();
-
-#endif    
+    init_capture_interrupt();
+	
+    // enable interrupts
+    enable_global_interrupts();
+ 
     
     // enable radio receiver
     radio_receiver_on();
@@ -220,9 +229,6 @@ int main (void)
     // just to give some startup time
     delay1ms(500);
 
-    // enable interrupts
-    //enable_global_interrupts();
-
         
     // watchdog will force a reset, unless we periodically write to it, demonstrating loop is not stuck somewhere
     enable_watchdog();
@@ -234,43 +240,6 @@ int main (void)
         refresh_watchdog();
     
     
-        // mirror radio voltage levels to esp8265, otherwise output decoded serial data
-#if PASSTHROUGH_MODE
-        // mirror radio pin levels to uart pins (used as gpio)
-        // so that esp8265 can effectively decode the same signals
-        rdataLevelOld = rdataLevelNew;
-        rdataLevelNew = rdata_level();
-        
-        // look for a level change (i.e., an edge)
-        // because I am thinking expliciting setting pin output constantly, even with no change, is somehow a bad idea
-        if (rdataLevelOld != rdataLevelNew)
-        {
-            // radio receiver
-            if (rdataLevelNew)
-            {
-                uart_tx_pin_on();
-            } else {
-                uart_tx_pin_off();
-            }
-        }
-
-        // FIXME: variable name may need to be changed
-        //        (is actually uart rx pin level)
-        tdataLevelOld = tdataLevelNew;
-        tdataLevelNew = uart_rx_pin_level();
-        
-        if (tdataLevelOld != tdataLevelNew)
-        {
-            
-            // radio transmitter
-            if (tdataLevelNew)
-            {
-                tdata_on();
-            } else {
-                tdata_off();
-            }
-        }
-#else
 
         // try to get one byte from uart rx buffer
         rxdata = uart_getc();
@@ -293,24 +262,7 @@ int main (void)
             uart_state_machine(rxdata);
         }
             
-#endif
 
-
-#if PASSTHROUGH_MODE
-
-        // when in mirror mode, just use successful radio decode (onboard microcontroller)
-        // as sign to toggle led for human feedback
-        //
-        // otherwise send out decoded packet over serial port
-        //if (available())
-        //{
-        //    // flickers as packets detected so nice feedback to human
-        //    led_toggle();
-        //    
-        //    // clears flag indicating packet was decoded
-        //    reset_available();
-        //}
-#else
         if (available())
         {
             // FIXME: there must be a better way to lock
@@ -335,23 +287,21 @@ int main (void)
             // DEBUG: using software uart
             // FIXME: a little dangerous as-is because basically sits in a while() loop ?
             // protocol index
-            putc('p');
-            putc('x');
-            puthex2(get_received_protocol());
-            putc(' ');
+            //putc('p');
+            //putc('x');
+            //puthex2(get_received_protocol());
+            //putc(' ');
 
             // bits received
-            putc('b');
-            putc('x');
-            puthex2(get_received_bitlength());
-            putc('\r');
-            putc('\n');
+            //putc('b');
+            //putc('x');
+            //puthex2(get_received_bitlength());
+            //putc('\r');
+            //putc('\n');
         }
-    
-#endif
         
         
-#if 0
+#if 1
         // do a task like blink led about every ten seconds to show loop is alive
         elapsedTimeHeartbeat = get_elapsed_timer1(previousTimeHeartbeat);
 

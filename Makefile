@@ -35,72 +35,69 @@
 
 # Usage ----------------------------------------------------------------
 #
-# Build executable in release mode:
+# Build executables:
 #   make
-#
-# Build executable in debug mode:
-#   make BUILD_MODE=debug
-#
-# Build documentation:
-#   make doc
-#
-# Upload executable to MCU:
-#   make upload
-#
-# Open serial console in new window:
-#   make console
 #
 # Clean project (remove all build files):
 #   make clean
 
 # Target MCU settings --------------------------------------------------
-# for OB38S003 used in Sonoff v2.2 receivers (white color)
-MCU_FREQ_KHZ := 16000
-#STACK_SIZE := 16
-
-
-#
-MEMORY_SIZES = \
-    --iram-size 256 \
-    --xram-size 256 \
-    --code-size 8192
+# FIXME: for EFM8BB1 in Sonoff v2.0 receivers (black color box)
+#MCU_FREQ_KHZ := 24500
+# for OB38S003 used in Sonoff v2.2 receivers (white color box)
+MCU_FREQ_KHZ = 16000
 
 #
-MEMORY_MODEL := --model-small
+MEMORY_SIZES  = --iram-size 256 --xram-size 256 --code-size 8192
+MEMORY_MODEL  = --model-small
+HAS_DUAL_DPTR = n
 
-HAS_DUAL_DPTR := n
+# 
+SOURCE_DIR     = src
+BUILD_DIR      = build
 
-# Define UNISTC_DIR, HAL_DIR, DRIVER_DIR, and MAKE_DIR -----------------
-include makefiles/0-directories.mk
+INCLUDE_DIR    = inc
+DRIVER_DIR     = drivers/ob38s003/inc
+DRIVER_SRC_DIR = drivers/ob38s003/src
 
-# Project settings -----------------------------------------------------
-PROJECT_NAME := RF-Bridge-OB38S003
-
-ifeq ($(PASSTHROUGH_MODE),1)
-    SRCS := \
-        src/delay.c \
-        src/hal.c \
-        src/main.c
-else
-    SRCS := \
-        src/delay.c \
-        src/hal.c \
-        src/main.c \
-        src/rcswitch.c \
-        src/state_machine.c \
-        src/timer.c \
-        src/uart.c \
-        src/uart_software.c
-endif
+INCLUDE_DIRS = $(addprefix -I, $(INCLUDE_DIR) $(DRIVER_DIR))
 
 
 
-CONSOLE_BAUDRATE := 19200
-CONSOLE_PORT := ttyUSB0
+# FIXME: add pass through mode
+# FIXME: support multiple microcontrollers
+SOURCES = $(SOURCE_DIR)/main_passthrough.c $(DRIVER_SRC_DIR)/delay.c
+OBJECTS = $(BUILD_DIR)/main_passthrough.o $(BUILD_DIR)/delay.o
+TARGET  = $(BUILD_DIR)/main_passthrough.ihx
 
-ISP_PORT := COM3
+# Toolchain settings ---------------------------------------------------
 
-# Boilerplate rules ----------------------------------------------------
-include $(MAKE_DIR)/1-mcu-settings.mk
-#-include $(DEP_FILE)
-include $(MAKE_DIR)/2-mcu-rules.mk
+TARGET_ARCH = -mmcs51
+
+AS       = sdas8051
+CC       = sdcc
+ASFLAGS  = -plosgffw
+CPPFLAGS = $(PROJECT_FLAGS) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIRS)
+CFLAGS   = $(TARGET_ARCH) $(MEMORY_MODEL) $(CPPFLAGS)
+LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
+
+# Rules ----------------------------------------------------------------
+
+.PHONY: all clean
+
+all: $(TARGET)
+
+clean:
+	rm -rf $(BUILD_DIR)
+
+# basically the linking step
+$(TARGET): $(OBJECTS)
+	mkdir -p $(dir $@)
+	$(CC) $(LDFLAGS) -o $@ $^
+
+# basically the compilation step
+$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
+	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -c -o $@ $^
+	
+#$(BUILD_DIR)/%.o: $(DRIVER_SRC_DIR)/%.c
+#	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -c -o $@ $^
