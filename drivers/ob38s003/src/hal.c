@@ -4,11 +4,8 @@
  *      Author: Jonathan Armstrong
  */
 
-#include <8052.h>
-
- 
 #include "hal.h"
-#include "ob38s003_sfr.h"
+#include "OB38S003.h"
 
 
 // pg. 3 of OB38S003 datasheet
@@ -80,7 +77,7 @@ void init_uart(void)
     SM1 = 1;
     
     // see formula below with SMOD = 1
-    PCON |= SMOD;
+    PCON |= 0x80;
     
     // SRELPS0 = 1;
     PFCON |= 0x10;
@@ -126,7 +123,7 @@ void enable_capture_interrupt(void)
 void init_timer0(void)
 {
     // 16-bit mode
-    TMOD |= T0_M0;
+    TMOD |= 0x01;
     
     // FIXME: T0PS 0x01 prescaler Fosc
     // FIXME: this would not necessarily clear upper bit, so bad HAL
@@ -151,7 +148,7 @@ void init_timer0(void)
 void init_timer1(void)
 {
     // 16-bit mode
-    TMOD |= T1_M0;
+    TMOD |= 0x10;
     
     // T1PS prescaler Fosc
     // b01 = FOCS

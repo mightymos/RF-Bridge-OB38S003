@@ -66,11 +66,13 @@ INCLUDE_DIRS = $(addprefix -I, $(INCLUDE_DIR) $(DRIVER_DIR))
 
 # FIXME: add pass through mode
 # FIXME: support multiple microcontrollers
-SOURCES = $(SOURCE_DIR)/main_passthrough.c $(DRIVER_SRC_DIR)/delay.c
-OBJECTS = $(BUILD_DIR)/main_passthrough.o $(BUILD_DIR)/delay.o
+SOURCES = $(SOURCE_DIR)/main_passthrough.c $(DRIVER_SRC_DIR)/delay.c $(DRIVER_SRC_DIR)/hal.c
+OBJECTS = $(BUILD_DIR)/main_passthrough.rel $(BUILD_DIR)/delay.rel $(BUILD_DIR)/hal.rel
 TARGET  = $(BUILD_DIR)/main_passthrough.ihx
 
-# Toolchain settings ---------------------------------------------------
+###########################################################
+# Toolchain settings
+###########################################################
 
 TARGET_ARCH = -mmcs51
 
@@ -81,7 +83,35 @@ CPPFLAGS = $(PROJECT_FLAGS) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIRS)
 CFLAGS   = $(TARGET_ARCH) $(MEMORY_MODEL) $(CPPFLAGS)
 LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 
-# Rules ----------------------------------------------------------------
+
+###########################################################
+# Build
+# $@ is equal to the target (in this case %.rel)
+# $^ is equal to the input (in this case %.c)
+###########################################################
+
+# basically the linking step
+$(TARGET): $(OBJECTS)
+	@echo "Linking $^"
+	$(CC) $(LDFLAGS) -o $@ $^
+	packihx $@ > $(basename $@).hex
+	dos2unix $(basename $@).hex
+
+# basically the compilation step
+$(BUILD_DIR)/%.rel: $(SOURCE_DIR)/%.c
+	mkdir -p $(dir $@)
+	@echo "Compiling $^"
+	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -c -o $@ $^
+	
+$(BUILD_DIR)/%.rel: $(DRIVER_SRC_DIR)/%.c
+	mkdir -p $(dir $@)
+	@echo "Compiling $^"
+	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -c -o $@ $^
+	
+
+###########################################################
+# Phony targets
+###########################################################
 
 .PHONY: all clean
 
@@ -89,15 +119,3 @@ all: $(TARGET)
 
 clean:
 	rm -rf $(BUILD_DIR)
-
-# basically the linking step
-$(TARGET): $(OBJECTS)
-	mkdir -p $(dir $@)
-	$(CC) $(LDFLAGS) -o $@ $^
-
-# basically the compilation step
-$(BUILD_DIR)/%.o: $(SOURCE_DIR)/%.c
-	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -c -o $@ $^
-	
-#$(BUILD_DIR)/%.o: $(DRIVER_SRC_DIR)/%.c
-#	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -c -o $@ $^
