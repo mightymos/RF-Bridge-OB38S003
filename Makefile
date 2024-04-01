@@ -42,6 +42,9 @@
 #   make clean
 
 # Target MCU settings --------------------------------------------------
+SONOFF_BLACK = OB38S003
+SONOFF_WHITE = EFM8BB1
+
 # FIXME: for EFM8BB1 in Sonoff v2.0 receivers (black color box)
 #MCU_FREQ_KHZ := 24500
 # for OB38S003 used in Sonoff v2.2 receivers (white color box)
@@ -54,20 +57,23 @@ HAS_DUAL_DPTR = n
 
 # 
 SOURCE_DIR     = src
-BUILD_DIR      = build
+DRIVER_SRC_DIR = drivers/ob38s003/src
 
 INCLUDE_DIR    = inc
 DRIVER_DIR     = drivers/ob38s003/inc
-DRIVER_SRC_DIR = drivers/ob38s003/src
 
 INCLUDE_DIRS = $(addprefix -I, $(INCLUDE_DIR) $(DRIVER_DIR))
 
-
+BUILD_DIR      = build
 
 # FIXME: add pass through mode
 # FIXME: support multiple microcontrollers
-SOURCES = $(SOURCE_DIR)/main_passthrough.c $(DRIVER_SRC_DIR)/delay.c $(DRIVER_SRC_DIR)/hal.c
-OBJECTS = $(BUILD_DIR)/main_passthrough.rel $(BUILD_DIR)/delay.rel $(BUILD_DIR)/hal.rel
+SOURCES = $(SOURCE_DIR)/main_passthrough.c \
+          $(DRIVER_SRC_DIR)/delay.c \
+		  $(DRIVER_SRC_DIR)/hal.c
+OBJECTS = $(BUILD_DIR)/main_passthrough.rel \
+		  $(BUILD_DIR)/delay.rel \
+		  $(BUILD_DIR)/hal.rel
 TARGET  = $(BUILD_DIR)/main_passthrough.ihx
 
 ###########################################################
@@ -83,7 +89,17 @@ CPPFLAGS = $(PROJECT_FLAGS) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIRS)
 CFLAGS   = $(TARGET_ARCH) $(MEMORY_MODEL) $(CPPFLAGS)
 LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 
+###########################################################
+# Phony targets
+###########################################################
 
+.PHONY: all clean
+
+all: $(TARGET)
+
+clean:
+	rm -rf $(BUILD_DIR)
+	
 ###########################################################
 # Build
 # $@ is equal to the target (in this case %.rel)
@@ -107,15 +123,3 @@ $(BUILD_DIR)/%.rel: $(DRIVER_SRC_DIR)/%.c
 	mkdir -p $(dir $@)
 	@echo "Compiling $^"
 	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -c -o $@ $^
-	
-
-###########################################################
-# Phony targets
-###########################################################
-
-.PHONY: all clean
-
-all: $(TARGET)
-
-clean:
-	rm -rf $(BUILD_DIR)
