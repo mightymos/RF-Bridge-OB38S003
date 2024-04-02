@@ -86,7 +86,7 @@ SOURCES = $(SOURCE_DIR)/main_rcswitch.c \
 
 OBJECT_NAMES = $(notdir $(SOURCES:.c=.rel))
 OBJECTS = $(patsubst %,$(OBJECT_DIR)/%,$(OBJECT_NAMES))
-TARGET  = $(OBJECT_DIR)/main_rcswitch.ihx
+TARGET  = $(BUILD_DIR)/main_rcswitch.ihx
 
 ###########################################################
 # Toolchain settings
