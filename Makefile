@@ -110,8 +110,16 @@ LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 all: $(TARGET)
 
 clean:
-	rm -rf $(BUILD_DIR)
-	rm -rf $(OBJECT_DIR)
+	rm -f $(BUILD_DIR)/*.hex
+	rm -f $(BUILD_DIR)/*.ihx
+	rm -f $(BUILD_DIR)/*.lk
+	rm -f $(BUILD_DIR)/*.map
+	rm -f $(BUILD_DIR)/*.mem
+	rm -f $(OBJECT_DIR)/*.asm
+	rm -f $(OBJECT_DIR)/*.lst
+	rm -f $(OBJECT_DIR)/*.rel
+	rm -f $(OBJECT_DIR)/*.rst
+	rm -f $(OBJECT_DIR)/*.sym
 	
 ###########################################################
 # Build
