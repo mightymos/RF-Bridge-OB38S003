@@ -68,7 +68,7 @@
 //extern void timer0_isr(void) __interrupt (1);
 // software uart
 // FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
-extern void tm0(void)        __interrupt (d_T0_Vector);
+//extern void tm0(void)        __interrupt (d_T0_Vector);
 extern void timer1_isr(void) __interrupt (d_T1_Vector);
 extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 extern void timer2_isr(void) __interrupt (d_T2_Vector);
@@ -164,13 +164,6 @@ int main (void)
     
     // upper eight bits hold error or no data flags
     unsigned int rxdata = UART_NO_DATA;
-    
-    // look for level transitions on pins rather than absolute level, so that we can count signal edges
-    bool        rdataLevelOld;
-    static bool rdataLevelNew = false;
-    
-    bool        tdataLevelOld;
-    static bool tdataLevelNew = false;
     
 
     // hardware initialization

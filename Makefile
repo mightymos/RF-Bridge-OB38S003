@@ -62,19 +62,31 @@ DRIVER_SRC_DIR = drivers/ob38s003/src
 INCLUDE_DIR    = inc
 DRIVER_DIR     = drivers/ob38s003/inc
 
-INCLUDE_DIRS = $(addprefix -I, $(INCLUDE_DIR) $(DRIVER_DIR))
-
+OBJECT_DIR     = object
 BUILD_DIR      = build
 
 # FIXME: add pass through mode
 # FIXME: support multiple microcontrollers
-SOURCES = $(SOURCE_DIR)/main_passthrough.c \
+#SOURCES = $(SOURCE_DIR)/main_passthrough.c \
+#          $(DRIVER_SRC_DIR)/delay.c \
+#		  $(DRIVER_SRC_DIR)/hal.c		  
+#OBJECTS = $(BUILD_DIR)/main_passthrough.rel \
+#		  $(BUILD_DIR)/delay.rel \
+#		  $(BUILD_DIR)/hal.rel
+#TARGET  = $(BUILD_DIR)/main_passthrough.ihx
+
+SOURCES = $(SOURCE_DIR)/main_rcswitch.c \
+		  $(SOURCE_DIR)/rcswitch.c \
+		  $(SOURCE_DIR)/state_machine.c \
+		  $(SOURCE_DIR)/uart.c \
           $(DRIVER_SRC_DIR)/delay.c \
-		  $(DRIVER_SRC_DIR)/hal.c
-OBJECTS = $(BUILD_DIR)/main_passthrough.rel \
-		  $(BUILD_DIR)/delay.rel \
-		  $(BUILD_DIR)/hal.rel
-TARGET  = $(BUILD_DIR)/main_passthrough.ihx
+		  $(DRIVER_SRC_DIR)/hal.c	\
+		  $(DRIVER_SRC_DIR)/timer.c
+		  
+
+OBJECT_NAMES = $(notdir $(SOURCES:.c=.rel))
+OBJECTS = $(patsubst %,$(OBJECT_DIR)/%,$(OBJECT_NAMES))
+TARGET  = $(OBJECT_DIR)/main_rcswitch.ihx
 
 ###########################################################
 # Toolchain settings
@@ -85,7 +97,7 @@ TARGET_ARCH = -mmcs51
 AS       = sdas8051
 CC       = sdcc
 ASFLAGS  = -plosgffw
-CPPFLAGS = $(PROJECT_FLAGS) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIRS)
+CPPFLAGS = $(PROJECT_FLAGS) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIR) -I$(DRIVER_DIR)
 CFLAGS   = $(TARGET_ARCH) $(MEMORY_MODEL) $(CPPFLAGS)
 LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 
@@ -99,6 +111,7 @@ all: $(TARGET)
 
 clean:
 	rm -rf $(BUILD_DIR)
+	rm -rf $(OBJECT_DIR)
 	
 ###########################################################
 # Build
@@ -109,17 +122,21 @@ clean:
 # basically the linking step
 $(TARGET): $(OBJECTS)
 	@echo "Linking $^"
+	mkdir -p $(dir $@)
 	$(CC) $(LDFLAGS) -o $@ $^
+	
+	# hex lines are a short, fixed length (compared with ihx) and therefore works with upload tools
+	# unix style line endings (LF instead of LFCR) work with upload tools
 	packihx $@ > $(basename $@).hex
 	dos2unix $(basename $@).hex
 
 # basically the compilation step
-$(BUILD_DIR)/%.rel: $(SOURCE_DIR)/%.c
-	mkdir -p $(dir $@)
+$(OBJECT_DIR)/%.rel: $(SOURCE_DIR)/%.c
 	@echo "Compiling $^"
-	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -c -o $@ $^
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $^
 	
-$(BUILD_DIR)/%.rel: $(DRIVER_SRC_DIR)/%.c
-	mkdir -p $(dir $@)
+$(OBJECT_DIR)/%.rel: $(DRIVER_SRC_DIR)/%.c
 	@echo "Compiling $^"
-	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -c -o $@ $^
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $^

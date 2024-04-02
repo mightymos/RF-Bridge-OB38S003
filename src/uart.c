@@ -4,11 +4,11 @@
  *      Author: Jonathan Armstrong
  */
 
-#include <8052.h>
-#include <stdint.h>
-
 #include "hal.h"
+#include "OB38S003.h"
 #include "uart.h"
+
+#include <stdint.h>
 
 //
 // the original implementation from RF-Bridge-EFM8BB1 looks similar to this implementation

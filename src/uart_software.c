@@ -1,10 +1,8 @@
 // based on test code posted by user PSLLSP
 // https://github.com/grigorig/stcgal/issues/26
 
-#include <8052.h>
 
-
-#include "ob38s003_sfr.h"
+#include "ob38s003.h"
 #include "uart_software.h"
 
 #define RCNT_RELOAD 3
