@@ -17,9 +17,23 @@ This can be accomplished in two ways:
 1) microcontroller mirrors the voltage levels on the radio data pins over to uart pins (used as gpio) already connected to ESP8265.  
    (this essentially bypasses the microcontroller but using software instead of hardware modification)  
    
+   Use firmware file: **RF-Bridge-OB38S003_PassthroughMode.hex**
+
+   The following pins can be used in ESPHome / Tasmota (flash **tasmota-sensors.bin** to ESP on RF Bridge and configure as e.g. **Generic(0)**)
+
+   TX pin to GPIO1 (RFSend)
+   RX pin to GPIO3 (RFRecv)
+
 2) microcontroller decodes radio packets and sends formatted to ESP8265 over uart/serial  
    (similar to factory firmware but with ability for source code protocols to be added, behavior modified, etc.)  
    
+   Use firmware file: **RF-Bridge-OB38S003_SerialMode.hex**
+
+   For Tasmota configure as **Sonoff Bridge (25)** and normal flash **tasmota.bin** to ESP will be sufficient
+
+   GPIO4 (RFSend)
+   GPIO5 (RFRecv)
+
 A benefit to keeping the microcontroller involved is that the radio LED and buzzer may still be controlled.  
 The downside is the effort required to develop firmware and flash by the end user.  
 
@@ -48,7 +62,7 @@ Install SDCC compiler for your platform:
 https://sdcc.sourceforge.net/  
 
 On command line run make.  
-Built firmware placed in build directory.  
+Built firmware placed in build directory.
 See Flasher section below.  
 
 # Previous Work
