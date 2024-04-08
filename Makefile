@@ -67,26 +67,38 @@ BUILD_DIR      = build
 
 # FIXME: add pass through mode
 # FIXME: support multiple microcontrollers
-#SOURCES = $(SOURCE_DIR)/main_passthrough.c \
+#SOURCES_PASSTHROUGH = $(SOURCE_DIR)/main_passthrough.c \
 #          $(DRIVER_SRC_DIR)/delay.c \
 #		  $(DRIVER_SRC_DIR)/hal.c		  
-#OBJECTS = $(BUILD_DIR)/main_passthrough.rel \
+#OBJECTS_PASSTHROUGH = $(BUILD_DIR)/main_passthrough.rel \
 #		  $(BUILD_DIR)/delay.rel \
 #		  $(BUILD_DIR)/hal.rel
-#TARGET  = $(BUILD_DIR)/main_passthrough.ihx
+#TARGET_PASSTHROUGH  = $(BUILD_DIR)/main_passthrough.ihx
 
-SOURCES = $(SOURCE_DIR)/main_rcswitch.c \
+SOURCES = $(SOURCE_DIR)/main_passthrough.c \
+		  $(SOURCE_DIR)/main_rcswitch.c \
 		  $(SOURCE_DIR)/rcswitch.c \
 		  $(SOURCE_DIR)/state_machine.c \
 		  $(SOURCE_DIR)/uart.c \
           $(DRIVER_SRC_DIR)/delay.c \
 		  $(DRIVER_SRC_DIR)/hal.c	\
 		  $(DRIVER_SRC_DIR)/timer.c
-		  
-
 OBJECT_NAMES = $(notdir $(SOURCES:.c=.rel))
 OBJECTS = $(patsubst %,$(OBJECT_DIR)/%,$(OBJECT_NAMES))
-TARGET  = $(BUILD_DIR)/main_rcswitch.ihx
+
+OBJECTS_RCSWITCH = 		$(OBJECT_DIR)/main_rcswitch.rel \
+						$(OBJECT_DIR)/rcswitch.rel \
+						$(OBJECT_DIR)/state_machine.rel \
+						$(OBJECT_DIR)/uart.rel \
+						$(OBJECT_DIR)/delay.rel \
+						$(OBJECT_DIR)/hal.rel	\
+						$(OBJECT_DIR)/timer.rel
+OBJECTS_PASSTHROUGH = 	$(OBJECT_DIR)/main_passthrough.rel \
+						$(OBJECT_DIR)/delay.rel \
+						$(OBJECT_DIR)/hal.rel
+						
+TARGET_RCSWITCH     = $(BUILD_DIR)/main_rcswitch.ihx
+TARGET_PASSTHROUGH  = $(BUILD_DIR)/main_passthrough.ihx
 
 ###########################################################
 # Toolchain settings
@@ -107,7 +119,7 @@ LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 
 .PHONY: all clean
 
-all: $(TARGET)
+all: $(TARGET_RCSWITCH) $(TARGET_PASSTHROUGH)
 
 clean:
 	rm -f $(BUILD_DIR)/*.hex
@@ -128,7 +140,17 @@ clean:
 ###########################################################
 
 # basically the linking step
-$(TARGET): $(OBJECTS)
+$(TARGET_RCSWITCH): $(OBJECTS_RCSWITCH)
+	@echo "Linking $^"
+	mkdir -p $(dir $@)
+	$(CC) $(LDFLAGS) -o $@ $^
+	
+	# hex lines are a short, fixed length (compared with ihx) and therefore works with upload tools
+	# unix style line endings (LF instead of LFCR) work with upload tools
+	packihx $@ > $(basename $@).hex
+	dos2unix $(basename $@).hex
+	
+$(TARGET_PASSTHROUGH): $(OBJECTS_PASSTHROUGH)
 	@echo "Linking $^"
 	mkdir -p $(dir $@)
 	$(CC) $(LDFLAGS) -o $@ $^
