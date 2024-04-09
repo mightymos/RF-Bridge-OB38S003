@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "OB38S003.h"
 
 #include "hal.h"
 #include "rcswitch.h"
@@ -85,7 +86,7 @@ unsigned long get_elapsed_timer1(unsigned long previousTime)
 }
 
 
-void timer0_isr(void) __interrupt (1)
+void timer0_isr(void) __interrupt (d_T0_Vector)
 {
     gTimeMilliseconds++;
 
@@ -99,7 +100,7 @@ void timer0_isr(void) __interrupt (1)
 
 
 // timer 1 interrupt
-void timer1_isr(void) __interrupt (3)
+void timer1_isr(void) __interrupt (d_T1_Vector)
 {
     // tracks time since timer enabled, used to track long periods of time
     gTimeTenMicroseconds++;
@@ -111,7 +112,7 @@ void timer1_isr(void) __interrupt (3)
 //-----------------------------------------------------------------------------
 // timer 2 should previously be set in capture mode 0 - pg. 32 of OB38S003 datasheet
 //-----------------------------------------------------------------------------
-void timer2_isr(void) __interrupt (5)
+void timer2_isr(void) __interrupt (d_T2_Vector)
 {
     const uint8_t gapMagicNumber  = 200;
     const uint8_t repeatThreshold   = 2;

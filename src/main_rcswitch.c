@@ -31,8 +31,9 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-//#include <stdint.h>
-//#include <stdlib.h>
+#if !defined(TARGET_BOARD_EFM8BB1) && !defined(TARGET_BOARD_OB38S003) && !defined(TARGET_BOARD_EFM8BB1LCB)
+	#error Please define TARGET_BOARD in makefile
+#endif
 
 // printf() requires a decent amount of code space and ram which we would like to avoid
 // and printf is not particularly useful once packet format is used
@@ -45,8 +46,10 @@
 // NOT a fancy hardware abstraction layer
 #include "hal.h"
 
-// additional special function registers not present in standard 8051/8052
+#if TARGET_BOARD_OB38S003
+// sdcc does not have sfrs defined for this microcontroller, so must include them
 #include "OB38S003.h"
+#endif
 
 // the classic library for radio packet decoding
 #include "rcswitch.h"

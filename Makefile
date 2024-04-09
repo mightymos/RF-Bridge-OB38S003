@@ -42,13 +42,27 @@
 #   make clean
 
 # Target MCU settings --------------------------------------------------
-SONOFF_BLACK = OB38S003
-SONOFF_WHITE = EFM8BB1
+# black sonoff
+#TARGET_BOARD = EFM8BB1
+# white sonoff
+TARGET_BOARD = OB38S003
+#TARGET_BOARD = EFM8BB1LCB
 
-# FIXME: for EFM8BB1 in Sonoff v2.0 receivers (black color box)
-#MCU_FREQ_KHZ := 24500
+ifndef TARGET_BOARD
+$(error Please define TARGET_BOARD in makefile)
+endif
+
+ifeq ($(TARGET_BOARD), EFM8BB1)
+# for EFM8BB1 in Sonoff v2.0 receivers (black color box)
+MCU_FREQ_KHZ = 24500
+else ifeq ($(TARGET_BOARD), EFM8BB1LCB)
+MCU_FREQ_KHZ = 24500
+else ifeq ($(TARGET_BOARD), OB38S003)
 # for OB38S003 used in Sonoff v2.2 receivers (white color box)
 MCU_FREQ_KHZ = 16000
+#else
+#	$(error Please define TARGET_BOARD as EFM8BB1, EFM8BB1LCB, or OB38S003 in makefile)
+endif
 
 #
 MEMORY_SIZES  = --iram-size 256 --xram-size 256 --code-size 8192
@@ -56,24 +70,26 @@ MEMORY_MODEL  = --model-small
 HAS_DUAL_DPTR = n
 
 # 
-SOURCE_DIR     = src
+SOURCE_DIR = src
+
+ifeq ($(TARGET_BOARD), EFM8BB1)
+DRIVER_SRC_DIR = drivers/efm8bb1/src
+else ifeq ($(TARGET_BOARD), OB38S003)
 DRIVER_SRC_DIR = drivers/ob38s003/src
+endif
 
-INCLUDE_DIR    = inc
-DRIVER_DIR     = drivers/ob38s003/inc
 
-OBJECT_DIR     = object
-BUILD_DIR      = build
+INCLUDE_DIR = inc/
 
-# FIXME: add pass through mode
-# FIXME: support multiple microcontrollers
-#SOURCES_PASSTHROUGH = $(SOURCE_DIR)/main_passthrough.c \
-#          $(DRIVER_SRC_DIR)/delay.c \
-#		  $(DRIVER_SRC_DIR)/hal.c		  
-#OBJECTS_PASSTHROUGH = $(BUILD_DIR)/main_passthrough.rel \
-#		  $(BUILD_DIR)/delay.rel \
-#		  $(BUILD_DIR)/hal.rel
-#TARGET_PASSTHROUGH  = $(BUILD_DIR)/main_passthrough.ihx
+ifeq ($(TARGET_BOARD), EFM8BB1)
+DRIVER_DIR = drivers/efm8bb1/inc
+else ifeq ($(TARGET_BOARD), OB38S003)
+DRIVER_DIR = drivers/ob38s003/inc
+endif
+
+
+OBJECT_DIR = object
+BUILD_DIR  = build
 
 SOURCES = $(SOURCE_DIR)/main_passthrough.c \
 		  $(SOURCE_DIR)/main_rcswitch.c \
@@ -109,7 +125,7 @@ TARGET_ARCH = -mmcs51
 AS       = sdas8051
 CC       = sdcc
 ASFLAGS  = -plosgffw
-CPPFLAGS = $(PROJECT_FLAGS) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIR) -I$(DRIVER_DIR)
+CPPFLAGS = $(PROJECT_FLAGS) -DTARGET_BOARD_$(TARGET_BOARD) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIR) -I$(DRIVER_DIR)
 CFLAGS   = $(TARGET_ARCH) $(MEMORY_MODEL) $(CPPFLAGS)
 LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 
@@ -122,6 +138,8 @@ LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 all: $(TARGET_RCSWITCH) $(TARGET_PASSTHROUGH)
 
 clean:
+	# it is safer to remove wildcard with file extension instead of the entire directory
+	# but can revisit this issue in the future (I think other projects just remove directory)
 	rm -f $(BUILD_DIR)/*.hex
 	rm -f $(BUILD_DIR)/*.ihx
 	rm -f $(BUILD_DIR)/*.lk

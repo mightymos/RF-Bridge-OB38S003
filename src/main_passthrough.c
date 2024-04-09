@@ -32,14 +32,20 @@
 // Includes
 //-----------------------------------------------------------------------------
 
+#if !defined(TARGET_BOARD_EFM8BB1) && !defined(TARGET_BOARD_OB38S003) && !defined(TARGET_BOARD_EFM8BB1LCB)
+	#error Please define TARGET_BOARD in makefile
+#endif
+
 // nop style delays
 #include "delay.h"
 
 // basically just function wrappers for setting pins (i.e., not a full hardware abstraction layer)
 #include "hal.h"
 
-// special function registers definitions
+#if TARGET_BOARD_OB38S003
+// sdcc does not have sfrs defined for this microcontroller, so must include them
 #include "OB38S003.h"
+#endif
 
 #include <stdint.h>
 
