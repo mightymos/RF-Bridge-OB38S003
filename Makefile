@@ -43,9 +43,9 @@
 
 # Target MCU settings --------------------------------------------------
 # black sonoff
-#TARGET_BOARD = EFM8BB1
+TARGET_BOARD = EFM8BB1
 # white sonoff
-TARGET_BOARD = OB38S003
+#TARGET_BOARD = OB38S003
 #TARGET_BOARD = EFM8BB1LCB
 
 ifndef TARGET_BOARD
@@ -96,9 +96,10 @@ SOURCES = $(SOURCE_DIR)/main_passthrough.c \
 		  $(SOURCE_DIR)/rcswitch.c \
 		  $(SOURCE_DIR)/state_machine.c \
 		  $(SOURCE_DIR)/uart.c \
+		  $(SOURCE_DIR)/ticks.c \
           $(DRIVER_SRC_DIR)/delay.c \
 		  $(DRIVER_SRC_DIR)/hal.c	\
-		  $(DRIVER_SRC_DIR)/timer.c
+		  $(DRIVER_SRC_DIR)/tick_interrupts.c
 OBJECT_NAMES = $(notdir $(SOURCES:.c=.rel))
 OBJECTS = $(patsubst %,$(OBJECT_DIR)/%,$(OBJECT_NAMES))
 
@@ -108,13 +109,14 @@ OBJECTS_RCSWITCH = 		$(OBJECT_DIR)/main_rcswitch.rel \
 						$(OBJECT_DIR)/uart.rel \
 						$(OBJECT_DIR)/delay.rel \
 						$(OBJECT_DIR)/hal.rel	\
-						$(OBJECT_DIR)/timer.rel
+						$(OBJECT_DIR)/ticks.rel \
+						$(OBJECT_DIR)/tick_interrupts.rel
 OBJECTS_PASSTHROUGH = 	$(OBJECT_DIR)/main_passthrough.rel \
 						$(OBJECT_DIR)/delay.rel \
 						$(OBJECT_DIR)/hal.rel
 						
-TARGET_RCSWITCH     = $(BUILD_DIR)/main_rcswitch.ihx
-TARGET_PASSTHROUGH  = $(BUILD_DIR)/main_passthrough.ihx
+TARGET_RCSWITCH     = $(BUILD_DIR)/main_rcswitch_$(TARGET_BOARD).ihx
+TARGET_PASSTHROUGH  = $(BUILD_DIR)/main_passthrough_$(TARGET_BOARD).ihx
 
 ###########################################################
 # Toolchain settings

@@ -5,11 +5,20 @@
  */
 
 #include "hal.h"
+
+#if defined(TARGET_BOARD_OB38S003)
 #include "OB38S003.h"
+#endif
+
 #include "uart.h"
 
 #include <stdint.h>
 
+
+#if defined(TARGET_BOARD_EFM8BB1)
+#define SBUF SBUF0
+#define SCON SCON0
+#endif
 //
 // the original implementation from RF-Bridge-EFM8BB1 looks similar to this implementation
 // https://github.com/hrshygoodness/EFM32-Library/blob/master/v2/an/an0820_efm32_smart_card/usart_driver.c
@@ -83,7 +92,13 @@ void uart_init_tx_polling(void)
 
 //=========================================================
 //=========================================================
-void uart_isr(void) __interrupt (4)
+#if TARGET_BOARD_OB38S003
+void uart_isr(void) __interrupt (d_UART0_Vector)
+#endif
+
+#if TARGET_BOARD_EFM8BB1
+void uart_isr(void) __interrupt (UART0_VECTOR)
+#endif
 {
     // FIXME: not sure if it is a good idea to clear both flags together
     // FIXME: need to define bit mask if we want to clear sfr this way

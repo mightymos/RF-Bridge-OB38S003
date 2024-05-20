@@ -46,10 +46,11 @@
 // NOT a fancy hardware abstraction layer
 #include "hal.h"
 
-#if TARGET_BOARD_OB38S003
-// sdcc does not have sfrs defined for this microcontroller, so must include them
-#include "OB38S003.h"
-#endif
+// FIXME: if or ifdef required?
+//#if defined(TARGET_BOARD_OB38S003)
+// sdcc does not have sfrs defined for this microcontroller, so we provided them
+//#include "OB38S003.h"
+//#endif
 
 // the classic library for radio packet decoding
 #include "rcswitch.h"
@@ -58,7 +59,8 @@
 #include "state_machine.h"
 
 // hardware specific
-#include "timer.h"
+//#include "timer.h"
+#include "ticks.h"
 #include "uart.h"
 
 // since the uart pins are used for communication with ESP8265
@@ -72,10 +74,17 @@
 // software uart
 // FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
 //extern void tm0(void)        __interrupt (d_T0_Vector);
+#if defined(TARGET_BOARD_OB38S003)
 extern void timer1_isr(void) __interrupt (d_T1_Vector);
 extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 extern void timer2_isr(void) __interrupt (d_T2_Vector);
+#endif
 
+#if defined(TARGET_BOARD_EFM8BB1)
+extern void timer1_isr(void) __interrupt (TIMER1_VECTOR);
+extern void uart_isr(void)   __interrupt (UART0_VECTOR);
+extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
+#endif
 
 //-----------------------------------------------------------------------------
 // FIXME: this is sometimes needed to initialize external ram, setup watch dog timer, etc.
@@ -125,6 +134,9 @@ void startup_blink(void)
     led_off();
 }
 
+#if 0
+
+// for reset source on ob38s003
 // this can be pretty slow to blink out an eight bit reset register
 void startup_reset_status(void)
 {
@@ -141,6 +153,7 @@ void startup_reset_status(void)
     }
 }
 
+#endif
 
 //-----------------------------------------------------------------------------
 // main() Routine
@@ -170,7 +183,14 @@ int main (void)
     
 
     // hardware initialization
+#if defined(TARGET_BOARD_OB38S003)
     set_clock_1t_mode();
+#endif
+
+#if defined(TARGET_BOARD_EFM8BB1)
+    set_clock_mode();
+#endif
+
     init_port_pins();
     
     // set default pin levels

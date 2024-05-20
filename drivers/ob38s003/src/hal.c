@@ -166,6 +166,7 @@ void init_timer1(void)
 }
 
 //================================================================================
+// datasheet states that using timer2 in capture mode is similar to programmable counter array (PCA) on other microcontrollers
 //================================================================================
 void init_timer2_capture(void)
 {

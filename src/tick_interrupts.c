@@ -2,7 +2,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#if defined(TARGET_BOARD_OB38S003)
 #include "OB38S003.h"
+#endif
+
+#if defined(TARGET_BOARD_EFM8BB1)
+#include <EFM8BB1.h>
+#endif
 
 #include "hal.h"
 #include "rcswitch.h"
@@ -12,81 +18,23 @@
 static unsigned long gTimeMilliseconds = 0;
 static unsigned long gTimeTenMicroseconds = 0;
 
-
-unsigned long get_current_timer0(void)
+unsigned long get_time_milliseconds(void)
 {
-    unsigned long currentTime;
-    
-    // FIXME: disable timer0 interrupt for atomic reading of variable
-    //        consider check to see if interrupt was enabled in the first place
-    disable_timer0_interrupt();
-    
-    // FIXME: compute the proper conversion from counts to milliseconds
-    currentTime = gTimeMilliseconds;
-    
-    // re-enable timer0 interrupt
-    enable_timer0_interrupt();
-    
-    return currentTime;
+	return gTimeMilliseconds;
 }
 
-
-unsigned long get_elapsed_timer0(unsigned long previousTime)
+unsigned long get_time_ten_microseconds(void)
 {
-    unsigned long currentTime;
-    unsigned long elapsed;
-    
-    currentTime = get_current_timer0();
-        
-    // handle typical versus wraparound condition
-    if (previousTime <= currentTime)
-    {
-        elapsed = currentTime - previousTime;
-    } else {
-        elapsed = ULONG_MAX - previousTime + currentTime;
-    }
-    
-    return elapsed;
+	return gTimeTenMicroseconds;
 }
 
-unsigned long get_current_timer1(void)
-{
-    unsigned long currentTime;
-    
-
-    disable_timer1_interrupt();
-    
-    // FIXME: compute the proper conversion from counts to microseconds
-    currentTime = gTimeTenMicroseconds;
-    
-    enable_timer1_interrupt();
-    
-    return currentTime;
-}
-
-
-unsigned long get_elapsed_timer1(unsigned long previousTime)
-{
-    unsigned long currentTime;
-    unsigned long elapsed;
-    
-    currentTime = get_current_timer1();
-    
-    //printf("currentTime: %lu\r\n", currentTime);
-    
-    // handle typical versus wraparound condition
-    if (previousTime <= currentTime)
-    {
-        elapsed = currentTime - previousTime;
-    } else {
-        elapsed = ULONG_MAX - previousTime + currentTime;
-    }
-    
-    return elapsed;
-}
-
-
+#if TARGET_BOARD_OB38S003
 void timer0_isr(void) __interrupt (d_T0_Vector)
+#endif
+
+#if TARGET_BOARD_EFM8BB1
+void timer0_isr(void) __interrupt (TIMER0_VECTOR)
+#endif
 {
     gTimeMilliseconds++;
 
@@ -100,7 +48,13 @@ void timer0_isr(void) __interrupt (d_T0_Vector)
 
 
 // timer 1 interrupt
+#if TARGET_BOARD_OB38S003
 void timer1_isr(void) __interrupt (d_T1_Vector)
+#endif
+
+#if TARGET_BOARD_EFM8BB1
+void timer1_isr(void) __interrupt (TIMER1_VECTOR)
+#endif
 {
     // tracks time since timer enabled, used to track long periods of time
     gTimeTenMicroseconds++;
@@ -112,7 +66,13 @@ void timer1_isr(void) __interrupt (d_T1_Vector)
 //-----------------------------------------------------------------------------
 // timer 2 should previously be set in capture mode 0 - pg. 32 of OB38S003 datasheet
 //-----------------------------------------------------------------------------
+#if TARGET_BOARD_OB38S003
 void timer2_isr(void) __interrupt (d_T2_Vector)
+#endif
+
+#if TARGET_BOARD_EFM8BB1
+void timer2_isr(void) __interrupt (TIMER2_VECTOR)
+#endif
 {
     const uint8_t gapMagicNumber  = 200;
     const uint8_t repeatThreshold   = 2;

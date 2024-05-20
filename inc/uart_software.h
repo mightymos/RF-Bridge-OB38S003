@@ -3,7 +3,14 @@
 
 #include <stdbool.h>
 
+#if TARGET_BOARD_OB38S003
 #include "sonoffr22_pins.h"
+#endif
+
+#if TARGET_BOARD_EFM8BB1
+#include "sonoffr20_pins.h"
+#endif
+
 
 // FIXME: make this a macro computed from MCU_FREQ in Makefile
 //define baudrate const

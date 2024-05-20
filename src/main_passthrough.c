@@ -42,10 +42,10 @@
 // basically just function wrappers for setting pins (i.e., not a full hardware abstraction layer)
 #include "hal.h"
 
-#if TARGET_BOARD_OB38S003
+//#if TARGET_BOARD_OB38S003
 // sdcc does not have sfrs defined for this microcontroller, so must include them
-#include "OB38S003.h"
-#endif
+//#include "OB38S003.h"
+//#endif
 
 #include <stdint.h>
 
@@ -69,6 +69,10 @@ void startup_blink(void)
     led_off();
 }
 
+
+#if 0
+
+// for reset source on ob38s003
 // this can be pretty slow to blink out an eight bit reset register
 void startup_reset_status(void)
 {
@@ -85,6 +89,7 @@ void startup_reset_status(void)
     }
 }
 
+#endif
 
 //-----------------------------------------------------------------------------
 // main() Routine
@@ -107,7 +112,14 @@ int main (void)
     
 
     // hardware initialization
+#if defined(TARGET_BOARD_OB38S003)
     set_clock_1t_mode();
+#endif
+
+#if defined(TARGET_BOARD_EFM8BB1)
+    set_clock_mode();
+#endif
+
     init_port_pins();
     
     // set default pin levels

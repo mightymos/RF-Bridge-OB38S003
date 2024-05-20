@@ -3,5 +3,5 @@
 
 #include <stdint.h>
 
-void efm8_delay_us(uint16_t us);
-void efm8_delay_ms(uint16_t ms);
+void delay_us(uint16_t us);
+void delay1ms(uint16_t ms);

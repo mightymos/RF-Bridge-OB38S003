@@ -1,209 +1,197 @@
 /*
- * Globals.c
+ * hal.c
  *
  *  Created on: 07.12.2017
  *      Author:
  */
-
 #include <stdint.h>
+#include <stdbool.h>
+
 #include <EFM8BB1.h>
 
 
-#include "globals.h"
-
-__xdata uint16_t Timer_2_Timeout  = 0x0000;
-__xdata uint16_t Timer_2_Interval = 0x0000;
-__xdata uint16_t Timer_3_Timeout  = 0x0000;
-__xdata uint16_t Timer_3_Interval = 0x0000;
-
-
-
-void SetTimer2Reload(uint16_t reload)
+// pg. 3 of OB38S003 datasheet
+// high speed architecture of 1 clock/machine cycle runs up to 16MHz.
+void set_clock_mode(void)
 {
+    //*****************************************
+	// - Clock derived from the Internal High-Frequency Oscillator
+	// - SYSCLK is equal to selected clock source divided by 1
+	//*****************************************
+	CLKSEL = CLKSL__HFOSC | CLKDIV__SYSCLK_DIV_1;
+	
+	//**********************************************************************
+	// - System clock divided by 12
+	// - Counter/Timer 0 uses the system clock
+	// - Timer 2 high byte uses the clock defined by T2XCLK in TMR2CN0
+	// - Timer 2 low byte uses the system clock
+	// - Timer 3 high byte uses the clock defined by T3XCLK in TMR3CN0
+	// - Timer 3 low byte uses the system clock
+	// - Timer 1 uses the clock defined by the prescale field, SCA
+	//***********************************************************************/
+	CKCON0 = SCA__SYSCLK_DIV_12 | T0M__SYSCLK | T2MH__EXTERNAL_CLOCK | T2ML__SYSCLK | T3MH__EXTERNAL_CLOCK | T3ML__SYSCLK | T1M__PRESCALE;
+}
+
+
+// pg. 44 - once the watchdog is started it cannot be stopped
+void enable_watchdog(void)
+{
+    //timebase = timebase;
+    //idleState = idleState;
+    //WDTCN = interval;
+	WDTCN = 0xA5;
+}
+
+void refresh_watchdog(void)
+{
+	WDTCN = 0xA5;
+}
+
+void init_port_pins(void)
+{
+	// FIXME: add comment to explain pin functions
+	P0MDOUT = B0__PUSH_PULL | B1__OPEN_DRAIN | B2__OPEN_DRAIN | B3__OPEN_DRAIN | B4__PUSH_PULL | B5__OPEN_DRAIN | B6__OPEN_DRAIN | B7__OPEN_DRAIN;
+
+	// add explanation
+	P0SKIP = B0__SKIPPED | B1__SKIPPED | B2__SKIPPED | B3__SKIPPED | B4__NOT_SKIPPED | B5__NOT_SKIPPED | B6__SKIPPED | B7__SKIPPED;
+
+
+
+	// FIXME: correctly handle LED on sonoff different from LED on EFM8BB1LCK board
+	P1MDOUT = B0__PUSH_PULL | B1__OPEN_DRAIN
+			| B2__OPEN_DRAIN | B3__OPEN_DRAIN
+			| B4__PUSH_PULL | B5__PUSH_PULL
+			| B6__PUSH_PULL | B7__PUSH_PULL;
+
+	// $[P1SKIP - Port 1 Skip]
 	/***********************************************************************
-	 - Timer 2 Reload High Byte
+	 - P1.0 pin is skipped by the crossbar
+	 - P1.1 pin is skipped by the crossbar
+	 - P1.2 pin is skipped by the crossbar
+	 - P1.3 pin is not skipped by the crossbar
+	 - P1.4 pin is skipped by the crossbar
+	 - P1.5 pin is skipped by the crossbar
+	 - P1.6 pin is skipped by the crossbar
 	 ***********************************************************************/
-	TMR2RLH = ((reload >> 8) & 0xFF);
+	P1SKIP = B0__SKIPPED | B1__SKIPPED | B2__SKIPPED
+			| B3__NOT_SKIPPED | B4__SKIPPED | B5__SKIPPED
+			| B6__SKIPPED | B7__SKIPPED;
+
+
+	// $[XBR2 - Port I/O Crossbar 2]
 	/***********************************************************************
-	 - Timer 2 Reload Low Byte = 0x86
+	 - Weak Pullups enabled 
+	 - Crossbar enabled
 	 ***********************************************************************/
-	TMR2RLL = (reload & 0xFF);
-}
+	XBR2 = WEAKPUD__PULL_UPS_ENABLED | XBARE__ENABLED;
 
-#if 0
-void SetTimer3Reload(uint16_t reload)
-{
+
+	// $[XBR0 - Port I/O Crossbar 0]
 	/***********************************************************************
-	 - Timer 3 Reload High Byte
+	 - UART TX, RX routed to Port pins P0.4 and P0.5
+	 - SPI I/O unavailable at Port pins
+	 - SMBus 0 I/O unavailable at Port pins
+	 - CP0 unavailable at Port pin
+	 - Asynchronous CP0 unavailable at Port pin
+	 - CP1 unavailable at Port pin
+	 - Asynchronous CP1 unavailable at Port pin
+	 - SYSCLK unavailable at Port pin
 	 ***********************************************************************/
-	TMR3RLH = ((reload >> 8) & 0xFF);
+	XBR0 = URT0E__ENABLED | SPI0E__DISABLED | SMB0E__DISABLED
+			| CP0E__DISABLED | CP0AE__DISABLED | CP1E__DISABLED
+			| CP1AE__DISABLED | SYSCKE__DISABLED;
+
+	// $[XBR1 - Port I/O Crossbar 1]
 	/***********************************************************************
-	 - Timer 3 Reload Low Byte = 0x86
+	 - CEX0 routed to Port pin
+	 - ECI unavailable at Port pin
+	 - T0 unavailable at Port pin
+	 - T1 unavailable at Port pin
+	 - T2 unavailable at Port pin
 	 ***********************************************************************/
-	TMR3RLL = (reload & 0xFF);
+	XBR1 = PCA0ME__CEX0 | ECIE__DISABLED | T0E__DISABLED | T1E__DISABLED | T2E__DISABLED;
 }
-#endif
 
-/*
- * Init Timer 2 with microseconds interval, maximum is 65535탎.
- */
-void InitTimer2_us(uint16_t interval, uint16_t timeout)
+
+void init_uart(void)
 {
-	SetTimer2Reload((uint16_t)(0x10000 - ((uint32_t)SYSCLK / (1000000 / (uint32_t)interval))));
-
-	// remove 65탎 because of startup delay
-	Timer_2_Timeout = timeout - 65;
-	Timer_2_Interval = interval;
-
-	// start timer
-	TMR2CN0 |= TR2__RUN;
+    SCON0 &= ~(SMODE__BMASK | MCE__BMASK | REN__BMASK);
+	SCON0 = REN__RECEIVE_ENABLED | SMODE__8_BIT | MCE__MULTI_DISABLED;
 }
 
-#if 0
-/*
- * Init Timer 3 with microseconds interval, maximum is 65535탎.
- */
-void InitTimer3_us(uint16_t interval, uint16_t timeout)
+
+
+void init_serial_interrupt(void)
 {
-	SetTimerReload((uint16_t)(0x10000 - ((uint32_t)SYSCLK / (1000000 / (uint32_t)interval))));
-
-	// remove 65탎 because of startup delay
-	Timer_3_Timeout = timeout - 65;
-	Timer_3_Interval = interval;
-
-	// start timer
-	TMR3CN0 |= TR3__RUN;
+    TI = 1;
 }
-#endif
 
-/*
- * Init Timer 2 with milliseconds interval, maximum is ~2.5ms.
- */
-void InitTimer2_ms(uint16_t interval, uint16_t timeout)
+void init_capture_interrupt(void)
 {
-	SetTimer2Reload((uint16_t)(0x10000 - ((uint32_t)SYSCLK / (1000 / (uint32_t)interval))));
-
-	Timer_2_Timeout = timeout;
-	Timer_2_Interval = interval;
-
-	// start timer
-	TMR2CN0 |= TR2__RUN;
+	EIE1 |= EPCA0__ENABLED;
 }
 
-#if 0
-/*
- * Init Timer 3 with milliseconds interval, maximum is ~2.5ms.
- */
-void InitTimer3_ms(uint16_t interval, uint16_t timeout)
+void disable_capture_interrupt(void)
 {
-	SetTimerReload((uint16_t)(0x10000 - ((uint32_t)SYSCLK / (1000 / (uint32_t)interval))));
-
-	Timer_3_Timeout = timeout;
-	Timer_3_Interval = interval;
-
-	// start timer
-	TMR3CN0 |= TR3__RUN;
+	EIE1 &= ~EPCA0__ENABLED;
 }
-#endif
 
-void WaitTimer2Finished(void)
+void enable_capture_interrupt(void)
 {
-	// wait until timer has finished
-	while((TMR2CN0 & TR2__BMASK) == TR2__RUN);
+	EIE1 |= EPCA0__ENABLED;
 }
 
-#if 0
-void WaitTimer3Finished(void)
+void init_timer0(void)
 {
-	// wait until timer has finished
-	while((TMR3CN0 & TR3__BMASK) == TR3__RUN);
+    // pg. 194  Setting the TR0 bit enables the timer when either GATE0 in the TMOD register is logic 0
+	TMOD = T0M__MODE2 | T1M__MODE2 | CT0__TIMER | GATE0__DISABLED | CT1__TIMER | GATE1__DISABLED;
 }
-#endif
 
-#if 1
-void StopTimer2(void)
+void init_timer1(void)
 {
-	// stop timer
-	TMR2CN0 &= ~TR2__RUN;
-	// Clear Timer 2 high overflow flag
-	TMR2CN0 &= ~TF2H__SET;
+	// FIXME: actually do what function name says
+	TMOD = T0M__MODE2 | T1M__MODE2 | CT0__TIMER | GATE0__DISABLED | CT1__TIMER | GATE1__DISABLED;
 }
-#endif
 
-#if 0
-void StopTimer3(void)
+//================================================================================
+//================================================================================
+//================================================================================
+//================================================================================
+void init_timer2_capture(void)
 {
-	// stop timer
-	TMR3CN0 &= ~TR3__RUN;
-	// Clear Timer 3 high overflow flag
-	TMR3CN0 &= ~TF3H__SET;
+	//FIXME: need to convert this over to PCA
 }
-#endif
 
-bool IsTimer2Finished(void)
+
+
+bool global_interrupts_are_enabled(void)
 {
-	return ((TMR2CN0 & TR2__BMASK) != TR2__RUN);
+	return EA;
 }
 
-#if 0
-bool IsTimer3Finished(void)
+void load_timer0(const unsigned int value)
 {
-	return ((TMR3CN0 & TR3__BMASK) != TR3__RUN);
+	TH0 = (value >> 8) & 0xFF;
+	TL0 = value & 0xFF;
 }
-#endif
 
-//-----------------------------------------------------------------------------
-// TIMER2_ISR
-//-----------------------------------------------------------------------------
-//
-// TIMER2 ISR Content goes here. Remember to clear flag bits:
-// TMR2CN0::TF2H (Timer # High Byte Overflow Flag)
-// TMR2CN0::TF2L (Timer # Low Byte Overflow Flag)
-//
-//-----------------------------------------------------------------------------
-void TIMER2_ISR(void) __interrupt (5)
+void load_timer1(const unsigned int value)
 {
-	// Clear Timer 2 high overflow flag
-	TMR2CN0 &= ~TF2H__SET;
-
-	// check if pulse time is over
-	if(Timer_2_Timeout == 0)
-	{
-		// stop timer
-		TMR2CN0 &= ~TR2__RUN;
-	}
-
-	if (Timer_2_Timeout < Timer_2_Interval)
-		Timer_2_Timeout = 0;
-	else
-		Timer_2_Timeout -= Timer_2_Interval;
+	TH1 = (value >> 8) & 0xFF;
+	TL1 = value & 0xFF;
 }
 
-#if 0
-//-----------------------------------------------------------------------------
-// TIMER3_ISR
-//-----------------------------------------------------------------------------
-//
-// TIMER3 ISR Content goes here. Remember to clear flag bits:
-// TMR3CN0::TF3H (Timer # High Byte Overflow Flag)
-// TMR3CN0::TF3L (Timer # Low Byte Overflow Flag)
-//
-//-----------------------------------------------------------------------------
-void TIMER3_ISR(void) __interrupt (TIMER3_IRQn)
+unsigned char get_timer2_low(void)
 {
-	// Clear Timer 3 high overflow flag
-	TMR3CN0 &= ~TF3H__SET;
-
-	// check if pulse time is over
-	if(Timer_3_Timeout == 0)
-	{
-		// stop timer
-		TMR3CN0 &= ~TR3__RUN;
-	}
-
-	if (Timer_3_Timeout < Timer_3_Interval)
-		Timer_3_Timeout = 0;
-	else
-		Timer_3_Timeout -= Timer_3_Interval;
+	return TMR2L;
 }
-#endif
+
+unsigned char get_timer2_high(void)
+{
+	return TMR2H;
+}
+
+void clear_ccp1_flag(void)
+{
+	CCF1 = 0;
+}

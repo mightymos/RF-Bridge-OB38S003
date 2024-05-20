@@ -32,7 +32,7 @@
 #ifndef __OB38S003_H__
 #define __OB38S003_H__
 
-// macros allow definitions with different compilers
+// macros allow definitions supported by different compilers
 #include <compiler.h>
 
 /*  BYTE Registers  */

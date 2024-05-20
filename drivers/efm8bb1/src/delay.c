@@ -4,7 +4,7 @@
 #include "delay.h"
 
 // don't care too much if this isn't accurate
-void efm8_delay_us(uint16_t us) {
+void delay_us(uint16_t us) {
     while (us--) {
 		__asm
 #if F_CPU >=  8000000ULL
@@ -43,8 +43,8 @@ void efm8_delay_us(uint16_t us) {
     }
 }
 
-void efm8_delay_ms(uint16_t ms) {
+void delay1ms(uint16_t ms) {
     while (ms--) {
-        efm8_delay_us(1000);
+        delay_us(1000);
     }
 }
