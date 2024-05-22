@@ -2,13 +2,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#if defined(TARGET_BOARD_OB38S003)
-#include "OB38S003.h"
-#endif
+#include "EFM8BB1.h"
 
-#if defined(TARGET_BOARD_EFM8BB1)
-#include <EFM8BB1.h>
-#endif
 
 #include "hal.h"
 #include "rcswitch.h"
@@ -28,33 +23,18 @@ unsigned long get_time_ten_microseconds(void)
 	return gTimeTenMicroseconds;
 }
 
-#if TARGET_BOARD_OB38S003
-void timer0_isr(void) __interrupt (d_T0_Vector)
-#endif
 
-#if TARGET_BOARD_EFM8BB1
 void timer0_isr(void) __interrupt (TIMER0_VECTOR)
-#endif
 {
     gTimeMilliseconds++;
 
     // one millisecond to overflow
     load_timer0(0xc17f);
-    
-    // ten microseconds to overflow
-    //TH0 = 0xff;
-    //TL0 = 0x5f;
 }
 
 
 // timer 1 interrupt
-#if TARGET_BOARD_OB38S003
-void timer1_isr(void) __interrupt (d_T1_Vector)
-#endif
-
-#if TARGET_BOARD_EFM8BB1
 void timer1_isr(void) __interrupt (TIMER1_VECTOR)
-#endif
 {
     // tracks time since timer enabled, used to track long periods of time
     gTimeTenMicroseconds++;
@@ -63,25 +43,14 @@ void timer1_isr(void) __interrupt (TIMER1_VECTOR)
     load_timer1(0xff5f);
 }
 
-//-----------------------------------------------------------------------------
-// timer 2 should previously be set in capture mode 0 - pg. 32 of OB38S003 datasheet
-//-----------------------------------------------------------------------------
-#if TARGET_BOARD_OB38S003
-void timer2_isr(void) __interrupt (d_T2_Vector)
-#endif
-
-#if TARGET_BOARD_EFM8BB1
-void timer2_isr(void) __interrupt (TIMER2_VECTOR)
-#endif
+void pca0_channel0EventCb(void)
 {
+    //FIXME: we need to specify the actual time step this represents
+	uint16_t current_capture_value = PCA0CP0 * 10;
+	uint8_t flags = PCA0MD;
+	
     const uint8_t gapMagicNumber  = 200;
     const uint8_t repeatThreshold   = 2;
-    
-    // track previous and new timer values so we can compute dfiference
-    uint8_t lowByteOld;
-    uint8_t highByteOld;
-    static uint8_t lowByteNew  = 0;
-    static uint8_t highByteNew = 0;
     
     // for converting 8-bit timer values to 16-bits to allow subtraction
     uint16_t        previous;
@@ -98,19 +67,15 @@ void timer2_isr(void) __interrupt (TIMER2_VECTOR)
     // FIXME: move to rcswitch.h
     const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
 
-    
-    // we are always looking for pulse duration (i.e., difference), so need to store previous and new values
-    lowByteOld  = lowByteNew;
-    highByteOld = highByteNew;
-    
-    // this stores timer 2 value without stopping timer 2
-    // FIXME: I think read order is important here, double check
-    lowByteNew  = get_timer2_low();
-    highByteNew = get_timer2_high();
-    
     // go from 8-bit to 16-bit variables
     previous = current;
-    current = (highByteNew << 8) | lowByteNew;
+    current = current_capture_value;
+	
+	// clear counter
+	PCA0MD &= 0xBF;
+	PCA0H = 0x00;
+	PCA0L = 0x00;
+	PCA0MD = flags;
     
     
     // check for overflow condition
@@ -175,5 +140,43 @@ void timer2_isr(void) __interrupt (TIMER2_VECTOR)
     
         
     //clear compare/capture 1 flag
-    clear_ccp1_flag();
+    //clear_ccp1_flag();
+}
+
+
+
+void pca0_isr(void) __interrupt (PCA0_VECTOR)
+{
+  // save and clear flags
+  uint8_t flags = PCA0CN0 & (CF__BMASK | CCF0__BMASK | CCF1__BMASK | CCF2__BMASK);
+
+  PCA0CN0 &= ~flags;
+
+  //if( (PCA0PWM & COVF__BMASK) && (PCA0PWM & ECOV__BMASK))
+  //{
+  //  PCA0_intermediateOverflowCb();
+  //}
+
+  PCA0PWM &= ~COVF__BMASK;
+
+  //if((flags & CF__BMASK) && (PCA0MD & ECF__BMASK))
+  //{
+  //  PCA0_overflowCb();
+  //}
+
+  if((flags & CCF0__BMASK) && (PCA0CPM0 & ECCF__BMASK))
+  {
+  	// apparently our radio input
+    pca0_channel0EventCb();
+  }
+
+  //if((flags & CCF1__BMASK) && (PCA0CPM1 & ECCF__BMASK))
+  //{
+  //  PCA0_channel1EventCb();
+  //}
+
+  //if((flags & CCF2__BMASK) && (PCA0CPM2 & ECCF__BMASK))
+  //{
+  //  PCA0_channel2EventCb();
+  //}
 }

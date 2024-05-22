@@ -176,7 +176,11 @@ extern void init_capture_interrupt(void);
 extern void init_uart(void);
 extern void init_timer0(void);
 extern void init_timer1(void);
-extern void init_timer2_capture(void);
+
+extern void pca0_init(void);
+extern void pca0_run(void);
+extern void pca0_halt(void);
+
 extern void enable_capture_interrupt(void);
 extern void disable_capture_interrupt(void);
 extern bool global_interrupts_are_enabled(void);

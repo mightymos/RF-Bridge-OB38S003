@@ -42,11 +42,13 @@
 #   make clean
 
 # Target MCU settings --------------------------------------------------
-# black sonoff
+# sonoff black box
 TARGET_BOARD = EFM8BB1
-# white sonoff
-#TARGET_BOARD = OB38S003
 #TARGET_BOARD = EFM8BB1LCB
+
+# sonoff white box
+TARGET_BOARD = OB38S003
+
 
 ifndef TARGET_BOARD
 $(error Please define TARGET_BOARD in makefile)
@@ -99,7 +101,7 @@ SOURCES = $(SOURCE_DIR)/main_passthrough.c \
 		  $(SOURCE_DIR)/ticks.c \
           $(DRIVER_SRC_DIR)/delay.c \
 		  $(DRIVER_SRC_DIR)/hal.c	\
-		  $(DRIVER_SRC_DIR)/tick_interrupts.c
+		  $(DRIVER_SRC_DIR)/timer_interrupts.c
 OBJECT_NAMES = $(notdir $(SOURCES:.c=.rel))
 OBJECTS = $(patsubst %,$(OBJECT_DIR)/%,$(OBJECT_NAMES))
 
@@ -110,7 +112,7 @@ OBJECTS_RCSWITCH = 		$(OBJECT_DIR)/main_rcswitch.rel \
 						$(OBJECT_DIR)/delay.rel \
 						$(OBJECT_DIR)/hal.rel	\
 						$(OBJECT_DIR)/ticks.rel \
-						$(OBJECT_DIR)/tick_interrupts.rel
+						$(OBJECT_DIR)/timer_interrupts.rel
 OBJECTS_PASSTHROUGH = 	$(OBJECT_DIR)/main_passthrough.rel \
 						$(OBJECT_DIR)/delay.rel \
 						$(OBJECT_DIR)/hal.rel

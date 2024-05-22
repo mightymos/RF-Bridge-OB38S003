@@ -5,7 +5,7 @@
 #include "delay.h"
 #include "hal.h"
 #include "rcswitch.h"
-#include "timer.h"
+//#include "timer.h"
 
 
 // FIXME: explain constants

@@ -153,15 +153,62 @@ void init_timer1(void)
 	TMOD = T0M__MODE2 | T1M__MODE2 | CT0__TIMER | GATE0__DISABLED | CT1__TIMER | GATE1__DISABLED;
 }
 
-//================================================================================
-//================================================================================
-//================================================================================
-//================================================================================
-void init_timer2_capture(void)
+void pca0_init(void)
 {
-	//FIXME: need to convert this over to PCA
+	// 
+	PCA0CN0 = CR__STOP;
+
+
+	// $[PCA0MD - PCA Mode]
+	/***********************************************************************
+	 - PCA continues to function normally while the system controller is in
+	 Idle Mode
+	 - Enable a PCA Counter/Timer Overflow interrupt request when CF is set
+	 - Timer 0 overflow
+	 ***********************************************************************/
+	PCA0MD = CIDL__NORMAL | ECF__OVF_INT_ENABLED | CPS__T0_OVERFLOW;
+
+	/***********************************************************************
+	 - PCA Counter/Timer Low Byte = 0xFF
+	 ***********************************************************************/
+	//PCA0L = (0xFF << PCA0L_PCA0L__SHIFT);
+    PCA0L = 0xFF;
+
+	/***********************************************************************
+	 - Invert polarity
+	 - Use default polarity
+	 - Use default polarity
+	 ***********************************************************************/
+	PCA0POL = CEX0POL__INVERT | CEX1POL__DEFAULT | CEX2POL__DEFAULT;
+
+
+	// FIXME: comment
+	PCA0PWM &= ~ARSEL__BMASK;
+
+
+	// $[PCA0CPM0 - PCA Channel 0 Capture/Compare Mode]
+	/***********************************************************************
+	 - Enable negative edge capture
+	 - Disable CCF0 interrupts
+	 - Disable match function
+	 - 8 to 11-bit PWM selected
+	 - Enable positive edge capture
+	 - Disable comparator function
+	 - Disable PWM function
+	 - Disable toggle function
+	 ***********************************************************************/
+	PCA0CPM0 = CAPN__ENABLED | ECCF__DISABLED | MAT__DISABLED | PWM16__8_BIT | CAPP__ENABLED | ECOM__DISABLED | PWM__DISABLED | TOG__DISABLED;
 }
 
+void pca0_run(void)
+{
+    PCA0CN0 |= CR__RUN;
+}
+
+void pca0_halt(void)
+{
+    PCA0CN0 &= ~CR__RUN;
+}
 
 
 bool global_interrupts_are_enabled(void)

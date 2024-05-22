@@ -83,7 +83,7 @@ extern void timer2_isr(void) __interrupt (d_T2_Vector);
 #if defined(TARGET_BOARD_EFM8BB1)
 extern void timer1_isr(void) __interrupt (TIMER1_VECTOR);
 extern void uart_isr(void)   __interrupt (UART0_VECTOR);
-extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
+extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
 #endif
 
 //-----------------------------------------------------------------------------
@@ -225,7 +225,14 @@ int main (void)
     enable_timer1_interrupt();
     
     // timer supports compare and capture module for determining pulse lengths of received radio signals
+#if defined(TARGET_BOARD_OB38S003)
     init_timer2_capture();
+#endif
+
+#if defined(TARGET_BOARD_EFM8BB1)
+    pca0_init();
+	pca0_run();
+#endif
 
     // radio receiver edge detection
     init_capture_interrupt();
