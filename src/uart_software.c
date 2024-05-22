@@ -2,7 +2,16 @@
 // https://github.com/grigorig/stcgal/issues/26
 
 
-#include "ob38s003.h"
+#if TARGET_BOARD_OB38S003
+#include "OB38S003.h"
+#endif
+
+#if TARGET_BOARD_EFM8BB1
+#include "EFM8BB1.h"
+#endif
+
+
+#include "hal.h"
 #include "uart_software.h"
 
 #define RCNT_RELOAD 3
@@ -22,12 +31,12 @@ unsigned char TBIT,RBIT;
 
 //-----------------------------------------
 //Timer interrupt routine for UART
+// both microcontrollers use the same interrupt number for timer 0
 void tm0(void) __interrupt (1)
 {    
 
     // reload since no auto reload available on timer 0
-    TH0 = (BAUD >> 8) & 0xff;
-    TL0 = BAUD & 0xff;
+	load_timer0(BAUD);
     
   if (RING) {
     if (--RCNT == 0) {
@@ -77,67 +86,6 @@ void tm0(void) __interrupt (1)
 }
 }
 
-// FIXME: these names and functionality could be confusing, if we switch over to using timer0 as tick function
-void enable_timer0(void)
-{
-    //timer0 in 16-bit mode
-    //(ob38s003 only supports autoreload on timer2, so must reload manually within interrupt)
-    TMOD |= T0_M0;
-    
-    // FIXME: we set this elsewhere in main()
-    // but need to confirm this is okay I guess
-    //timer0 working at 1T mode    
-    //AUXR = 0x80;
-    //set_clock_1t_mode();
-    //CKCON = 0x00;
-    
-    // prescaler is FOSC so prescaler is 1
-    // FIXME: this would not necessarily clear upper bit so bad HAL practice
-    PFCON |= 0x01;
-    
-    //initial timer0
-    TH0 = (BAUD >> 8) & 0xff;
-    TL0 = BAUD & 0xff;
-
-    //enable timer0 interrupt
-    //IE1  |= M_ET0;
-    ET0 = true;
-
-    //timer0 start running
-    TR0 = true;
-    
-    // FIXME: does processor have priorities?
-    //improve timer0 interrupt priority
-    //IP1H |= M_PT0;
-}
-
-void disable_timer0(void)
-{
-    //timer0 in 16-bit auto reload mode
-    //TMOD = 0x00;
-    
-    // FIXME: is it necessary or make sense to undo clock setting mode
-    //timer0 working at 12T mode    
-    //AUXR &= ~0x80;
-    
-    //timer0 stop running
-    TR0 = 0;
-    
-    // clear overflow flag
-    TF0 = 0;
-    
-    //initialize timer0 and set reload value
-    TL0 = 0x00;
-    TH0 = 0x00;
-    
-    //disable timer0 interrupt
-    //IE1  &= ~M_ET0;
-    ET0 = 0;
-    
-    //clear timer0 interrupt priority
-    //IP1H &= ~M_PT0;
-}
-
 //-----------------------------------------
 //initial UART module variable
 void init_software_uart(void)
@@ -151,8 +99,6 @@ void init_software_uart(void)
 }
 
 //-----------------------------------------
-
-
 void putc(const char c)
 {
     while (TEND==0);
@@ -161,11 +107,14 @@ void putc(const char c)
     TING = 1;
 }
 
-//void puts(const char *s)
-//{
-//   while (*s) putc(*s++);
-//}
+//-----------------------------------------
+// avoid puts() naming to avoid conflict with printf/stdio/putchar
+void putstring(const char *s)
+{
+   while (*s) putc(*s++);
+}
 
+//-----------------------------------------
 void puthex(unsigned char v)
 {
    unsigned char c;
@@ -175,12 +124,14 @@ void puthex(unsigned char v)
    putc(c);
 }
 
+//-----------------------------------------
 void puthex2(const unsigned char x)
 {
    puthex(x >> 4);
    puthex(x);
 }
 
+//-----------------------------------------
 unsigned char uart_rx(bool* result)
 {
     volatile unsigned char rxByte = 0;
@@ -201,6 +152,7 @@ unsigned char uart_rx(bool* result)
     return rxByte;
 }
 
+//-----------------------------------------
 void uart_loop_test(void)
 {
     volatile unsigned char rxByte = 0;

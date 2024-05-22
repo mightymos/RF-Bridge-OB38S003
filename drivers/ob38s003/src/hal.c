@@ -54,7 +54,11 @@ void init_port_pins(void)
     // radio incoming input only
     //P1M1 |=  0x40;
     //P1M0 &= ~0x40;
-    
+	
+	// software uart (transmit by reset pin)
+	// default should be quasi output
+	//P1M1 &= ~0x20;
+	//P1M0 &= ~0x20;
     
     // rf sleep/wake push pull
     // see sonoffr22_pins.h - pin attached to upper leg of resistor divider
@@ -120,7 +124,7 @@ void enable_capture_interrupt(void)
     CCCON |= 0x20;
 }
 
-void init_timer0(void)
+void init_timer0(const uint16_t value)
 {
     // 16-bit mode
     TMOD |= 0x01;
@@ -130,8 +134,10 @@ void init_timer0(void)
     PFCON |= 0x01;
     
     // one millisecond to overflow
-    TH0 = 0xc1;
-    TL0 = 0x7f;
+    //TH0 = 0xc1;
+    //TL0 = 0x7f;
+    TH0 = (value >> 8) & 0xff;
+    TL0 = value & 0xff;
     
     
     // ten microseconds to overflow
@@ -145,7 +151,7 @@ void init_timer0(void)
     TR0 = true;
 }
 
-void init_timer1(void)
+void init_timer1(const uint16_t value)
 {
     // 16-bit mode
     TMOD |= 0x10;
@@ -155,8 +161,10 @@ void init_timer1(void)
     PFCON |= 0x04;
     
     // ten microseconds to overflow
-    TH1 = 0xff;
-    TL1 = 0x5f;
+    //TH1 = 0xff;
+    //TL1 = 0x5f;
+    TH1 = (value >> 8) & 0xff;
+    TL1 = value & 0xff;
     
     // enable timer1 overflow interrupt
     ET1 = true;
@@ -186,13 +194,13 @@ bool global_interrupts_are_enabled(void)
     return EA;
 }
 
-void load_timer0(const unsigned int value)
+void load_timer0(const uint16_t value)
 {
     TH0 = (value >> 8) & 0xff;
     TL0 = value & 0xff;
 }
 
-void load_timer1(const unsigned int value)
+void load_timer1(const uint16_t value)
 {
     TH1 = (value >> 8) & 0xff;
     TL1 = value & 0xff;

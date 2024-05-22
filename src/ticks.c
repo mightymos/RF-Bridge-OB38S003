@@ -1,5 +1,5 @@
 #include "hal.h"
-//#include "timer.h"
+#include "timer_interrupts.h"
 
 #include <limits.h>
 

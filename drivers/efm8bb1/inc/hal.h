@@ -174,8 +174,8 @@ extern void init_port_pins(void);
 extern void init_serial_interrupt(void);
 extern void init_capture_interrupt(void);
 extern void init_uart(void);
-extern void init_timer0(void);
-extern void init_timer1(void);
+extern void init_timer0(const uint16_t);
+extern void init_timer1(const uint16_t);
 
 extern void pca0_init(void);
 extern void pca0_run(void);

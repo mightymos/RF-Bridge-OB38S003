@@ -141,16 +141,16 @@ void enable_capture_interrupt(void)
 	EIE1 |= EPCA0__ENABLED;
 }
 
-void init_timer0(void)
+void init_timer0(const uint16_t value)
 {
     // pg. 194  Setting the TR0 bit enables the timer when either GATE0 in the TMOD register is logic 0
-	TMOD = T0M__MODE2 | T1M__MODE2 | CT0__TIMER | GATE0__DISABLED | CT1__TIMER | GATE1__DISABLED;
+	//TMOD = T0M__MODE2 | T1M__MODE2 | CT0__TIMER | GATE0__DISABLED | CT1__TIMER | GATE1__DISABLED;
 }
 
-void init_timer1(void)
+void init_timer1(const uint16_t value)
 {
 	// FIXME: actually do what function name says
-	TMOD = T0M__MODE2 | T1M__MODE2 | CT0__TIMER | GATE0__DISABLED | CT1__TIMER | GATE1__DISABLED;
+	//TMOD = T0M__MODE2 | T1M__MODE2 | CT0__TIMER | GATE0__DISABLED | CT1__TIMER | GATE1__DISABLED;
 }
 
 void pca0_init(void)

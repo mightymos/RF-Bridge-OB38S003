@@ -14,7 +14,7 @@
 
 
 #include <stdbool.h>
-//#include <stdint.h>
+#include <stdint.h>
 //#include <stdio.h>
 
 // we place these directly in include file because
@@ -175,16 +175,16 @@ extern void init_port_pins(void);
 extern void init_serial_interrupt(void);
 extern void init_capture_interrupt(void);
 extern void init_uart(void);
-extern void init_timer0(void);
-extern void init_timer1(void);
+extern void init_timer0(const uint16_t);
+extern void init_timer1(const uint16_t);
 extern void init_timer2_capture(void);
 extern void enable_capture_interrupt(void);
 extern void disable_capture_interrupt(void);
 extern bool global_interrupts_are_enabled(void);
 
 
-extern void load_timer0(const unsigned int value);
-extern void load_timer1(const unsigned int value);
+extern void load_timer0(const uint16_t value);
+extern void load_timer1(const uint16_t value);
 
 extern unsigned char get_timer2_low(void);
 extern unsigned char get_timer2_high(void);

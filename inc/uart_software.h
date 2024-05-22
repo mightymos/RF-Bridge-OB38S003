@@ -3,14 +3,19 @@
 
 #include <stdbool.h>
 
-#if TARGET_BOARD_OB38S003
-#include "sonoffr22_pins.h"
-#endif
-
 #if TARGET_BOARD_EFM8BB1
 #include "sonoffr20_pins.h"
 #endif
 
+#if TARGET_BOARD_OB38S003
+#include "sonoffr22_pins.h"
+
+// pin definitions
+#define RXB BUZZER
+#define TXB RESET_PIN
+//#define BTN P3_2
+
+#endif
 
 // FIXME: make this a macro computed from MCU_FREQ in Makefile
 //define baudrate const
@@ -45,12 +50,7 @@
 #define BAUD (65536 - (MCU_FREQ/2400/1))
 
 
-// pin definitions
-#define RXB BUZZER
-#define TXB RESET_PIN
-//#define BTN P3_2
-
-extern unsigned char TBUF,RBUF;
+extern unsigned char TBUF, RBUF;
 extern __bit TING,RING;
 extern __bit TEND,REND;
 extern unsigned char t, r;
@@ -62,11 +62,9 @@ extern unsigned char t, r;
 //-----------------------------------------
 //initial UART module variable
 void init_software_uart(void);
-void enable_timer0(void);
-void disable_timer0(void);
 
 void putc(const char c);
-//void puts(const char *s);
+void putstring(const char *s);
 
 void puthex(unsigned char v);
 void puthex2(const unsigned char x);

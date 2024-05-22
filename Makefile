@@ -99,6 +99,7 @@ SOURCES = $(SOURCE_DIR)/main_passthrough.c \
 		  $(SOURCE_DIR)/state_machine.c \
 		  $(SOURCE_DIR)/uart.c \
 		  $(SOURCE_DIR)/ticks.c \
+		  $(SOURCE_DIR)/uart_software.c \
           $(DRIVER_SRC_DIR)/delay.c \
 		  $(DRIVER_SRC_DIR)/hal.c	\
 		  $(DRIVER_SRC_DIR)/timer_interrupts.c
@@ -112,7 +113,8 @@ OBJECTS_RCSWITCH = 		$(OBJECT_DIR)/main_rcswitch.rel \
 						$(OBJECT_DIR)/delay.rel \
 						$(OBJECT_DIR)/hal.rel	\
 						$(OBJECT_DIR)/ticks.rel \
-						$(OBJECT_DIR)/timer_interrupts.rel
+						$(OBJECT_DIR)/timer_interrupts.rel \
+						$(OBJECT_DIR)/uart_software.rel
 OBJECTS_PASSTHROUGH = 	$(OBJECT_DIR)/main_passthrough.rel \
 						$(OBJECT_DIR)/delay.rel \
 						$(OBJECT_DIR)/hal.rel

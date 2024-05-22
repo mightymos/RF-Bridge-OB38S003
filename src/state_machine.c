@@ -4,11 +4,11 @@
 #include "state_machine.h"
 #include "uart.h"
 
-
+#include <stdio.h>
 #include <stdint.h>
 
 //-----------------------------------------------------------------------------
-// Portisch generally used this type of state machine, which I had alot of trouble reading
+// Portisch generally used this type of state machine, which I had a lot of trouble reading
 //-----------------------------------------------------------------------------
 void uart_state_machine(const unsigned int rxdata)
 {

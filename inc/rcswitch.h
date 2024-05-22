@@ -11,7 +11,7 @@
 //-----------------------------------------------------------------------------
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
+//#include <stdio.h>
 
 // FIXME: how much can we save ?
 #define RCSWITCH_MAX_CHANGES 64

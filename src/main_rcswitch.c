@@ -37,7 +37,8 @@
 
 // printf() requires a decent amount of code space and ram which we would like to avoid
 // and printf is not particularly useful once packet format is used
-#include <stdio.h>
+// including will conflict with puts() in uart_software.c
+//#include <stdio.h>
 
 // borrowed from area-8051 uni-stc HAL...
 #include "delay.h"
@@ -75,12 +76,14 @@
 // FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
 //extern void tm0(void)        __interrupt (d_T0_Vector);
 #if defined(TARGET_BOARD_OB38S003)
+extern void tm0(void)        __interrupt (1);
 extern void timer1_isr(void) __interrupt (d_T1_Vector);
 extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 extern void timer2_isr(void) __interrupt (d_T2_Vector);
 #endif
 
 #if defined(TARGET_BOARD_EFM8BB1)
+extern void tm0(void)        __interrupt (1);
 extern void timer1_isr(void) __interrupt (TIMER1_VECTOR);
 extern void uart_isr(void)   __interrupt (UART0_VECTOR);
 extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
@@ -206,22 +209,19 @@ int main (void)
     // hardware serial interrupt
     init_serial_interrupt();
     
-    // FIXME: consider reading pin state to select mirror mode or decoding mode
-    // default state is reset high if using software uart
-    //reset_pin_on();
-    
+   
     // software serial
-    //init_software_uart();
-    //enable_timer0();
+    // default state is reset high if using software uart
+    reset_pin_on();
+    init_software_uart();
         
-    // provides one millisecond tick
-    // (warning: cannot be used at the same time as software uart for now)
-    //init_timer0();
-        
+    // provides one millisecond tick or supports software uart
+    init_timer0(BAUD);
     // provides ten microsecond tick
-    init_timer1();
+    init_timer1(0xFF5F);
     
-    // tick style functionality
+    //
+	enable_timer0_interrupt();
     enable_timer1_interrupt();
     
     // timer supports compare and capture module for determining pulse lengths of received radio signals
@@ -256,12 +256,17 @@ int main (void)
     // watchdog will force a reset, unless we periodically write to it, demonstrating loop is not stuck somewhere
     enable_watchdog();
 
+
+	// demonstrate software uart is working
+	//putstring("Soft UART\r\n");
+	putc('s');
+
+
     while (true)
     {
 
         // if this is not periodically called, watchdog will force microcontroller reset
         refresh_watchdog();
-    
     
 
         // try to get one byte from uart rx buffer
@@ -310,17 +315,17 @@ int main (void)
             // DEBUG: using software uart
             // FIXME: a little dangerous as-is because basically sits in a while() loop ?
             // protocol index
-            //putc('p');
-            //putc('x');
-            //puthex2(get_received_protocol());
-            //putc(' ');
+            putc('p');
+            putc('x');
+            puthex2(get_received_protocol());
+            putc(' ');
 
             // bits received
-            //putc('b');
-            //putc('x');
-            //puthex2(get_received_bitlength());
-            //putc('\r');
-            //putc('\n');
+            putc('b');
+            putc('x');
+            puthex2(get_received_bitlength());
+            putc('\r');
+            putc('\n');
         }
         
         
