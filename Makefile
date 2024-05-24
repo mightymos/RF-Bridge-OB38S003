@@ -43,7 +43,7 @@
 
 # Target MCU settings --------------------------------------------------
 # sonoff black box
-TARGET_BOARD = EFM8BB1
+#TARGET_BOARD = EFM8BB1
 #TARGET_BOARD = EFM8BB1LCB
 
 # sonoff white box

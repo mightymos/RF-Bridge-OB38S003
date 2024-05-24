@@ -7,6 +7,7 @@
 #endif
 
 #if TARGET_BOARD_EFM8BB1
+#include <stdint.h>
 #include "EFM8BB1.h"
 #endif
 

@@ -139,14 +139,6 @@ void init_timer0(const uint16_t value)
     TH0 = (value >> 8) & 0xff;
     TL0 = value & 0xff;
     
-    
-    // ten microseconds to overflow
-    //TH0 = 0xff;
-    //TL0 = 0x5f;
-    
-    // enable timer0 overflow interrupt
-    ET0 = true;
-    
     // enable timer0
     TR0 = true;
 }
@@ -165,9 +157,6 @@ void init_timer1(const uint16_t value)
     //TL1 = 0x5f;
     TH1 = (value >> 8) & 0xff;
     TL1 = value & 0xff;
-    
-    // enable timer1 overflow interrupt
-    ET1 = true;
     
     // enable timer1
     TR1 = true;

@@ -29,7 +29,7 @@ void timer0_isr(void) __interrupt (TIMER0_VECTOR)
     gTimeMilliseconds++;
 
     // one millisecond to overflow
-    load_timer0(0xc17f);
+    load_timer0(0xFCAD);
 }
 
 
@@ -40,7 +40,7 @@ void timer1_isr(void) __interrupt (TIMER1_VECTOR)
     gTimeTenMicroseconds++;
     
     // ten microseconds to overflow
-    load_timer1(0xff5f);
+    load_timer1(0xFFEA);
 }
 
 void pca0_channel0EventCb(void)

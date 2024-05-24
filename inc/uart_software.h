@@ -5,6 +5,12 @@
 
 #if TARGET_BOARD_EFM8BB1
 #include "sonoffr20_pins.h"
+
+// pin definitions
+#define RXB DEBUG_PIN0
+#define TXB DEBUG_PIN1
+//#define BTN P3_2
+
 #endif
 
 #if TARGET_BOARD_OB38S003

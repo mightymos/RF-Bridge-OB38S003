@@ -201,6 +201,8 @@ int main (void)
     buzzer_off();
     tdata_off();
     
+	startup_blink();
+	delay1ms(500);
     
     // setup hardware serial
     init_uart();
@@ -211,14 +213,32 @@ int main (void)
     
    
     // software serial
-    // default state is reset high if using software uart
+    // default state is reset/pin1 high if using software uart as transmit pin
+#if defined(TARGET_BOARD_OB38S003)
     reset_pin_on();
+#endif
+
+#if defined(TARGET_BOARD_EFM8BB1)
+    debug_pin1_on();
+#endif
+
+	// allows use of a gpio to output text characters because hardware uart communicates with esp8285
     init_software_uart();
-        
+
+	
+#if defined(TARGET_BOARD_OB38S003)
     // provides one millisecond tick or supports software uart
     init_timer0(BAUD);
     // provides ten microsecond tick
+	// for ob38s003 0xFFFF - (10*10^-6)/(1/16000000)
     init_timer1(0xFF5F);
+#endif
+
+#if defined(TARGET_BOARD_EFM8BB1)
+	init_timer0(0xFCAD);
+	// for efm8bb1 0xFFFF - (10*10^-6)/(12/16000000)
+	init_timer1(0xFFEA);
+#endif
     
     //
 	enable_timer0_interrupt();
@@ -230,8 +250,8 @@ int main (void)
 #endif
 
 #if defined(TARGET_BOARD_EFM8BB1)
-    pca0_init();
-	pca0_run();
+    //pca0_init();
+	//pca0_run();
 #endif
 
     // radio receiver edge detection
@@ -312,6 +332,7 @@ int main (void)
             
             enable_capture_interrupt();
             
+#if 1
             // DEBUG: using software uart
             // FIXME: a little dangerous as-is because basically sits in a while() loop ?
             // protocol index
@@ -326,6 +347,8 @@ int main (void)
             puthex2(get_received_bitlength());
             putc('\r');
             putc('\n');
+#endif
+
         }
         
         

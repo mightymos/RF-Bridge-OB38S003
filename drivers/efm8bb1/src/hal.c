@@ -58,10 +58,7 @@ void init_port_pins(void)
 
 
 	// FIXME: correctly handle LED on sonoff different from LED on EFM8BB1LCK board
-	P1MDOUT = B0__PUSH_PULL | B1__OPEN_DRAIN
-			| B2__OPEN_DRAIN | B3__OPEN_DRAIN
-			| B4__PUSH_PULL | B5__PUSH_PULL
-			| B6__PUSH_PULL | B7__PUSH_PULL;
+	P1MDOUT = B0__PUSH_PULL | B1__OPEN_DRAIN | B2__OPEN_DRAIN | B3__OPEN_DRAIN | B4__PUSH_PULL | B5__PUSH_PULL | B6__PUSH_PULL | B7__PUSH_PULL;
 
 	// $[P1SKIP - Port 1 Skip]
 	/***********************************************************************
@@ -73,9 +70,7 @@ void init_port_pins(void)
 	 - P1.5 pin is skipped by the crossbar
 	 - P1.6 pin is skipped by the crossbar
 	 ***********************************************************************/
-	P1SKIP = B0__SKIPPED | B1__SKIPPED | B2__SKIPPED
-			| B3__NOT_SKIPPED | B4__SKIPPED | B5__SKIPPED
-			| B6__SKIPPED | B7__SKIPPED;
+	P1SKIP = B0__SKIPPED | B1__SKIPPED | B2__SKIPPED | B3__NOT_SKIPPED | B4__SKIPPED | B5__SKIPPED | B6__SKIPPED | B7__SKIPPED;
 
 
 	// $[XBR2 - Port I/O Crossbar 2]
@@ -97,9 +92,7 @@ void init_port_pins(void)
 	 - Asynchronous CP1 unavailable at Port pin
 	 - SYSCLK unavailable at Port pin
 	 ***********************************************************************/
-	XBR0 = URT0E__ENABLED | SPI0E__DISABLED | SMB0E__DISABLED
-			| CP0E__DISABLED | CP0AE__DISABLED | CP1E__DISABLED
-			| CP1AE__DISABLED | SYSCKE__DISABLED;
+	XBR0 = URT0E__ENABLED | SPI0E__DISABLED | SMB0E__DISABLED | CP0E__DISABLED | CP0AE__DISABLED | CP1E__DISABLED | CP1AE__DISABLED | SYSCKE__DISABLED;
 
 	// $[XBR1 - Port I/O Crossbar 1]
 	/***********************************************************************
@@ -118,7 +111,6 @@ void init_uart(void)
     SCON0 &= ~(SMODE__BMASK | MCE__BMASK | REN__BMASK);
 	SCON0 = REN__RECEIVE_ENABLED | SMODE__8_BIT | MCE__MULTI_DISABLED;
 }
-
 
 
 void init_serial_interrupt(void)
@@ -144,13 +136,25 @@ void enable_capture_interrupt(void)
 void init_timer0(const uint16_t value)
 {
     // pg. 194  Setting the TR0 bit enables the timer when either GATE0 in the TMOD register is logic 0
-	//TMOD = T0M__MODE2 | T1M__MODE2 | CT0__TIMER | GATE0__DISABLED | CT1__TIMER | GATE1__DISABLED;
+	TMOD = T0M__MODE2 | T1M__MODE2 | CT0__TIMER | GATE0__DISABLED | CT1__TIMER | GATE1__DISABLED;
+	
+    TH0 = (value >> 8) & 0xff;
+    TL0 = value & 0xff;
+	
+	// enable timer
+	TR0 = true;
 }
 
 void init_timer1(const uint16_t value)
 {
 	// FIXME: actually do what function name says
-	//TMOD = T0M__MODE2 | T1M__MODE2 | CT0__TIMER | GATE0__DISABLED | CT1__TIMER | GATE1__DISABLED;
+	TMOD = T0M__MODE2 | T1M__MODE2 | CT0__TIMER | GATE0__DISABLED | CT1__TIMER | GATE1__DISABLED;
+	
+    TH1 = (value >> 8) & 0xff;
+    TL1 = value & 0xff;
+	
+	// enable timer
+	TR1 = true;
 }
 
 void pca0_init(void)
