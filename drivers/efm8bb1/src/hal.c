@@ -29,7 +29,9 @@ void set_clock_mode(void)
 	// - Timer 3 low byte uses the system clock
 	// - Timer 1 uses the clock defined by the prescale field, SCA
 	//***********************************************************************/
-	CKCON0 = SCA__SYSCLK_DIV_12 | T0M__SYSCLK | T2MH__EXTERNAL_CLOCK | T2ML__SYSCLK | T3MH__EXTERNAL_CLOCK | T3ML__SYSCLK | T1M__PRESCALE;
+	//CKCON0 = SCA__SYSCLK_DIV_12 | T0M__SYSCLK | T2MH__EXTERNAL_CLOCK | T2ML__SYSCLK | T3MH__EXTERNAL_CLOCK | T3ML__SYSCLK | T1M__PRESCALE;
+	CKCON0 |= T0M__SYSCLK;
+	CKCON0 |= T1M__SYSCLK;
 }
 
 
@@ -118,7 +120,7 @@ void init_serial_interrupt(void)
     TI = 1;
 }
 
-void init_capture_interrupt(void)
+void enable_capture_interrupt(void)
 {
 	EIE1 |= EPCA0__ENABLED;
 }
@@ -128,15 +130,10 @@ void disable_capture_interrupt(void)
 	EIE1 &= ~EPCA0__ENABLED;
 }
 
-void enable_capture_interrupt(void)
-{
-	EIE1 |= EPCA0__ENABLED;
-}
 
 void init_timer0(const uint16_t value)
 {
-    // pg. 194  Setting the TR0 bit enables the timer when either GATE0 in the TMOD register is logic 0
-	TMOD = T0M__MODE2 | T1M__MODE2 | CT0__TIMER | GATE0__DISABLED | CT1__TIMER | GATE1__DISABLED;
+	TMOD |= T0M__MODE1;
 	
     TH0 = (value >> 8) & 0xff;
     TL0 = value & 0xff;
@@ -147,8 +144,7 @@ void init_timer0(const uint16_t value)
 
 void init_timer1(const uint16_t value)
 {
-	// FIXME: actually do what function name says
-	TMOD = T0M__MODE2 | T1M__MODE2 | CT0__TIMER | GATE0__DISABLED | CT1__TIMER | GATE1__DISABLED;
+	TMOD |= T1M__MODE1;
 	
     TH1 = (value >> 8) & 0xff;
     TL1 = value & 0xff;

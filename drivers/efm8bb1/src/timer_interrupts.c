@@ -7,7 +7,7 @@
 
 #include "hal.h"
 #include "rcswitch.h"
-#include "timer.h"
+#include "timer_interrupts.h"
 
 // track time since startup in one millisecond increments
 static unsigned long gTimeMilliseconds = 0;
@@ -24,14 +24,17 @@ unsigned long get_time_ten_microseconds(void)
 }
 
 
+#if 0
+
 void timer0_isr(void) __interrupt (TIMER0_VECTOR)
 {
     gTimeMilliseconds++;
 
     // one millisecond to overflow
-    load_timer0(0xFCAD);
+    load_timer0(TIMER0_RELOAD_1MILLIS);
 }
 
+#endif
 
 // timer 1 interrupt
 void timer1_isr(void) __interrupt (TIMER1_VECTOR)
@@ -40,7 +43,7 @@ void timer1_isr(void) __interrupt (TIMER1_VECTOR)
     gTimeTenMicroseconds++;
     
     // ten microseconds to overflow
-    load_timer1(0xFFEA);
+    load_timer1(TIMER1_RELOAD_10MICROS);
 }
 
 void pca0_channel0EventCb(void)

@@ -107,21 +107,14 @@ void init_serial_interrupt(void)
     ES = 1;
 }
 
-void init_capture_interrupt(void)
+void enable_capture_interrupt(void)
 {
-    //pg. 33 Compare/Capture interrupt share T2 interrupt vector.
-    // compare/capture 1 interrupt control bit
     CCCON |= 0x20;
 }
 
 void disable_capture_interrupt(void)
 {
     CCCON &= ~0x20;
-}
-
-void enable_capture_interrupt(void)
-{
-    CCCON |= 0x20;
 }
 
 void init_timer0(const uint16_t value)

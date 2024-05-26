@@ -8,6 +8,8 @@
 #ifndef INC_TIMER_INTERRUPT_H_
 #define INC_TIMER_INTERRUPT_H_
 
+#define TIMER0_RELOAD_1MILLIS   0xC17F
+#define TIMER1_RELOAD_10MICROS  0xFF5F
 
 unsigned long get_time_milliseconds(void);
 unsigned long get_time_ten_microseconds(void);

@@ -44,14 +44,9 @@
 #include "delay.h"
 
 // basically just function wrappers for setting pins etc
-// NOT a fancy hardware abstraction layer
+// not really a complete hardware abstraction layer
 #include "hal.h"
 
-// FIXME: if or ifdef required?
-//#if defined(TARGET_BOARD_OB38S003)
-// sdcc does not have sfrs defined for this microcontroller, so we provided them
-//#include "OB38S003.h"
-//#endif
 
 // the classic library for radio packet decoding
 #include "rcswitch.h"
@@ -59,10 +54,13 @@
 //
 #include "state_machine.h"
 
-// hardware specific
-//#include "timer.h"
+// generic tick logic independent of controller
 #include "ticks.h"
+// hardware specific
+#include "timer_interrupts.h"
+
 #include "uart.h"
+
 
 // since the uart pins are used for communication with ESP8265
 // it is helpful to have serial output on another pin (e.g., reset pin)
@@ -80,9 +78,7 @@ extern void tm0(void)        __interrupt (1);
 extern void timer1_isr(void) __interrupt (d_T1_Vector);
 extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 extern void timer2_isr(void) __interrupt (d_T2_Vector);
-#endif
-
-#if defined(TARGET_BOARD_EFM8BB1)
+#elif defined(TARGET_BOARD_EFM8BB1)
 extern void tm0(void)        __interrupt (1);
 extern void timer1_isr(void) __interrupt (TIMER1_VECTOR);
 extern void uart_isr(void)   __interrupt (UART0_VECTOR);
@@ -188,9 +184,7 @@ int main (void)
     // hardware initialization
 #if defined(TARGET_BOARD_OB38S003)
     set_clock_1t_mode();
-#endif
-
-#if defined(TARGET_BOARD_EFM8BB1)
+#elif defined(TARGET_BOARD_EFM8BB1)
     set_clock_mode();
 #endif
 
@@ -216,9 +210,7 @@ int main (void)
     // default state is reset/pin1 high if using software uart as transmit pin
 #if defined(TARGET_BOARD_OB38S003)
     reset_pin_on();
-#endif
-
-#if defined(TARGET_BOARD_EFM8BB1)
+#elif defined(TARGET_BOARD_EFM8BB1)
     debug_pin1_on();
 #endif
 
@@ -227,35 +219,31 @@ int main (void)
 
 	
 #if defined(TARGET_BOARD_OB38S003)
-    // provides one millisecond tick or supports software uart
-    init_timer0(BAUD);
-    // provides ten microsecond tick
+    // timer 0 provides one millisecond tick or supports software uart
+    // timer 1 provides ten microsecond tick
 	// for ob38s003 0xFFFF - (10*10^-6)/(1/16000000)
-    init_timer1(0xFF5F);
-#endif
-
-#if defined(TARGET_BOARD_EFM8BB1)
-	init_timer0(0xFCAD);
-	// for efm8bb1 0xFFFF - (10*10^-6)/(12/16000000)
-	init_timer1(0xFFEA);
+    init_timer0(BAUD);
+    init_timer1(TIMER1_RELOAD_10MICROS);
+#elif defined(TARGET_BOARD_EFM8BB1)
+	init_timer0(BAUD);
+	init_timer1(TIMER1_RELOAD_10MICROS);
 #endif
     
     //
 	enable_timer0_interrupt();
     enable_timer1_interrupt();
     
-    // timer supports compare and capture module for determining pulse lengths of received radio signals
+    
 #if defined(TARGET_BOARD_OB38S003)
+	// timer supports compare and capture module for determining pulse lengths of received radio signals
     init_timer2_capture();
-#endif
-
-#if defined(TARGET_BOARD_EFM8BB1)
+#elif defined(TARGET_BOARD_EFM8BB1)
     //pca0_init();
 	//pca0_run();
 #endif
 
     // radio receiver edge detection
-    init_capture_interrupt();
+    enable_capture_interrupt();
 	
     // enable interrupts
     enable_global_interrupts();
@@ -356,7 +344,8 @@ int main (void)
         // do a task like blink led about every ten seconds to show loop is alive
         elapsedTimeHeartbeat = get_elapsed_timer1(previousTimeHeartbeat);
 
-        if (elapsedTimeHeartbeat >= 1000000)
+        //if (elapsedTimeHeartbeat >= 1000000)
+		if (elapsedTimeHeartbeat >= 300000)
         {
             // test software uart
             //puthex2(heartbeat);

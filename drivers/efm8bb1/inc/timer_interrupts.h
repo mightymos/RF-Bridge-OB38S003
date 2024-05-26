@@ -8,6 +8,10 @@
 #ifndef INC_TIMER_INTERRUPT_H_
 #define INC_TIMER_INTERRUPT_H_
 
+// hex(0xFFFF - (10*10^-6)/(1/24500000))
+// hex(0xFFFF - (1*10^-3)/(1/24500000))
+#define TIMER0_RELOAD_1MILLIS   0xA04B
+#define TIMER1_RELOAD_10MICROS  0xFF0A
 
 unsigned long get_time_milliseconds(void);
 unsigned long get_time_ten_microseconds(void);

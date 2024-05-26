@@ -55,7 +55,6 @@
 
 #define BAUD (65536 - (MCU_FREQ/2400/1))
 
-
 extern unsigned char TBUF, RBUF;
 extern __bit TING,RING;
 extern __bit TEND,REND;
