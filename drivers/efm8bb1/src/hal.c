@@ -133,11 +133,13 @@ void disable_capture_interrupt(void)
 }
 
 
-void init_timer0(const uint8_t value)
+void init_timer0(const uint16_t value)
 {
+	// 16-bit
 	TMOD |= T0M__MODE1;
-	
-    TH0 = value;
+
+	TH0 = (value >> 8) & 0xff;
+	TL0 = value & 0xff;
 
 	// enable timer
 	TR0 = 1;
@@ -176,6 +178,18 @@ void init_timer3(const uint16_t value)
 	
 	// timer 3 on
 	TMR3CN0 |= TR3__RUN;
+}
+
+void load_timer0(const uint16_t value)
+{
+    TH0 = (value >> 8) & 0xff;
+    TL0 = value & 0xff;
+}
+
+void load_timer1(const uint16_t value)
+{
+    TH1 = (value >> 8) & 0xff;
+    TL1 = value & 0xff;
 }
 
 void pca0_init(void)

@@ -2,11 +2,9 @@
 // https://github.com/grigorig/stcgal/issues/26
 
 
-#if TARGET_BOARD_OB38S003
+#if defined(TARGET_BOARD_OB38S003)
 #include "OB38S003.h"
-#endif
-
-#if TARGET_BOARD_EFM8BB1
+#elif defined(TARGET_BOARD_EFM8BB1)
 #include <stdint.h>
 #include "EFM8BB1.h"
 #endif
@@ -34,15 +32,17 @@ unsigned char TBIT,RBIT;
 // timer interrupt routine for software UART
 // FIXME: ob38s003 uses timer 0 interrupt
 // efm8bb1  uses timer 3 interrupt
-void tm3(void) __interrupt (TIMER3_VECTOR)
+#if defined(TARGET_BOARD_OB38S003)
+void tm0(void) __interrupt (d_T0_Vector)
+#elif defined(TARGET_BOARD_EFM8BB1)
+void tm0(void) __interrupt (TIMER0_VECTOR)
+#endif
 {    
 
-#if TARGET_BOARD_OB38S003
-	// ob38s003
-    // reload since no auto reload available on timer 0
-	//load_timer0(BAUD);
-	FIXME:
-#endif
+    // for timer 0/1 no autoreload is available in 16 bit mode
+	// however, timer 2/3 would have autoreload available
+	load_timer0(SOFT_BAUD);
+
     
   if (RING)
   {
@@ -95,8 +95,9 @@ void tm3(void) __interrupt (TIMER3_VECTOR)
     }
   }
 
-  // clear Timer 3 high overflow flag
-  TMR3CN0 &= ~TF3H__SET;
+	// timer 0/1 flags are automatically cleared on both controllers
+	// if using timer 3 high overflow flag must be cleared
+	//TMR3CN0 &= ~TF3H__SET;
 }
 
 //-----------------------------------------

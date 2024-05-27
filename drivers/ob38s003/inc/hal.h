@@ -163,6 +163,16 @@ inline void disable_timer1_interrupt(void)
     ET1 = 0;
 }
 
+inline void enable_timer2_interrupt(void)
+{
+	ET2 = 1;
+}
+
+inline void disable_timer2_interrupt(void)
+{
+	ET2 = 0;
+}
+
 extern bool get_radio_wake(void);
 extern unsigned char get_stack_pointer(void);
 
@@ -176,9 +186,12 @@ extern void init_serial_interrupt(void);
 extern void init_uart(void);
 extern void init_timer0(const uint16_t);
 extern void init_timer1(const uint16_t);
-extern void init_timer2_capture(void);
+extern void init_timer2_as_capture(void);
 extern void enable_capture_interrupt(void);
 extern void disable_capture_interrupt(void);
+extern void enable_serial_interrupt(void);
+extern void disable_serial_interrupt(void);
+
 extern bool global_interrupts_are_enabled(void);
 
 

@@ -79,10 +79,10 @@ extern void timer1_isr(void) __interrupt (d_T1_Vector);
 extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 extern void timer2_isr(void) __interrupt (d_T2_Vector);
 #elif defined(TARGET_BOARD_EFM8BB1)
-//extern void tm0(void)        __interrupt (1);
+extern void tm0(void)        __interrupt (TIMER0_VECTOR);
 //extern void timer1_isr(void) __interrupt (TIMER1_VECTOR);
 extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
-extern void tm3(void)        __interrupt (TIMER3_VECTOR);
+//extern void tm3(void)        __interrupt (TIMER3_VECTOR);
 extern void uart_isr(void)   __interrupt (UART0_VECTOR);
 extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
 #endif
@@ -226,29 +226,34 @@ int main (void)
     // timer 0 provides one millisecond tick or supports software uart
     // timer 1 provides ten microsecond tick
 	// for ob38s003 0xFFFF - (10*10^-6)/(1/16000000)
-    init_timer0(BAUD);
+    init_timer0(SOFT_BAUD);
     init_timer1(TIMER1_RELOAD_10MICROS);
+	// timer 2 supports compare and capture module
+	// for determining pulse lengths of received radio signals
+    init_timer2_as_capture();
+	
+	//
+	enable_timer0_interrupt();
+    enable_timer1_interrupt();
+	enable_timer2_interrupt();
 #elif defined(TARGET_BOARD_EFM8BB1)
+	// pca used timer0 in portisch (why?), rcswitch can use dedicated pca counters
 	//init_timer0(TIMER0_PCA0);
+	init_timer0(SOFT_BAUD);
+	// uart must use timer1 on this controller
 	init_timer1(TIMER1_UART0);
 	init_timer2(TIMER2_RELOAD_10MICROS);
-	init_timer3(BAUD);
-#endif
-    
-    //
-	//enable_timer0_interrupt();
+	// timer 3 is unused for now
+	
+	enable_timer0_interrupt();
     //enable_timer1_interrupt();
 	enable_timer2_interrupt();
-    enable_timer3_interrupt();
-    
-#if defined(TARGET_BOARD_OB38S003)
-	// timer supports compare and capture module for determining pulse lengths of received radio signals
-    init_timer2_capture();
-#elif defined(TARGET_BOARD_EFM8BB1)
+	
 	// pca0 clock source was timer 0 on portisch
     pca0_init();
 	pca0_run();
 #endif
+    
 
     // radio receiver edge detection
     enable_capture_interrupt();

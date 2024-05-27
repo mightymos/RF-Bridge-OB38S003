@@ -193,10 +193,13 @@ extern void refresh_watchdog(void);
 extern void init_port_pins(void);
 extern void init_serial_interrupt(void);
 extern void init_uart(void);
-extern void init_timer0(const uint8_t);
+extern void init_timer0(const uint16_t);
 extern void init_timer1(const uint8_t);
 extern void init_timer2(const uint16_t);
 extern void init_timer3(const uint16_t);
+
+extern void load_timer0(const uint16_t value);
+extern void load_timer1(const uint16_t value);
 
 extern void pca0_init(void);
 extern void pca0_run(void);
@@ -204,6 +207,9 @@ extern void pca0_halt(void);
 
 extern void enable_capture_interrupt(void);
 extern void disable_capture_interrupt(void);
+extern void enable_serial_interrupt(void);
+extern void disable_serial_interrupt(void);
+
 extern bool global_interrupts_are_enabled(void);
 
 

@@ -19,7 +19,7 @@
 // example for efm8bb1
 // #define BAUD (65536 - (MCU_FREQ/2400/12))
 // hex(65536 - (24500000/2400/12))
-#define BAUD 0xFCAD
+#define SOFT_BAUD 0xFCAD
 
 #endif
 
@@ -33,7 +33,7 @@
 
 // example
 // hex(65536 - (16000000/2400/1))
-#define BAUD 0xE5F5
+#define SOFT_BAUD 0xE5F5
 
 #endif
 
