@@ -78,3 +78,41 @@ unsigned long get_elapsed_timer1(unsigned long previousTime)
     
     return elapsed;
 }
+
+unsigned long get_current_timer2(void)
+{
+    unsigned long currentTime;
+    
+
+    disable_timer2_interrupt();
+    
+    // FIXME: compute the proper conversion from counts to microseconds
+    //currentTime = gTimeTenMicroseconds;
+	currentTime = get_time_ten_microseconds();
+    
+    enable_timer2_interrupt();
+    
+    return currentTime;
+}
+
+
+unsigned long get_elapsed_timer2(unsigned long previousTime)
+{
+    unsigned long currentTime;
+    unsigned long elapsed;
+    
+    currentTime = get_current_timer2();
+    
+    //printf("currentTime: %lu\r\n", currentTime);
+    
+    // handle typical versus wraparound condition
+    if (previousTime <= currentTime)
+    {
+        elapsed = currentTime - previousTime;
+    } else {
+		// FIXME: seems like a bad idea to hardcode unsigned long maximum because what if type changes
+        elapsed = ULONG_MAX - previousTime + currentTime;
+    }
+    
+    return elapsed;
+}

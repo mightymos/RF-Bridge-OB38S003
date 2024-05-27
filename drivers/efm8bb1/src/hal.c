@@ -30,8 +30,8 @@ void set_clock_mode(void)
 	// - Timer 1 uses the clock defined by the prescale field, SCA
 	//***********************************************************************/
 	//CKCON0 = SCA__SYSCLK_DIV_12 | T0M__SYSCLK | T2MH__EXTERNAL_CLOCK | T2ML__SYSCLK | T3MH__EXTERNAL_CLOCK | T3ML__SYSCLK | T1M__PRESCALE;
-	CKCON0 |= T0M__SYSCLK;
-	CKCON0 |= T1M__SYSCLK;
+	CKCON0 |= SCA__SYSCLK_DIV_12;
+	CKCON0 |= T1M__PRESCALE;
 }
 
 
@@ -57,21 +57,10 @@ void init_port_pins(void)
 	// add explanation
 	P0SKIP = B0__SKIPPED | B1__SKIPPED | B2__SKIPPED | B3__SKIPPED | B4__NOT_SKIPPED | B5__NOT_SKIPPED | B6__SKIPPED | B7__SKIPPED;
 
-
-
 	// FIXME: correctly handle LED on sonoff different from LED on EFM8BB1LCK board
 	P1MDOUT = B0__PUSH_PULL | B1__OPEN_DRAIN | B2__OPEN_DRAIN | B3__OPEN_DRAIN | B4__PUSH_PULL | B5__PUSH_PULL | B6__PUSH_PULL | B7__PUSH_PULL;
 
-	// $[P1SKIP - Port 1 Skip]
-	/***********************************************************************
-	 - P1.0 pin is skipped by the crossbar
-	 - P1.1 pin is skipped by the crossbar
-	 - P1.2 pin is skipped by the crossbar
-	 - P1.3 pin is not skipped by the crossbar
-	 - P1.4 pin is skipped by the crossbar
-	 - P1.5 pin is skipped by the crossbar
-	 - P1.6 pin is skipped by the crossbar
-	 ***********************************************************************/
+
 	P1SKIP = B0__SKIPPED | B1__SKIPPED | B2__SKIPPED | B3__NOT_SKIPPED | B4__SKIPPED | B5__SKIPPED | B6__SKIPPED | B7__SKIPPED;
 
 
@@ -114,90 +103,90 @@ void init_uart(void)
 	SCON0 = REN__RECEIVE_ENABLED | SMODE__8_BIT | MCE__MULTI_DISABLED;
 }
 
-
+// this is necessary so that uart ring buffer logic operates correctly the first time it is used
+// i.e., appears that last character sent was completed, even though no previous character was actually sent
 void init_serial_interrupt(void)
 {
     TI = 1;
 }
 
+void enable_serial_interrupt(void)
+{
+    ES0 = 1;
+}
+
+void disable_serial_interrupt(void)
+{
+    ES0 = 0;
+}
+
 void enable_capture_interrupt(void)
 {
+	PCA0CPM0 |= ECCF__ENABLED;
 	EIE1 |= EPCA0__ENABLED;
 }
 
 void disable_capture_interrupt(void)
 {
+	PCA0CPM0 &= ~ECCF__ENABLED;
 	EIE1 &= ~EPCA0__ENABLED;
 }
 
 
-void init_timer0(const uint16_t value)
+void init_timer0(const uint8_t value)
 {
 	TMOD |= T0M__MODE1;
 	
-    TH0 = (value >> 8) & 0xff;
-    TL0 = value & 0xff;
-	
+    TH0 = value;
+
 	// enable timer
-	TR0 = true;
+	TR0 = 1;
 }
 
-void init_timer1(const uint16_t value)
+void init_timer1(const uint8_t value)
 {
-	TMOD |= T1M__MODE1;
+	// 8-bit Counter/Timer with Auto-Reload
+	TMOD |= T1M__MODE2;
 	
-    TH1 = (value >> 8) & 0xff;
-    TL1 = value & 0xff;
+    TH1 = value;
 	
 	// enable timer
-	TR1 = true;
+	TR1 = 1;
+}
+
+void init_timer2(const uint16_t value)
+{
+	TMR2RLH = (value >> 8) & 0xff;
+	TMR2RLL = value & 0xff;
+	
+	// default is 16 bit auto reload mode
+	// default clock source is system clock divided by 12
+	
+	// timer 2 on
+	TR2 = 1;
+}
+
+void init_timer3(const uint16_t value)
+{
+	TMR3RLH = (value >> 8) & 0xff;
+	TMR3RLL = value & 0xff;
+	
+	// default is 16 bit auto reload mode
+	// default clock source is system clock divided by 12
+	
+	// timer 3 on
+	TMR3CN0 |= TR3__RUN;
 }
 
 void pca0_init(void)
 {
-	// 
-	PCA0CN0 = CR__STOP;
-
-
-	// $[PCA0MD - PCA Mode]
-	/***********************************************************************
-	 - PCA continues to function normally while the system controller is in
-	 Idle Mode
-	 - Enable a PCA Counter/Timer Overflow interrupt request when CF is set
-	 - Timer 0 overflow
-	 ***********************************************************************/
-	PCA0MD = CIDL__NORMAL | ECF__OVF_INT_ENABLED | CPS__T0_OVERFLOW;
-
-	/***********************************************************************
-	 - PCA Counter/Timer Low Byte = 0xFF
-	 ***********************************************************************/
-	//PCA0L = (0xFF << PCA0L_PCA0L__SHIFT);
-    PCA0L = 0xFF;
-
-	/***********************************************************************
-	 - Invert polarity
-	 - Use default polarity
-	 - Use default polarity
-	 ***********************************************************************/
-	PCA0POL = CEX0POL__INVERT | CEX1POL__DEFAULT | CEX2POL__DEFAULT;
-
-
-	// FIXME: comment
-	PCA0PWM &= ~ARSEL__BMASK;
-
-
-	// $[PCA0CPM0 - PCA Channel 0 Capture/Compare Mode]
-	/***********************************************************************
-	 - Enable negative edge capture
-	 - Disable CCF0 interrupts
-	 - Disable match function
-	 - 8 to 11-bit PWM selected
-	 - Enable positive edge capture
-	 - Disable comparator function
-	 - Disable PWM function
-	 - Disable toggle function
-	 ***********************************************************************/
-	PCA0CPM0 = CAPN__ENABLED | ECCF__DISABLED | MAT__DISABLED | PWM16__8_BIT | CAPP__ENABLED | ECOM__DISABLED | PWM__DISABLED | TOG__DISABLED;
+	// default pca acts normally when controller is idle
+	// default pca CF overflow is disabled
+	PCA0MD |= CPS__SYSCLK_DIV_12;
+	
+	// enable both positive and negative edge triggers
+	PCA0CPM0 |= CAPP__ENABLED;
+	PCA0CPM0 |= CAPN__ENABLED;
 }
 
 void pca0_run(void)
@@ -216,18 +205,6 @@ bool global_interrupts_are_enabled(void)
 	return EA;
 }
 
-void load_timer0(const unsigned int value)
-{
-	TH0 = (value >> 8) & 0xFF;
-	TL0 = value & 0xFF;
-}
-
-void load_timer1(const unsigned int value)
-{
-	TH1 = (value >> 8) & 0xFF;
-	TL1 = value & 0xFF;
-}
-
 unsigned char get_timer2_low(void)
 {
 	return TMR2L;
@@ -238,7 +215,8 @@ unsigned char get_timer2_high(void)
 	return TMR2H;
 }
 
-void clear_ccp1_flag(void)
+void clear_capture_flag(void)
 {
-	CCF1 = 0;
+	//PCA0CN0 &= ~CF__SET;
+	CCF0 = 0;
 }

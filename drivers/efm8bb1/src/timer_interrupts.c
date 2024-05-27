@@ -24,34 +24,22 @@ unsigned long get_time_ten_microseconds(void)
 }
 
 
-#if 0
-
-void timer0_isr(void) __interrupt (TIMER0_VECTOR)
-{
-    gTimeMilliseconds++;
-
-    // one millisecond to overflow
-    load_timer0(TIMER0_RELOAD_1MILLIS);
-}
-
-#endif
-
-// timer 1 interrupt
-void timer1_isr(void) __interrupt (TIMER1_VECTOR)
+// timer 2 interrupt
+void timer2_isr(void) __interrupt (TIMER2_VECTOR)
 {
     // tracks time since timer enabled, used to track long periods of time
     gTimeTenMicroseconds++;
     
-    // ten microseconds to overflow
-    load_timer1(TIMER1_RELOAD_10MICROS);
+	// clear interrupt flag
+	TF2 = 0;
 }
+
 
 void pca0_channel0EventCb(void)
 {
     //FIXME: we need to specify the actual time step this represents
-	uint16_t current_capture_value = PCA0CP0 * 10;
-	uint8_t flags = PCA0MD;
-	
+	uint16_t current_capture_value = PCA0CP0;
+
     const uint8_t gapMagicNumber  = 200;
     const uint8_t repeatThreshold   = 2;
     
@@ -73,13 +61,6 @@ void pca0_channel0EventCb(void)
     // go from 8-bit to 16-bit variables
     previous = current;
     current = current_capture_value;
-	
-	// clear counter
-	PCA0MD &= 0xBF;
-	PCA0H = 0x00;
-	PCA0L = 0x00;
-	PCA0MD = flags;
-    
     
     // check for overflow condition
     if (current < previous)
@@ -92,11 +73,10 @@ void pca0_channel0EventCb(void)
     }
     
     // FIXME: no magic numbers
-    // with timer clocked at (16 MHz / 4), four counts are needed to get one microsecond
-    //duration = duration / 4;
-    // 16 MHz / 12
-    // e.g., (1/(16000000/24)) * dec(0xFFFF) = 98.30 milliseconds maximum can be counted
-    duration = (duration * 3) / 2;
+	// e.g. (1/(24500000))*(49/2) = 1      microsec
+	// e.g. (1/(24500000/12))*2   = 0.9796 microsec
+	// (1/(24500000/12))*dec(0xFFFF) = 32.0987755 millisecs max
+    duration = duration * 2;
     
     // from oscillscope readings it appears that first sync pulse of first radio packet is frequently not output properly by receiver
     // this could be because radio receiver needs to "warm up" (despite already being enabled?)
@@ -141,45 +121,48 @@ void pca0_channel0EventCb(void)
 
     timings[changeCount++] = duration;
     
-        
-    //clear compare/capture 1 flag
-    //clear_ccp1_flag();
+    // FIXME: done in the interrupt already, so can remove
+    //clear pca0 interrupt flag
+    //clear_capture_flag();
 }
 
 
 
 void pca0_isr(void) __interrupt (PCA0_VECTOR)
 {
-  // save and clear flags
-  uint8_t flags = PCA0CN0 & (CF__BMASK | CCF0__BMASK | CCF1__BMASK | CCF2__BMASK);
+	// save and clear flags
+	uint8_t flags = PCA0CN0 & (CF__BMASK | CCF0__BMASK | CCF1__BMASK | CCF2__BMASK);
 
-  PCA0CN0 &= ~flags;
+	PCA0CN0 &= ~flags;
 
-  //if( (PCA0PWM & COVF__BMASK) && (PCA0PWM & ECOV__BMASK))
-  //{
-  //  PCA0_intermediateOverflowCb();
-  //}
+	debug_pin0_toggle();
 
-  PCA0PWM &= ~COVF__BMASK;
+	//if( (PCA0PWM & COVF__BMASK) && (PCA0PWM & ECOV__BMASK))
+	//{
+	//  PCA0_intermediateOverflowCb();
+	//}
 
-  //if((flags & CF__BMASK) && (PCA0MD & ECF__BMASK))
-  //{
-  //  PCA0_overflowCb();
-  //}
+	PCA0PWM &= ~COVF__BMASK;
 
-  if((flags & CCF0__BMASK) && (PCA0CPM0 & ECCF__BMASK))
-  {
-  	// apparently our radio input
-    pca0_channel0EventCb();
-  }
+	//if((flags & CF__BMASK) && (PCA0MD & ECF__BMASK))
+	//{
+	//  PCA0_overflowCb();
+	//}
 
-  //if((flags & CCF1__BMASK) && (PCA0CPM1 & ECCF__BMASK))
-  //{
-  //  PCA0_channel1EventCb();
-  //}
+	// FIXME: we might eventually want to use CF flag to detect counter wrap around
+	if((flags & CCF0__BMASK) && (PCA0CPM0 & ECCF__BMASK))
+	{
+	// apparently our radio input
+	pca0_channel0EventCb();
+	}
 
-  //if((flags & CCF2__BMASK) && (PCA0CPM2 & ECCF__BMASK))
-  //{
-  //  PCA0_channel2EventCb();
-  //}
+	//if((flags & CCF1__BMASK) && (PCA0CPM1 & ECCF__BMASK))
+	//{
+	//  PCA0_channel1EventCb();
+	//}
+
+	//if((flags & CCF2__BMASK) && (PCA0CPM2 & ECCF__BMASK))
+	//{
+	//  PCA0_channel2EventCb();
+	//}
 }

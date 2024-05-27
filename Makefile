@@ -43,11 +43,11 @@
 
 # Target MCU settings --------------------------------------------------
 # sonoff black box
-#TARGET_BOARD = EFM8BB1
+TARGET_BOARD = EFM8BB1
 #TARGET_BOARD = EFM8BB1LCB
 
 # sonoff white box
-TARGET_BOARD = OB38S003
+#TARGET_BOARD = OB38S003
 
 
 ifndef TARGET_BOARD

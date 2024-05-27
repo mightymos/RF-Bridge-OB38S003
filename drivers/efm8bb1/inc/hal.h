@@ -167,14 +167,36 @@ inline void disable_timer1_interrupt(void)
     ET1 = 0;
 }
 
+inline void enable_timer2_interrupt(void)
+{
+	ET2 = 1;
+}
+
+inline void disable_timer2_interrupt(void)
+{
+	ET2 = 0;
+}
+
+inline void enable_timer3_interrupt(void)
+{
+	EIE1 |= ET3__ENABLED;
+}
+
+inline void disable_timer3_interrupt(void)
+{
+	EIE1 |= ET3__DISABLED;
+}
+
 extern void set_clock_mode(void);
 extern void enable_watchdog(void);
 extern void refresh_watchdog(void);
 extern void init_port_pins(void);
 extern void init_serial_interrupt(void);
 extern void init_uart(void);
-extern void init_timer0(const uint16_t);
-extern void init_timer1(const uint16_t);
+extern void init_timer0(const uint8_t);
+extern void init_timer1(const uint8_t);
+extern void init_timer2(const uint16_t);
+extern void init_timer3(const uint16_t);
 
 extern void pca0_init(void);
 extern void pca0_run(void);
@@ -185,12 +207,9 @@ extern void disable_capture_interrupt(void);
 extern bool global_interrupts_are_enabled(void);
 
 
-extern void load_timer0(const unsigned int value);
-extern void load_timer1(const unsigned int value);
-
 extern unsigned char get_timer2_low(void);
 extern unsigned char get_timer2_high(void);
 
-extern void clear_ccp1_flag(void);
+extern void clear_capture_flag(void);
 
 #endif // INC_GLOBALS_H_

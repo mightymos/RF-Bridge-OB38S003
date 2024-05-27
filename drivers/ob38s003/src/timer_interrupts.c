@@ -99,9 +99,8 @@ void timer2_isr(void) __interrupt (d_T2_Vector)
     }
     
     // FIXME: no magic numbers
-    // with timer clocked at (16 MHz / 4), four counts are needed to get one microsecond
-    //duration = duration / 4;
-    // 16 MHz / 12
+    // e.g. prescale at (1/4) at 16 MHz, four counts are needed to get one microsecond
+    // e.g. prescale at (1/24) at 16 MHz
     // e.g., (1/(16000000/24)) * dec(0xFFFF) = 98.30 milliseconds maximum can be counted
     duration = (duration * 3) / 2;
     
@@ -150,5 +149,5 @@ void timer2_isr(void) __interrupt (d_T2_Vector)
     
         
     //clear compare/capture 1 flag
-    clear_ccp1_flag();
+    clear_capture_flag();
 }

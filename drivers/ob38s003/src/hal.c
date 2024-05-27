@@ -198,7 +198,7 @@ unsigned char get_timer2_high(void)
     return CCH1;
 }
 
-void clear_ccp1_flag(void)
+void clear_capture_flag(void)
 {
     CCCON &= ~0x02;
 }

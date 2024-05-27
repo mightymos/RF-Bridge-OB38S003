@@ -18,6 +18,8 @@ unsigned long get_current_timer0(void);
 unsigned long get_elapsed_timer0(unsigned long previousTime);
 unsigned long get_current_timer1(void);
 unsigned long get_elapsed_timer1(unsigned long previousTime);
+unsigned long get_current_timer2(void);
+unsigned long get_elapsed_timer2(unsigned long previousTime);
 
 
 #endif // INC_TICKS_H_

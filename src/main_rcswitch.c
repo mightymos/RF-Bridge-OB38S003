@@ -74,13 +74,15 @@
 // FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
 //extern void tm0(void)        __interrupt (d_T0_Vector);
 #if defined(TARGET_BOARD_OB38S003)
-extern void tm0(void)        __interrupt (1);
+extern void tm0(void)        __interrupt (d_T0_Vector);
 extern void timer1_isr(void) __interrupt (d_T1_Vector);
 extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 extern void timer2_isr(void) __interrupt (d_T2_Vector);
 #elif defined(TARGET_BOARD_EFM8BB1)
-extern void tm0(void)        __interrupt (1);
-extern void timer1_isr(void) __interrupt (TIMER1_VECTOR);
+//extern void tm0(void)        __interrupt (1);
+//extern void timer1_isr(void) __interrupt (TIMER1_VECTOR);
+extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
+extern void tm3(void)        __interrupt (TIMER3_VECTOR);
 extern void uart_isr(void)   __interrupt (UART0_VECTOR);
 extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
 #endif
@@ -199,11 +201,13 @@ int main (void)
 	delay1ms(500);
     
     // setup hardware serial
+	// timer 1 is clock source for uart0 on efm8bb1
     init_uart();
     uart_rx_enabled();
     
     // hardware serial interrupt
     init_serial_interrupt();
+	enable_serial_interrupt();
     
    
     // software serial
@@ -225,21 +229,25 @@ int main (void)
     init_timer0(BAUD);
     init_timer1(TIMER1_RELOAD_10MICROS);
 #elif defined(TARGET_BOARD_EFM8BB1)
-	init_timer0(BAUD);
-	init_timer1(TIMER1_RELOAD_10MICROS);
+	//init_timer0(TIMER0_PCA0);
+	init_timer1(TIMER1_UART0);
+	init_timer2(TIMER2_RELOAD_10MICROS);
+	init_timer3(BAUD);
 #endif
     
     //
-	enable_timer0_interrupt();
-    enable_timer1_interrupt();
-    
+	//enable_timer0_interrupt();
+    //enable_timer1_interrupt();
+	enable_timer2_interrupt();
+    enable_timer3_interrupt();
     
 #if defined(TARGET_BOARD_OB38S003)
 	// timer supports compare and capture module for determining pulse lengths of received radio signals
     init_timer2_capture();
 #elif defined(TARGET_BOARD_EFM8BB1)
-    //pca0_init();
-	//pca0_run();
+	// pca0 clock source was timer 0 on portisch
+    pca0_init();
+	pca0_run();
 #endif
 
     // radio receiver edge detection
@@ -266,8 +274,8 @@ int main (void)
 
 
 	// demonstrate software uart is working
-	//putstring("Soft UART\r\n");
-	putc('s');
+	putstring("boot\r\n");
+	//putc('s');
 
 
     while (true)
@@ -342,10 +350,10 @@ int main (void)
         
 #if 1
         // do a task like blink led about every ten seconds to show loop is alive
-        elapsedTimeHeartbeat = get_elapsed_timer1(previousTimeHeartbeat);
+        elapsedTimeHeartbeat = get_elapsed_timer2(previousTimeHeartbeat);
 
         //if (elapsedTimeHeartbeat >= 1000000)
-		if (elapsedTimeHeartbeat >= 300000)
+		if (elapsedTimeHeartbeat >= 500000)
         {
             // test software uart
             //puthex2(heartbeat);
@@ -354,7 +362,7 @@ int main (void)
             
             led_toggle();
             
-            previousTimeHeartbeat = get_current_timer1();
+            previousTimeHeartbeat = get_current_timer2();
             
             heartbeat++;
         }

@@ -31,30 +31,36 @@ unsigned char TCNT,RCNT;
 unsigned char TBIT,RBIT;
 
 //-----------------------------------------
-//Timer interrupt routine for UART
-// both microcontrollers use the same interrupt number for timer 0
-void tm0(void) __interrupt (1)
+// timer interrupt routine for software UART
+// FIXME: ob38s003 uses timer 0 interrupt
+// efm8bb1  uses timer 3 interrupt
+void tm3(void) __interrupt (TIMER3_VECTOR)
 {    
 
+#if TARGET_BOARD_OB38S003
+	// ob38s003
     // reload since no auto reload available on timer 0
-	load_timer0(BAUD);
+	//load_timer0(BAUD);
+	FIXME:
+#endif
     
-  if (RING) {
-    if (--RCNT == 0) {
+  if (RING)
+  {
+    if (--RCNT == 0)
+	{
       //reset send baudrate counter
       RCNT = 3;
-      if (--RBIT == 0) {
+      if (--RBIT == 0)
+	  {
         RBUF = RDAT; //save the data to RBUF
         RING = 0; //stop receive
         REND = 1; //set receive completed flag
-      }
-      else {
+      } else {
         RDAT >>= 1;
         if (RXB) RDAT |= 0x80; //shift RX data to RX buffer
       }
     }
-  }
-  else if (!RXB) {
+  } else if (!RXB) {
     //set start receive flag
     RING = 1;
     //initial receive baudrate counter
@@ -63,28 +69,34 @@ void tm0(void) __interrupt (1)
     RBIT = 9;
   }
 
-  if (--TCNT == 0) {
+  if (--TCNT == 0)
+  {
     //reset send baudrate counter
     TCNT = TCNT_RELOAD;
-    if (TING) {  //judge whether sending
-      if (TBIT == 0) {
+    if (TING)
+	{  //judge whether sending
+      if (TBIT == 0)
+	  {
         TXB = 0; //send start bit
         TDAT = TBUF; //load data from TBUF to TDAT
         TBIT = 9; //initial send bit number (8 data bits + 1 stop bit)
-      }
-    else {
-      TDAT >>= 1; //shift data to CY
-      if (--TBIT == 0) {
-        TXB = 1;
-        TING = 0; //stop send
-        TEND = 1; //set send completed flag
-      }
-      else {
-        TXB = CY; //write CY to TX port
+      } else {
+		  TDAT >>= 1; //shift data to CY
+		  
+		  if (--TBIT == 0)
+		  {
+			TXB = 1;
+			TING = 0; //stop send
+			TEND = 1; //set send completed flag
+		  } else {
+			TXB = CY; //write CY to TX port
+		  }
       }
     }
   }
-}
+
+  // clear Timer 3 high overflow flag
+  TMR3CN0 &= ~TF3H__SET;
 }
 
 //-----------------------------------------

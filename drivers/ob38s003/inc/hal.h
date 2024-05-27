@@ -188,7 +188,7 @@ extern void load_timer1(const uint16_t value);
 extern unsigned char get_timer2_low(void);
 extern unsigned char get_timer2_high(void);
 
-extern void clear_ccp1_flag(void);
+extern void clear_capture_flag(void);
 
 
 #endif // INC_HAL_H_
