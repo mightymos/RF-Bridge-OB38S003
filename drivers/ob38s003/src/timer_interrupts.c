@@ -24,6 +24,7 @@ unsigned long get_time_ten_microseconds(void)
 	return gTimeTenMicroseconds;
 }
 
+#if 0
 
 void timer0_isr(void) __interrupt (d_T0_Vector)
 {
@@ -33,6 +34,7 @@ void timer0_isr(void) __interrupt (d_T0_Vector)
     load_timer0(TIMER0_RELOAD_1MILLIS);
 }
 
+#endif
 
 // timer 1 interrupt
 void timer1_isr(void) __interrupt (d_T1_Vector)

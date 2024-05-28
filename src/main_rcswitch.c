@@ -76,8 +76,8 @@
 #if defined(TARGET_BOARD_OB38S003)
 extern void tm0(void)        __interrupt (d_T0_Vector);
 extern void timer1_isr(void) __interrupt (d_T1_Vector);
-extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 extern void timer2_isr(void) __interrupt (d_T2_Vector);
+extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 #elif defined(TARGET_BOARD_EFM8BB1)
 extern void tm0(void)        __interrupt (TIMER0_VECTOR);
 //extern void timer1_isr(void) __interrupt (TIMER1_VECTOR);
@@ -235,7 +235,7 @@ int main (void)
 	//
 	enable_timer0_interrupt();
     enable_timer1_interrupt();
-	enable_timer2_interrupt();
+	//enable_timer2_interrupt();
 #elif defined(TARGET_BOARD_EFM8BB1)
 	// pca used timer0 in portisch (why?), rcswitch can use dedicated pca counters
 	//init_timer0(TIMER0_PCA0);
@@ -277,11 +277,10 @@ int main (void)
     // watchdog will force a reset, unless we periodically write to it, demonstrating loop is not stuck somewhere
     enable_watchdog();
 
-
+#if 1
 	// demonstrate software uart is working
 	putstring("boot\r\n");
-	//putc('s');
-
+#endif
 
     while (true)
     {
@@ -355,7 +354,7 @@ int main (void)
         
 #if 1
         // do a task like blink led about every ten seconds to show loop is alive
-        elapsedTimeHeartbeat = get_elapsed_timer2(previousTimeHeartbeat);
+        elapsedTimeHeartbeat = get_elapsed_timer1(previousTimeHeartbeat);
 
         //if (elapsedTimeHeartbeat >= 1000000)
 		if (elapsedTimeHeartbeat >= 500000)
@@ -367,7 +366,7 @@ int main (void)
             
             led_toggle();
             
-            previousTimeHeartbeat = get_current_timer2();
+            previousTimeHeartbeat = get_current_timer1();
             
             heartbeat++;
         }
