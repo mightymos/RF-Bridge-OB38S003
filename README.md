@@ -1,14 +1,19 @@
 # Introduction
 
-This is an alternative firmware targetting the 8052 based On-Bright OB38S003 microcontroller.  
-This microcontroller is present in the Sonoff Bridge R2 v2.2 433 MHz radio to wifi bridge.  
+An alternative firmware for 433 MHz radio to wifi bridges, targetting these boards/microcontrollers:  
+This microcontroller is present in the  433 MHz radio to wifi bridge.  
 
+| Board | Microcontroller | Passthrough |  RCSwitch | Portisch |
+| ------------- | ------------- | ------------- | ------------- | ------------- |
+| Sonoff Bridge R2 v1.0 (black box) | OB38S003 | Supported | Decode only | No |
+| Sonoff Bridge R2 v2.2 (white box) | EFM8BB1 | Supported | Decode only | No |
+| EFM8BB1 Busy Bee Low Cost Kit Board | EFM8BB1 | Supported | Decode only | No |
 
-The OB38S003 was originally intended for radio decoding but lacked support for additional protocols.  
+These microcontrollers were originally intended for radio decoding but lacked support for additional protocols.  
 As a consequence many people just bypass the microcontroller with a hardware modification:  
 https://github.com/arendst/Tasmota/discussions/13283  
 
-Decoding may then be done directly on the ESP8265 (e.g., ESPHome supports rcswitch).  
+Decoding may then be done directly on the ESP8265 (e.g., ESPHome or Tasmota or typically used for this purpose).  
 
 
 The intent here is to avoid the need to perform hardware modification.  
@@ -29,33 +34,22 @@ The firmware radio decoding is inspired by 1) RF-Bridge-EFM8BB1 (Portisch) and 2
 THIS IS A WORK IN PROGRESS and should not be used by typical users.  
 
 Erasing and reprogramming the microcontroller is cumbersome without the official programmer.  
-I am using the microcontroller as a pass through to ESPHome now.  
-So the code is a mess for selecting other uses.  
-
-That said, decoding of protocols 1 and 2 seems to work reliably.  
-For example door reed sensors - both stock and modified - have been successfully decoded.  
-https://github.com/mightymos/ReedTripRadio  
-
-| Feature | detail | status |
-| ------------- | ------------- | ------------- |
-| Protocol testing | we need some scheme to evaluate reliability | TODO |
-| Sniffing | allow viewing timing of unknown radio protocols | TODO |
-| Transmission | operate as remote control | TODO |
-| Port to R2 v1.0 bridge (black box) | requires makefile | TODO |
+However, an open source and inexpensive programmer is discussed under Flasher section.  
 
 # Installation
 Install SDCC compiler for your platform:  
 https://sdcc.sourceforge.net/  
 
 On command line run make.  
+For now modify Makefile to select desired target.  
 Built firmware placed in build directory.  
 See Flasher section below.  
 
 # Previous Work
 
-An attempt was made to compile portisch with the open source SDCC compiler.  
-8KB code space appeared to be exceeded.  
+An successful attempt was made to compile "Portisch" with the open source SDCC compiler.  
 I personally found the source code to be difficult to read.  
+I hope to be able to use this work to use Portisch on the newer Sonoff boxes.  
 https://github.com/mightymos/SonOfPortisch
 
 There are at least three versions of rcswitch.  

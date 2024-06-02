@@ -7,6 +7,9 @@
 #elif defined(TARGET_BOARD_EFM8BB1)
 #include <stdint.h>
 #include "EFM8BB1.h"
+#elif defined(TARGET_BOARD_EFM8BB1LCB)
+#include <stdint.h>
+#include "EFM8BB1.h"
 #endif
 
 
@@ -35,6 +38,8 @@ unsigned char TBIT,RBIT;
 #if defined(TARGET_BOARD_OB38S003)
 void tm0(void) __interrupt (d_T0_Vector)
 #elif defined(TARGET_BOARD_EFM8BB1)
+void tm0(void) __interrupt (TIMER0_VECTOR)
+#elif defined(TARGET_BOARD_EFM8BB1LCB)
 void tm0(void) __interrupt (TIMER0_VECTOR)
 #endif
 {    

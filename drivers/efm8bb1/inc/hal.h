@@ -5,10 +5,14 @@
  *      Author:
  */
 
-#ifndef INC_GLOBALS_H_
-#define INC_GLOBALS_H_
+#ifndef INC_HAL_H_
+#define INC_HAL_H_
 
+#if defined(TARGET_BOARD_EFM8BB1LCB)
+#include "efm8bb1lck_pins.h"
+#elif defined(TARGET_BOARD_EFM8BB1)
 #include "sonoffr20_pins.h"
+#endif
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -106,34 +110,19 @@ inline void uart_rx_disabled(void)
     SCON0 &= ~REN__RECEIVE_ENABLED;
 }
 
-inline void debug_pin0_on(void)
+inline void soft_tx_pin_on(void)
 {
-	DEBUG_PIN0 = 1;
+	SOFT_TX_PIN = 1;
 }
 
-inline void debug_pin0_off(void)
+inline void soft_tx_pin_off(void)
 {
-	DEBUG_PIN0 = 0;
+	SOFT_TX_PIN = 0;
 }
 
-inline void debug_pin0_toggle(void)
+inline void soft_tx_pin_toggle(void)
 {
-	DEBUG_PIN0 = !DEBUG_PIN0;
-}
-
-inline void debug_pin1_on(void)
-{
-	DEBUG_PIN1 = 1;
-}
-
-inline void debug_pin1_off(void)
-{
-	DEBUG_PIN1 = 0;
-}
-
-inline void debug_pin1_toggle(void)
-{
-	DEBUG_PIN1 = !DEBUG_PIN1;
+	SOFT_TX_PIN = !SOFT_TX_PIN;
 }
 
 
@@ -218,4 +207,4 @@ extern unsigned char get_timer2_high(void);
 
 extern void clear_capture_flag(void);
 
-#endif // INC_GLOBALS_H_
+#endif // INC_HAL_H_

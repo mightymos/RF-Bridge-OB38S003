@@ -70,26 +70,6 @@ void startup_blink(void)
 }
 
 
-#if 0
-
-// for reset source on ob38s003
-// this can be pretty slow to blink out an eight bit reset register
-void startup_reset_status(void)
-{
-    uint8_t index;
-    
-    for (index = 1; index <= RSTS; index++)
-    {
-        led_on();
-        //reset_pin_on();
-        delay1ms(1000);
-        led_off();
-        //reset_pin_off();
-        delay1ms(1000);
-    }
-}
-
-#endif
 
 //-----------------------------------------------------------------------------
 // main() Routine
@@ -116,6 +96,8 @@ int main (void)
     set_clock_1t_mode();
 #elif defined(TARGET_BOARD_EFM8BB1)
     set_clock_mode();
+#elif defined(TARGET_BOARD_EFM8BB1LCB)
+	set_clock_mode();
 #endif
 
     init_port_pins();

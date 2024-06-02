@@ -68,24 +68,19 @@ inline bool get_radio_wake(void)
     return RF_ENABLE;
 }
 
-inline void reset_pin_on(void)
+inline void soft_tx_pin_on(void)
 {
-    RESET_PIN = 1;
+    SOFT_TX_PIN = 1;
 }
 
-inline void reset_pin_off(void)
+inline void soft_tx_pin_off(void)
 {
-    RESET_PIN = 0;
+    SOFT_TX_PIN = 0;
 }
 
-inline void reset_pin_toggle(void)
+inline void soft_tx_pin_toggle(void)
 {
-    RESET_PIN = !RESET_PIN;
-}
-
-inline bool reset_level(void)
-{
-    return RESET_PIN;
+    SOFT_TX_PIN = !SOFT_TX_PIN;
 }
 
 inline void tdata_on(void)

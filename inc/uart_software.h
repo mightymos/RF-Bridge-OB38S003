@@ -3,39 +3,47 @@
 
 #include <stdbool.h>
 
-#if TARGET_BOARD_EFM8BB1
-#include "sonoffr20_pins.h"
-
-// pin definitions
-#define RXB DEBUG_PIN0
-#define TXB DEBUG_PIN1
-//#define BTN P3_2
-
 //define baudrate const
 // example formula was for STC15 8051 microcontroller with 24MHz / 3 = 8MHz max. clock at 3.3V ??
 //BAUD = 65536 - FOSC/3/BAUDRATE/M (1T:M=1; 12T:M=12)
 //NOTE: (FOSC/3/BAUDRATE) must be greater than 98, (RECOMMEND GREATER THAN 110)
 
-// example for efm8bb1
-// #define BAUD (65536 - (MCU_FREQ/2400/12))
-// hex(65536 - (24500000/2400/12))
-#define SOFT_BAUD 0xFCAD
-
-#endif
-
-#if TARGET_BOARD_OB38S003
-#include "sonoffr22_pins.h"
+#if defined(TARGET_BOARD_EFM8BB1LCB)
+#include "efm8bb1lck_pins.h"
 
 // pin definitions
 #define RXB BUZZER
-#define TXB RESET_PIN
+#define TXB SOFT_TX_PIN
 //#define BTN P3_2
 
-// example
-// hex(65536 - (16000000/2400/1))
+// e.g., hex(65536 - (24500000/2400/12))
+#define SOFT_BAUD 0xFCAD
+
+#elif defined(TARGET_BOARD_EFM8BB1)
+
+#include "sonoffr20_pins.h"
+
+// pin definitions
+#define RXB BUZZER
+#define TXB SOFT_TX_PIN
+//#define BTN P3_2
+
+// e.g., hex(65536 - (24500000/2400/12))
+#define SOFT_BAUD 0xFCAD
+
+#elif defined(TARGET_BOARD_OB38S003)
+
+#include "sonoffr22_pins.h"
+
+#define RXB BUZZER
+#define TXB SOFT_TX_PIN
+//#define BTN P3_2
+
+// e.g, hex(65536 - (16000000/2400/1))
 #define SOFT_BAUD 0xE5F5
 
 #endif
+
 
 
 

@@ -8,6 +8,13 @@
 
 #if defined(TARGET_BOARD_OB38S003)
 #include "OB38S003.h"
+#elif defined(TARGET_BOARD_EFM8BB1)
+// these are just a difference in naming convention
+#define SBUF SBUF0
+#define SCON SCON0
+#elif defined(TARGET_BOARD_EFM8BB1LCB)
+#define SBUF SBUF0
+#define SCON SCON0
 #endif
 
 #include "uart.h"
@@ -15,10 +22,6 @@
 #include <stdint.h>
 
 
-#if defined(TARGET_BOARD_EFM8BB1)
-#define SBUF SBUF0
-#define SCON SCON0
-#endif
 //
 // the original implementation from RF-Bridge-EFM8BB1 looks similar to this implementation
 // https://github.com/hrshygoodness/EFM32-Library/blob/master/v2/an/an0820_efm32_smart_card/usart_driver.c
@@ -92,11 +95,11 @@ void uart_init_tx_polling(void)
 
 //=========================================================
 //=========================================================
-#if TARGET_BOARD_OB38S003
+#if defined(TARGET_BOARD_OB38S003)
 void uart_isr(void) __interrupt (d_UART0_Vector)
-#endif
-
-#if TARGET_BOARD_EFM8BB1
+#elif defined(TARGET_BOARD_EFM8BB1)
+void uart_isr(void) __interrupt (UART0_VECTOR)
+#elif defined(TARGET_BOARD_EFM8BB1LCB)
 void uart_isr(void) __interrupt (UART0_VECTOR)
 #endif
 {

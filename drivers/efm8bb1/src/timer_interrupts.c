@@ -135,7 +135,6 @@ void pca0_isr(void) __interrupt (PCA0_VECTOR)
 
 	PCA0CN0 &= ~flags;
 
-	debug_pin0_toggle();
 
 	//if( (PCA0PWM & COVF__BMASK) && (PCA0PWM & ECOV__BMASK))
 	//{

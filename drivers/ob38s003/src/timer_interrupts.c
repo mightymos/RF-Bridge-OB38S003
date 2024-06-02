@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-// OB38S003 uses timer 2 capture mode for similar functionality to pca on EFM8BB1
+// OB38S003 uses timer 2 capture mode for similar functionality to PCA on EFM8BB1
 #include "OB38S003.h"
 
 

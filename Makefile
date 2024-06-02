@@ -42,18 +42,21 @@
 #   make clean
 
 # Target MCU settings --------------------------------------------------
+# uncomment only one target board
+# FIXME: build all targets without need to modify makefile
 # sonoff black box
-TARGET_BOARD = EFM8BB1
-#TARGET_BOARD = EFM8BB1LCB
-
+#TARGET_BOARD = EFM8BB1
+# low cost development board
+TARGET_BOARD = EFM8BB1LCB
 # sonoff white box
 #TARGET_BOARD = OB38S003
 
-
+# catches undefined
 ifndef TARGET_BOARD
 $(error Please define TARGET_BOARD in makefile)
 endif
 
+# these are the maximum clock speeds
 ifeq ($(TARGET_BOARD), EFM8BB1)
 # for EFM8BB1 in Sonoff v2.0 receivers (black color box)
 MCU_FREQ_KHZ = 24500
@@ -62,8 +65,6 @@ MCU_FREQ_KHZ = 24500
 else ifeq ($(TARGET_BOARD), OB38S003)
 # for OB38S003 used in Sonoff v2.2 receivers (white color box)
 MCU_FREQ_KHZ = 16000
-#else
-#	$(error Please define TARGET_BOARD as EFM8BB1, EFM8BB1LCB, or OB38S003 in makefile)
 endif
 
 #
@@ -71,26 +72,33 @@ MEMORY_SIZES  = --iram-size 256 --xram-size 256 --code-size 8192
 MEMORY_MODEL  = --model-small
 HAS_DUAL_DPTR = n
 
-# 
+# generic source directory
 SOURCE_DIR = src
 
+# target specific sources
 ifeq ($(TARGET_BOARD), EFM8BB1)
+DRIVER_SRC_DIR = drivers/efm8bb1/src
+else ifeq ($(TARGET_BOARD), EFM8BB1LCB)
 DRIVER_SRC_DIR = drivers/efm8bb1/src
 else ifeq ($(TARGET_BOARD), OB38S003)
 DRIVER_SRC_DIR = drivers/ob38s003/src
 endif
 
-
+# generic includes
 INCLUDE_DIR = inc/
 
+# target specific includes
 ifeq ($(TARGET_BOARD), EFM8BB1)
+DRIVER_DIR = drivers/efm8bb1/inc
+else ifeq ($(TARGET_BOARD), EFM8BB1LCB)
 DRIVER_DIR = drivers/efm8bb1/inc
 else ifeq ($(TARGET_BOARD), OB38S003)
 DRIVER_DIR = drivers/ob38s003/inc
 endif
 
-
+# place intermediate build files here so other directories are not cluttered
 OBJECT_DIR = object
+# final location of built firmware
 BUILD_DIR  = build
 
 SOURCES = $(SOURCE_DIR)/main_passthrough.c \

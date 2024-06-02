@@ -74,17 +74,30 @@
 // FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
 //extern void tm0(void)        __interrupt (d_T0_Vector);
 #if defined(TARGET_BOARD_OB38S003)
+
 extern void tm0(void)        __interrupt (d_T0_Vector);
 extern void timer1_isr(void) __interrupt (d_T1_Vector);
 extern void timer2_isr(void) __interrupt (d_T2_Vector);
 extern void uart_isr(void)   __interrupt (d_UART0_Vector);
+
 #elif defined(TARGET_BOARD_EFM8BB1)
+
 extern void tm0(void)        __interrupt (TIMER0_VECTOR);
 //extern void timer1_isr(void) __interrupt (TIMER1_VECTOR);
 extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
 //extern void tm3(void)        __interrupt (TIMER3_VECTOR);
 extern void uart_isr(void)   __interrupt (UART0_VECTOR);
 extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
+
+#elif defined(TARGET_BOARD_EFM8BB1LCB)
+
+extern void tm0(void)        __interrupt (TIMER0_VECTOR);
+extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
+extern void uart_isr(void)   __interrupt (UART0_VECTOR);
+extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
+
+#else
+	#error Please define TARGET_BOARD in makefile
 #endif
 
 //-----------------------------------------------------------------------------
@@ -135,26 +148,7 @@ void startup_blink(void)
     led_off();
 }
 
-#if 0
 
-// for reset source on ob38s003
-// this can be pretty slow to blink out an eight bit reset register
-void startup_reset_status(void)
-{
-    uint8_t index;
-    
-    for (index = 1; index <= RSTS; index++)
-    {
-        led_on();
-        //reset_pin_on();
-        delay1ms(1000);
-        led_off();
-        //reset_pin_off();
-        delay1ms(1000);
-    }
-}
-
-#endif
 
 //-----------------------------------------------------------------------------
 // main() Routine
@@ -188,6 +182,8 @@ int main (void)
     set_clock_1t_mode();
 #elif defined(TARGET_BOARD_EFM8BB1)
     set_clock_mode();
+#elif defined(TARGET_BOARD_EFM8BB1LCB)
+	set_clock_mode();
 #endif
 
     init_port_pins();
@@ -212,11 +208,7 @@ int main (void)
    
     // software serial
     // default state is reset/pin1 high if using software uart as transmit pin
-#if defined(TARGET_BOARD_OB38S003)
-    reset_pin_on();
-#elif defined(TARGET_BOARD_EFM8BB1)
-    debug_pin1_on();
-#endif
+    soft_tx_pin_on();
 
 	// allows use of a gpio to output text characters because hardware uart communicates with esp8285
     init_software_uart();
@@ -236,7 +228,7 @@ int main (void)
 	enable_timer0_interrupt();
     enable_timer1_interrupt();
 	//enable_timer2_interrupt();
-#elif defined(TARGET_BOARD_EFM8BB1)
+#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
 	// pca used timer0 in portisch (why?), rcswitch can use dedicated pca counters
 	//init_timer0(TIMER0_PCA0);
 	init_timer0(SOFT_BAUD);
