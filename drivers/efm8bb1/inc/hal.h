@@ -178,6 +178,7 @@ inline void disable_timer3_interrupt(void)
 
 extern void set_clock_mode(void);
 extern void enable_watchdog(void);
+extern void disable_watchdog(void);
 extern void refresh_watchdog(void);
 extern void init_port_pins(void);
 extern void init_serial_interrupt(void);
@@ -206,5 +207,19 @@ extern unsigned char get_timer2_low(void);
 extern unsigned char get_timer2_high(void);
 
 extern void clear_capture_flag(void);
+
+extern unsigned long countsToTime(const unsigned long duration);
+
+extern void InitTimer2_us(uint16_t interval, uint16_t timeout);
+extern void InitTimer3_us(uint16_t interval, uint16_t timeout);
+extern void InitTimer2_ms(uint16_t interval, uint16_t timeout);
+extern void InitTimer3_ms(uint16_t interval, uint16_t timeout);
+extern void WaitTimer2Finished(void);
+extern void WaitTimer3Finished(void);
+extern void StopTimer2(void);
+extern void StopTimer3(void);
+extern bool IsTimer2Finished(void);
+extern bool IsTimer3Finished(void);
+
 
 #endif // INC_HAL_H_

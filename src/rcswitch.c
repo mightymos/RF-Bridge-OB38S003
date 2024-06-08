@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -144,4 +145,102 @@ bool receive_protocol(const int p, unsigned int changeCount)
     }
 
     return false;
+}
+
+void capture_handler(const uint16_t currentCapture)
+{
+    const uint8_t gapMagicNumber  = 200;
+    const uint8_t repeatThreshold   = 2;
+    
+    // for converting 8-bit timer values to 16-bits to allow subtraction
+    uint16_t        previous;
+    static uint16_t current = 0;
+    
+    // this eventually represents the level duration in microseconds (difference between edge transitions)
+    unsigned long duration;
+    
+
+    // rc-switch variables
+    static unsigned int repeatCount = 0;
+    static unsigned int changeCount = 0;
+
+    // FIXME: move to rcswitch.h
+    const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
+
+    // go from 8-bit to 16-bit variables
+    previous = current;
+    current = currentCapture;
+    
+    // check for overflow condition
+    if (current < previous)
+    {
+        // FIXME: no magic numbers
+        // FIXME: seems like a bad idea to make wrap around calculation depend on variable type, what if it changes
+        // if overflow, we must compute difference by taking into account wrap around at maximum variable size
+        duration = USHRT_MAX  - previous + current;
+    } else {
+        duration = current - previous;
+    }
+    
+    // FIXME: no magic numbers
+    // e.g., EFM8BB1
+	// e.g. (1/(24500000))*(49/2) = 1      microsec
+	// e.g. (1/(24500000/12))*2   = 0.9796 microsec
+	// (1/(24500000/12))*dec(0xFFFF) = 32.0987755 millisecs max
+    
+    // e.g., OBS38S003
+    // e.g. prescale at (1/4) at 16 MHz, four counts are needed to get one microsecond
+    // e.g. prescale at (1/24) at 16 MHz
+    // e.g., (1/(16000000/24)) * dec(0xFFFF) = 98.30 milliseconds maximum can be counted
+    // FIXME: show why 3/2 conversion works
+    duration = countsToTime(duration);
+    
+    // from oscillscope readings it appears that first sync pulse of first radio packet is frequently not output properly by receiver
+    // this could be because radio receiver needs to "warm up" (despite already being enabled?)
+    // and it is known that radio packet transmissions are often repeated (between about four and twenty times) perhaps in part for this reason
+    if (duration > separationLimit)
+    {
+        // A long stretch without signal level change occurred. This could
+        // be the gap between two transmission.
+        if (abs(duration - timings[0]) < gapMagicNumber)
+        {
+          // This long signal is close in length to the long signal which
+          // started the previously recorded timings; this suggests that
+          // it may indeed by a a gap between two transmissions (we assume
+          // here that a sender will send the signal multiple times,
+          // with roughly the same gap between them).
+          repeatCount++;
+          
+          if (repeatCount == repeatThreshold)
+          {
+            for(unsigned int i = 1; i <= numProto; i++)
+            {
+              if (receive_protocol(i, changeCount))
+              {
+                // receive succeeded for protocol i
+                break;
+              }
+            }
+            
+            repeatCount = 0;
+          }
+        }
+        
+        changeCount = 0;
+    }
+
+    // detect overflow
+    if (changeCount >= RCSWITCH_MAX_CHANGES)
+    {
+        changeCount = 0;
+        repeatCount = 0;
+    }
+
+    timings[changeCount++] = duration;
+    
+    // done in the interrupt already on efm8bb1
+    // but must be explicitly cleared on ob38s003
+    // so just always clear it
+    //clear pca0 interrupt flag
+    clear_capture_flag();
 }

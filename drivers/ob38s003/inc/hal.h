@@ -175,6 +175,7 @@ extern unsigned char get_stack_pointer(void);
 extern void set_clock_1t_mode(void);
 extern void set_clock_6t_mode(void);
 extern void enable_watchdog(void);
+extern void disable_watchdog(void);
 extern void refresh_watchdog(void);
 extern void init_port_pins(void);
 extern void init_serial_interrupt(void);
@@ -193,10 +194,12 @@ extern bool global_interrupts_are_enabled(void);
 extern void load_timer0(const uint16_t value);
 extern void load_timer1(const uint16_t value);
 
-extern unsigned char get_timer2_low(void);
-extern unsigned char get_timer2_high(void);
+extern uint16_t get_timer2(void);
 
 extern void clear_capture_flag(void);
+
+extern unsigned long countsToTime(const unsigned long duration);
+
 
 
 #endif // INC_HAL_H_

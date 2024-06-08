@@ -101,34 +101,53 @@ OBJECT_DIR = object
 # final location of built firmware
 BUILD_DIR  = build
 
-SOURCES = $(SOURCE_DIR)/main_passthrough.c \
-		  $(SOURCE_DIR)/main_rcswitch.c \
-		  $(SOURCE_DIR)/rcswitch.c \
-		  $(SOURCE_DIR)/state_machine.c \
-		  $(SOURCE_DIR)/uart.c \
-		  $(SOURCE_DIR)/ticks.c \
-		  $(SOURCE_DIR)/uart_software.c \
-          $(DRIVER_SRC_DIR)/delay.c \
-		  $(DRIVER_SRC_DIR)/hal.c	\
+# list of source files
+SOURCES = $(SOURCE_DIR)/main_passthrough.c     \
+		  $(SOURCE_DIR)/main_portisch.c        \
+		  $(SOURCE_DIR)/main_rcswitch.c        \
+		  $(SOURCE_DIR)/portisch.c             \
+		  $(SOURCE_DIR)/portisch_serial.c      \
+		  $(SOURCE_DIR)/rcswitch.c             \
+		  $(SOURCE_DIR)/state_machine.c        \
+		  $(SOURCE_DIR)/uart.c                 \
+		  $(SOURCE_DIR)/ticks.c                \
+		  $(SOURCE_DIR)/uart_software.c        \
+          $(DRIVER_SRC_DIR)/delay.c            \
+		  $(DRIVER_SRC_DIR)/hal.c	           \
 		  $(DRIVER_SRC_DIR)/timer_interrupts.c
 OBJECT_NAMES = $(notdir $(SOURCES:.c=.rel))
 OBJECTS = $(patsubst %,$(OBJECT_DIR)/%,$(OBJECT_NAMES))
 
-OBJECTS_RCSWITCH = 		$(OBJECT_DIR)/main_rcswitch.rel \
-						$(OBJECT_DIR)/rcswitch.rel \
-						$(OBJECT_DIR)/state_machine.rel \
-						$(OBJECT_DIR)/uart.rel \
-						$(OBJECT_DIR)/delay.rel \
-						$(OBJECT_DIR)/hal.rel	\
-						$(OBJECT_DIR)/ticks.rel \
-						$(OBJECT_DIR)/timer_interrupts.rel \
-						$(OBJECT_DIR)/uart_software.rel
+# intermediate object files
 OBJECTS_PASSTHROUGH = 	$(OBJECT_DIR)/main_passthrough.rel \
-						$(OBJECT_DIR)/delay.rel \
+						$(OBJECT_DIR)/delay.rel            \
 						$(OBJECT_DIR)/hal.rel
 						
-TARGET_RCSWITCH     = $(BUILD_DIR)/main_rcswitch_$(TARGET_BOARD).ihx
+OBJECTS_RCSWITCH = 		$(OBJECT_DIR)/main_rcswitch.rel    \
+						$(OBJECT_DIR)/rcswitch.rel         \
+						$(OBJECT_DIR)/state_machine.rel    \
+						$(OBJECT_DIR)/uart.rel             \
+						$(OBJECT_DIR)/delay.rel            \
+						$(OBJECT_DIR)/hal.rel	           \
+						$(OBJECT_DIR)/ticks.rel            \
+						$(OBJECT_DIR)/timer_interrupts.rel \
+						$(OBJECT_DIR)/uart_software.rel
+						
+OBJECTS_PORTISCH = 		$(OBJECT_DIR)/main_portisch.rel    \
+						$(OBJECT_DIR)/portisch.rel         \
+						$(OBJECT_DIR)/portisch_serial.rel  \
+						$(OBJECT_DIR)/uart.rel             \
+						$(OBJECT_DIR)/delay.rel            \
+						$(OBJECT_DIR)/hal.rel	           \
+						$(OBJECT_DIR)/ticks.rel            \
+						$(OBJECT_DIR)/timer_interrupts.rel \
+						$(OBJECT_DIR)/uart_software.rel
+
+# firmware names
 TARGET_PASSTHROUGH  = $(BUILD_DIR)/main_passthrough_$(TARGET_BOARD).ihx
+TARGET_RCSWITCH     = $(BUILD_DIR)/main_rcswitch_$(TARGET_BOARD).ihx
+TARGET_PORTISCH     = $(BUILD_DIR)/main_portisch_$(TARGET_BOARD).ihx
+
 
 ###########################################################
 # Toolchain settings
@@ -149,7 +168,7 @@ LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 
 .PHONY: all clean
 
-all: $(TARGET_RCSWITCH) $(TARGET_PASSTHROUGH)
+all: $(TARGET_RCSWITCH) $(TARGET_PASSTHROUGH) $(TARGET_PORTISCH)
 
 clean:
 	# it is safer to remove wildcard with file extension instead of the entire directory
@@ -172,23 +191,29 @@ clean:
 ###########################################################
 
 # basically the linking step
-$(TARGET_RCSWITCH): $(OBJECTS_RCSWITCH)
-	@echo "Linking $^"
-	mkdir -p $(dir $@)
-	$(CC) $(LDFLAGS) -o $@ $^
-	
-	# hex lines are a short, fixed length (compared with ihx) and therefore works with upload tools
-	# unix style line endings (LF instead of LFCR) work with upload tools
-	packihx $@ > $(basename $@).hex
-	dos2unix $(basename $@).hex
-	
 $(TARGET_PASSTHROUGH): $(OBJECTS_PASSTHROUGH)
 	@echo "Linking $^"
 	mkdir -p $(dir $@)
 	$(CC) $(LDFLAGS) -o $@ $^
 	
 	# hex lines are a short, fixed length (compared with ihx) and therefore works with upload tools
+	packihx $@ > $(basename $@).hex
 	# unix style line endings (LF instead of LFCR) work with upload tools
+	dos2unix $(basename $@).hex
+	
+$(TARGET_RCSWITCH): $(OBJECTS_RCSWITCH)
+	@echo "Linking $^"
+	mkdir -p $(dir $@)
+	$(CC) $(LDFLAGS) -o $@ $^
+	
+	packihx $@ > $(basename $@).hex
+	dos2unix $(basename $@).hex
+	
+$(TARGET_PORTISCH): $(OBJECTS_PORTISCH)
+	@echo "Linking $^"
+	mkdir -p $(dir $@)
+	$(CC) $(LDFLAGS) -o $@ $^
+	
 	packihx $@ > $(basename $@).hex
 	dos2unix $(basename $@).hex
 

@@ -35,6 +35,11 @@ void enable_watchdog(void)
     WDTC |= 0x20;
 }
 
+void disable_watchdog(void)
+{
+    FIXME: finish function
+}
+
 void refresh_watchdog(void)
 {
     // pg. 46 - Clear WDT timer to 0.
@@ -200,14 +205,9 @@ void load_timer1(const uint16_t value)
     TL1 = value & 0xff;
 }
 
-unsigned char get_timer2_low(void)
+uint16_t get_timer2(void)
 {
-    return CCL1;
-}
-
-unsigned char get_timer2_high(void)
-{
-    return CCH1;
+    return (CCH1 << 8) | CCL1;
 }
 
 void clear_capture_flag(void)
@@ -218,4 +218,13 @@ void clear_capture_flag(void)
 unsigned char get_stack_pointer(void)
 {
     return SP;
+}
+
+// FIXME: on counts to time conversion
+unsigned long countsToTime(const unsigned long duration)
+{
+    unsigned long converted;
+    converted = (duration * 3) / 2;
+    
+    return converted;
 }

@@ -68,32 +68,33 @@
 
 
 // sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
-// millisecond tick count
-//extern void timer0_isr(void) __interrupt (1);
-// software uart
-// FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
-//extern void tm0(void)        __interrupt (d_T0_Vector);
-#if defined(TARGET_BOARD_OB38S003)
 
+#if defined(TARGET_BOARD_OB38S003)
+// for software uart
+// FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
 extern void tm0(void)        __interrupt (d_T0_Vector);
+// tick
 extern void timer1_isr(void) __interrupt (d_T1_Vector);
+// pca like capture mode for radio decoding
 extern void timer2_isr(void) __interrupt (d_T2_Vector);
+// hardware uart
 extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 
 #elif defined(TARGET_BOARD_EFM8BB1)
-
 extern void tm0(void)        __interrupt (TIMER0_VECTOR);
-//extern void timer1_isr(void) __interrupt (TIMER1_VECTOR);
 extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
-//extern void tm3(void)        __interrupt (TIMER3_VECTOR);
 extern void uart_isr(void)   __interrupt (UART0_VECTOR);
 extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
 
 #elif defined(TARGET_BOARD_EFM8BB1LCB)
 
+// software uart
 extern void tm0(void)        __interrupt (TIMER0_VECTOR);
+// tick
 extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
+// hardware uart (uses timer 1)
 extern void uart_isr(void)   __interrupt (UART0_VECTOR);
+// radio decoding
 extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
 
 #else

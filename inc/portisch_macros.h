@@ -1,9 +1,5 @@
-// this seems to start sniffing by default as opposed to waiting for command over uart
-#define SNIFFING_ON_AT_STARTUP 1
-
-#define SYSCLK	24500000
-
-#define FIRMWARE_VERSION		0x03
+#ifndef PORTISCH_MACROS_H
+#define PORTISCH_MACROS_H
 
 #define ARRAY_LENGTH(array) (sizeof((array))/sizeof((array)[0]))
 
@@ -42,3 +38,5 @@
 #define LOW(x) ((x) & 0x07)
 #define BUCKET_NR(x) ((x) & 0x07)
 #define BUCKET_STATE(x) (bool)(((x) & 0x08) >> 3)
+
+#endif

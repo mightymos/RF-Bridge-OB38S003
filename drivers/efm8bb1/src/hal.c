@@ -44,6 +44,14 @@ void enable_watchdog(void)
 	WDTCN = 0xA5;
 }
 
+void disable_watchdog(void)
+{
+    // pg. 218, sec. 20.3 disable watchdog timer
+    EA = 0;
+    WDTCN = 0xDE;
+    WDTCN = 0xAD;
+}
+
 void refresh_watchdog(void)
 {
 	WDTCN = 0xA5;
@@ -233,4 +241,152 @@ void clear_capture_flag(void)
 {
 	//PCA0CN0 &= ~CF__SET;
 	CCF0 = 0;
+}
+
+// FIXME: on counts to time conversion
+unsigned long countsToTime(const unsigned long duration)
+{
+    unsigned long converted;
+    converted = duration * 2;
+    
+    return converted;
+}
+
+void SetTimer2Reload(uint16_t reload)
+{
+	/***********************************************************************
+	 - Timer 2 Reload High Byte
+	 ***********************************************************************/
+	TMR2RLH = ((reload >> 8) & 0xFF);
+	/***********************************************************************
+	 - Timer 2 Reload Low Byte = 0x86
+	 ***********************************************************************/
+	TMR2RLL = (reload & 0xFF);
+}
+
+void SetTimer3Reload(uint16_t reload)
+{
+	/***********************************************************************
+	 - Timer 3 Reload High Byte
+	 ***********************************************************************/
+	TMR3RLH = ((reload >> 8) & 0xFF);
+	/***********************************************************************
+	 - Timer 3 Reload Low Byte = 0x86
+	 ***********************************************************************/
+	TMR3RLL = (reload & 0xFF);
+}
+
+/*
+ * Init Timer 2 with microseconds interval, maximum is 65535micros.
+ */
+void InitTimer2_us(uint16_t interval, uint16_t timeout)
+{
+    // FIXME: add comment
+    // do not think these are needed because portisch just waits for overflow to
+    // occur once to track passage of time
+    // it would be more useful to eventually have tick system like rtos/rcswitch style
+    //__xdata uint16_t Timer_2_Timeout  = 0x0000;
+    //__xdata uint16_t Timer_2_Interval = 0x0000;
+
+	SetTimer2Reload((uint16_t)(0x10000 - ((uint32_t)MCU_FREQ / (1000000 / (uint32_t)interval))));
+
+	// remove 65micros because of startup delay
+	//Timer_2_Timeout = timeout - 65;
+	//Timer_2_Interval = interval;
+
+	// start timer
+	TMR2CN0 |= TR2__RUN;
+}
+
+/*
+ * Init Timer 3 with microseconds interval, maximum is 65535micros.
+ */
+void InitTimer3_us(uint16_t interval, uint16_t timeout)
+{
+    // FIXME: add comment
+    //__xdata uint16_t Timer_3_Timeout  = 0x0000;
+    //__xdata uint16_t Timer_3_Interval = 0x0000;
+    
+	SetTimer3Reload((uint16_t)(0x10000 - ((uint32_t)MCU_FREQ / (1000000 / (uint32_t)interval))));
+
+	// remove 65micros because of startup delay
+	//Timer_3_Timeout = timeout - 65;
+	//Timer_3_Interval = interval;
+
+	// start timer
+	TMR3CN0 |= TR3__RUN;
+}
+
+/*
+ * Init Timer 2 with milliseconds interval, maximum is ~2.5ms.
+ */
+void InitTimer2_ms(uint16_t interval, uint16_t timeout)
+{
+    // FIXME: add comment
+    //__xdata uint16_t Timer_2_Timeout  = 0x0000;
+    //__xdata uint16_t Timer_2_Interval = 0x0000;
+    
+	SetTimer2Reload((uint16_t)(0x10000 - ((uint32_t)MCU_FREQ / (1000 / (uint32_t)interval))));
+
+	//Timer_2_Timeout = timeout;
+	//Timer_2_Interval = interval;
+
+	// start timer
+	TMR2CN0 |= TR2__RUN;
+}
+
+/*
+ * Init Timer 3 with milliseconds interval, maximum is ~2.5ms.
+ */
+void InitTimer3_ms(uint16_t interval, uint16_t timeout)
+{
+    // FIXME: add comment
+    //__xdata uint16_t Timer_3_Timeout  = 0x0000;
+    //__xdata uint16_t Timer_3_Interval = 0x0000;
+    
+	SetTimer3Reload((uint16_t)(0x10000 - ((uint32_t)MCU_FREQ / (1000 / (uint32_t)interval))));
+
+	//Timer_3_Timeout = timeout;
+	//Timer_3_Interval = interval;
+
+	// start timer
+	TMR3CN0 |= TR3__RUN;
+}
+
+void WaitTimer2Finished(void)
+{
+	// wait until timer has finished
+	while((TMR2CN0 & TR2__BMASK) == TR2__RUN);
+}
+
+void WaitTimer3Finished(void)
+{
+	// wait until timer has finished
+	while((TMR3CN0 & TR3__BMASK) == TR3__RUN);
+}
+
+void StopTimer2(void)
+{
+	// stop timer
+	TMR2CN0 &= ~TR2__RUN;
+	// Clear Timer 2 high overflow flag
+	TMR2CN0 &= ~TF2H__SET;
+}
+
+void StopTimer3(void)
+{
+	// stop timer
+	TMR3CN0 &= ~TR3__RUN;
+	// Clear Timer 3 high overflow flag
+	TMR3CN0 &= ~TF3H__SET;
+}
+
+bool IsTimer2Finished(void)
+{
+	return ((TMR2CN0 & TR2__BMASK) != TR2__RUN);
+}
+
+bool IsTimer3Finished(void)
+{
+	return ((TMR3CN0 & TR3__BMASK) != TR3__RUN);
 }
