@@ -9,6 +9,11 @@
 
 #include <EFM8BB1.h>
 
+    // FIXME: it would be more useful to eventually have tick system like rtos/rcswitch style
+__xdata uint16_t Timer_2_Timeout  = 0x0000;
+__xdata uint16_t Timer_2_Interval = 0x0000;
+__xdata uint16_t Timer_3_Timeout  = 0x0000;
+__xdata uint16_t Timer_3_Interval = 0x0000;
 
 // pg. 3 of OB38S003 datasheet
 // high speed architecture of 1 clock/machine cycle runs up to 16MHz.
@@ -252,7 +257,7 @@ unsigned long countsToTime(const unsigned long duration)
     return converted;
 }
 
-void SetTimer2Reload(uint16_t reload)
+void SetTimer2Reload(const uint16_t reload)
 {
 	/***********************************************************************
 	 - Timer 2 Reload High Byte
@@ -264,7 +269,7 @@ void SetTimer2Reload(uint16_t reload)
 	TMR2RLL = (reload & 0xFF);
 }
 
-void SetTimer3Reload(uint16_t reload)
+void SetTimer3Reload(const uint16_t reload)
 {
 	/***********************************************************************
 	 - Timer 3 Reload High Byte
@@ -279,20 +284,14 @@ void SetTimer3Reload(uint16_t reload)
 /*
  * Init Timer 2 with microseconds interval, maximum is 65535micros.
  */
-void InitTimer2_us(uint16_t interval, uint16_t timeout)
+void InitTimer2_us(const uint16_t interval, const uint16_t timeout)
 {
-    // FIXME: add comment
-    // do not think these are needed because portisch just waits for overflow to
-    // occur once to track passage of time
-    // it would be more useful to eventually have tick system like rtos/rcswitch style
-    //__xdata uint16_t Timer_2_Timeout  = 0x0000;
-    //__xdata uint16_t Timer_2_Interval = 0x0000;
-
-	SetTimer2Reload((uint16_t)(0x10000 - ((uint32_t)MCU_FREQ / (1000000 / (uint32_t)interval))));
+    //
+	SetTimer2Reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
 
 	// remove 65micros because of startup delay
-	//Timer_2_Timeout = timeout - 65;
-	//Timer_2_Interval = interval;
+	Timer_2_Timeout = timeout - 65;
+	Timer_2_Interval = interval;
 
 	// start timer
 	TMR2CN0 |= TR2__RUN;
@@ -301,17 +300,13 @@ void InitTimer2_us(uint16_t interval, uint16_t timeout)
 /*
  * Init Timer 3 with microseconds interval, maximum is 65535micros.
  */
-void InitTimer3_us(uint16_t interval, uint16_t timeout)
+void InitTimer3_us(const uint16_t interval, const uint16_t timeout)
 {
-    // FIXME: add comment
-    //__xdata uint16_t Timer_3_Timeout  = 0x0000;
-    //__xdata uint16_t Timer_3_Interval = 0x0000;
-    
-	SetTimer3Reload((uint16_t)(0x10000 - ((uint32_t)MCU_FREQ / (1000000 / (uint32_t)interval))));
+	SetTimer3Reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
 
 	// remove 65micros because of startup delay
-	//Timer_3_Timeout = timeout - 65;
-	//Timer_3_Interval = interval;
+	Timer_3_Timeout = timeout - 65;
+	Timer_3_Interval = interval;
 
 	// start timer
 	TMR3CN0 |= TR3__RUN;
@@ -320,16 +315,12 @@ void InitTimer3_us(uint16_t interval, uint16_t timeout)
 /*
  * Init Timer 2 with milliseconds interval, maximum is ~2.5ms.
  */
-void InitTimer2_ms(uint16_t interval, uint16_t timeout)
-{
-    // FIXME: add comment
-    //__xdata uint16_t Timer_2_Timeout  = 0x0000;
-    //__xdata uint16_t Timer_2_Interval = 0x0000;
-    
-	SetTimer2Reload((uint16_t)(0x10000 - ((uint32_t)MCU_FREQ / (1000 / (uint32_t)interval))));
+void InitTimer2_ms(const uint16_t interval, const uint16_t timeout)
+{    
+	SetTimer2Reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000 / (uint32_t)interval))));
 
-	//Timer_2_Timeout = timeout;
-	//Timer_2_Interval = interval;
+	Timer_2_Timeout = timeout;
+	Timer_2_Interval = interval;
 
 	// start timer
 	TMR2CN0 |= TR2__RUN;
@@ -338,16 +329,12 @@ void InitTimer2_ms(uint16_t interval, uint16_t timeout)
 /*
  * Init Timer 3 with milliseconds interval, maximum is ~2.5ms.
  */
-void InitTimer3_ms(uint16_t interval, uint16_t timeout)
+void InitTimer3_ms(const uint16_t interval, const uint16_t timeout)
 {
-    // FIXME: add comment
-    //__xdata uint16_t Timer_3_Timeout  = 0x0000;
-    //__xdata uint16_t Timer_3_Interval = 0x0000;
-    
-	SetTimer3Reload((uint16_t)(0x10000 - ((uint32_t)MCU_FREQ / (1000 / (uint32_t)interval))));
+    SetTimer3Reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000 / (uint32_t) interval))));
 
-	//Timer_3_Timeout = timeout;
-	//Timer_3_Interval = interval;
+	Timer_3_Timeout = timeout;
+	Timer_3_Interval = interval;
 
 	// start timer
 	TMR3CN0 |= TR3__RUN;

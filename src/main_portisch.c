@@ -21,6 +21,8 @@
 // FIXME: not sure what is desired or expected
 #define FIRMWARE_VERSION 0x03
 
+#define UART_BUFFER_SIZE 10
+
 // for printf_tiny()
 //#include <stdio.h>
 
@@ -42,7 +44,7 @@ __xdata uart_command_t uart_command = NONE;
 __xdata uart_command_t idle_uart_command;
 
 // buffer
-__xdata uint8_t uartPacket[10];
+__xdata uint8_t uartPacket[UART_BUFFER_SIZE];
 
 
 // sdcc manual section 3.8.1 general information
@@ -58,7 +60,7 @@ extern void timer2_isr(void) __interrupt (d_T2_Vector);
 extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 
 #elif defined(TARGET_BOARD_EFM8BB1)
-extern void tm0(void)        __interrupt (TIMER0_VECTOR);
+//extern void tm0(void)        __interrupt (TIMER0_VECTOR);
 extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
 extern void uart_isr(void)   __interrupt (UART0_VECTOR);
 extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
@@ -66,7 +68,7 @@ extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
 #elif defined(TARGET_BOARD_EFM8BB1LCB)
 
 // software uart
-extern void tm0(void)        __interrupt (TIMER0_VECTOR);
+//extern void tm0(void)        __interrupt (TIMER0_VECTOR);
 // tick
 extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
 // hardware uart (uses timer 1)

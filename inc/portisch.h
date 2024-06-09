@@ -61,7 +61,7 @@ extern __xdata uint16_t bucket_sync;
 extern __xdata uint8_t bucket_count;
 #endif
 
-
+extern void capture_handler(const uint16_t currentCapture);
 extern bool buffer_out(uint16_t* bucket);
 extern void HandleRFBucket(uint16_t duration, bool high_low);
 extern uint8_t PCA0_DoSniffing(void);

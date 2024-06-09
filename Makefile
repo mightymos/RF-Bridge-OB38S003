@@ -47,9 +47,9 @@
 # sonoff black box
 #TARGET_BOARD = EFM8BB1
 # low cost development board
-TARGET_BOARD = EFM8BB1LCB
+#TARGET_BOARD = EFM8BB1LCB
 # sonoff white box
-#TARGET_BOARD = OB38S003
+TARGET_BOARD = OB38S003
 
 # catches undefined
 ifndef TARGET_BOARD
@@ -133,20 +133,19 @@ OBJECTS_RCSWITCH = 		$(OBJECT_DIR)/main_rcswitch.rel    \
 						$(OBJECT_DIR)/timer_interrupts.rel \
 						$(OBJECT_DIR)/uart_software.rel
 						
-OBJECTS_PORTISCH = 		$(OBJECT_DIR)/main_portisch.rel    \
-						$(OBJECT_DIR)/portisch.rel         \
-						$(OBJECT_DIR)/portisch_serial.rel  \
-						$(OBJECT_DIR)/uart.rel             \
-						$(OBJECT_DIR)/delay.rel            \
-						$(OBJECT_DIR)/hal.rel	           \
-						$(OBJECT_DIR)/ticks.rel            \
-						$(OBJECT_DIR)/timer_interrupts.rel \
-						$(OBJECT_DIR)/uart_software.rel
+#OBJECTS_PORTISCH = 		$(OBJECT_DIR)/main_portisch.rel    \
+#						$(OBJECT_DIR)/portisch.rel         \
+#						$(OBJECT_DIR)/portisch_serial.rel  \
+#						$(OBJECT_DIR)/uart.rel             \
+#						$(OBJECT_DIR)/delay.rel            \
+#						$(OBJECT_DIR)/hal.rel	           \
+#						$(OBJECT_DIR)/ticks.rel            \
+#						$(OBJECT_DIR)/timer_interrupts.rel
 
 # firmware names
 TARGET_PASSTHROUGH  = $(BUILD_DIR)/main_passthrough_$(TARGET_BOARD).ihx
 TARGET_RCSWITCH     = $(BUILD_DIR)/main_rcswitch_$(TARGET_BOARD).ihx
-TARGET_PORTISCH     = $(BUILD_DIR)/main_portisch_$(TARGET_BOARD).ihx
+#TARGET_PORTISCH     = $(BUILD_DIR)/main_portisch_$(TARGET_BOARD).ihx
 
 
 ###########################################################
@@ -209,13 +208,13 @@ $(TARGET_RCSWITCH): $(OBJECTS_RCSWITCH)
 	packihx $@ > $(basename $@).hex
 	dos2unix $(basename $@).hex
 	
-$(TARGET_PORTISCH): $(OBJECTS_PORTISCH)
-	@echo "Linking $^"
-	mkdir -p $(dir $@)
-	$(CC) $(LDFLAGS) -o $@ $^
-	
-	packihx $@ > $(basename $@).hex
-	dos2unix $(basename $@).hex
+#$(TARGET_PORTISCH): $(OBJECTS_PORTISCH)
+#	@echo "Linking $^"
+#	mkdir -p $(dir $@)
+#	$(CC) $(LDFLAGS) -o $@ $^
+#	
+#	packihx $@ > $(basename $@).hex
+#	dos2unix $(basename $@).hex
 
 # basically the compilation step
 $(OBJECT_DIR)/%.rel: $(SOURCE_DIR)/%.c

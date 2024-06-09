@@ -26,7 +26,7 @@ void set_clock_6t_mode(void)
 // pg. 44 - once the watchdog is started it cannot be stopped
 void enable_watchdog(void)
 {
-    // changes WDTC from read only
+    // changes WDTC from read only to enable write
     TAKEY = 0x55;
     TAKEY = 0xAA;
     TAKEY = 0x5A;
@@ -37,7 +37,13 @@ void enable_watchdog(void)
 
 void disable_watchdog(void)
 {
-    FIXME: finish function
+    // changes WDTC from read only to enable write
+    TAKEY = 0x55;
+    TAKEY = 0xAA;
+    TAKEY = 0x5A;
+    
+    // clear WDTE bit
+    WDTC &= ~0x20;
 }
 
 void refresh_watchdog(void)

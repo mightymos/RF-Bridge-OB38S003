@@ -13,7 +13,7 @@
 volatile __xdata struct RC_SWITCH_T gRCSwitch = {0, 0, 0, 0, 60, 4300};
 volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
 
-static __xdata struct TRANSMIT_PACKET_T gTxPacket;
+//static __xdata struct TRANSMIT_PACKET_T gTXPacket;
 
 
 //

@@ -37,6 +37,8 @@ void timer2_isr(void) __interrupt (TIMER2_VECTOR)
 void pca0_channel0EventCb(void)
 {
     //FIXME: we need to record the actual time step this represents so it is clear to human readers
+    //FIXME: should be PCA0CP0 * 10 for Portisch?
+    //       probably not, because we are using dedicated PCA counter instead of timer 0 as portisch did originally
 	uint16_t currentCapture = PCA0CP0;
     
     capture_handler(currentCapture);

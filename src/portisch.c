@@ -22,7 +22,8 @@
 //#include <stdlib.h>
 
 // FIXME: explain number
-#define BUFFER_BUCKETS_SIZE 4
+#define BUFFER_BUCKETS_SIZE  4
+#define NUM_OF_BUCKETS       7
 
 
 //-----------------------------------------------------------------------------
@@ -57,7 +58,7 @@ uint8_t crc = 0;
 
 // up to 8 timing buckets for RF_CODE_SNIFFING_ON_BUCKET
 // -1 because of the bucket_sync
-__xdata uint16_t buckets[7];
+__xdata uint16_t buckets[NUM_OF_BUCKETS];
 
 #if defined(INCLUDE_BUCKET_SNIFFING)
 __xdata uint16_t bucket_sync;
@@ -385,24 +386,13 @@ bool buffer_out(uint16_t* bucket)
 	return true;
 }
 
-void PCA0_channel0EventCb(void)
+void capture_handler(const uint16_t currentCapture)
 {
-    //FIXME: possible to eliminate multiplication to save code size?
-	uint16_t current_capture_value = PCA0CP0 * 10;
-	uint8_t flags = PCA0MD;
-
-	// clear counter
-	PCA0MD &= 0xBF;
-	PCA0H = 0x00;
-	PCA0L = 0x00;
-	PCA0MD = flags;
-
-
 	// FIXME: additional comments; if bucket is not noise add it to buffer
-	if (current_capture_value < 0x8000)
+	if (currentCapture < 0x8000)
 	{
 		// FIXME: add comment
-		buffer_in(current_capture_value | ((uint16_t)(!rdata_level()) << 15));
+		buffer_in(currentCapture | ((uint16_t)(!rdata_level()) << 15));
 	}
 	else
 	{
@@ -411,10 +401,6 @@ void PCA0_channel0EventCb(void)
 		buffer_buckets_write = 0;
 	}
 }
-
-void PCA0_channel1EventCb(void) { }
-
-void PCA0_channel2EventCb(void) { }
 
 //void SetTimer0Overflow(uint8_t T0_Overflow)
 //{
@@ -714,6 +700,7 @@ void Bucket_Received(uint16_t duration, bool high_low, rf_state_t* rf_state)
 
 					// check if maximum of array got reached
 					if (bucket_count > ARRAY_LENGTH(buckets))
+                    //if (bucket_count > NUM_OF_BUCKETS)
 					{
 						// restart sync
 						*rf_state = RF_IDLE;

@@ -210,10 +210,10 @@ extern void clear_capture_flag(void);
 
 extern unsigned long countsToTime(const unsigned long duration);
 
-extern void InitTimer2_us(uint16_t interval, uint16_t timeout);
-extern void InitTimer3_us(uint16_t interval, uint16_t timeout);
-extern void InitTimer2_ms(uint16_t interval, uint16_t timeout);
-extern void InitTimer3_ms(uint16_t interval, uint16_t timeout);
+extern void InitTimer2_us(const uint16_t interval, const uint16_t timeout);
+extern void InitTimer3_us(const uint16_t interval, const uint16_t timeout);
+extern void InitTimer2_ms(const uint16_t interval, const uint16_t timeout);
+extern void InitTimer3_ms(const uint16_t interval, const uint16_t timeout);
 extern void WaitTimer2Finished(void);
 extern void WaitTimer3Finished(void);
 extern void StopTimer2(void);
