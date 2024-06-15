@@ -9,11 +9,13 @@
 
 #include <EFM8BB1.h>
 
+#if 0
     // FIXME: it would be more useful to eventually have tick system like rtos/rcswitch style
 __xdata uint16_t Timer_2_Timeout  = 0x0000;
 __xdata uint16_t Timer_2_Interval = 0x0000;
 __xdata uint16_t Timer_3_Timeout  = 0x0000;
 __xdata uint16_t Timer_3_Interval = 0x0000;
+#endif
 
 // pg. 3 of OB38S003 datasheet
 // high speed architecture of 1 clock/machine cycle runs up to 16MHz.
@@ -257,6 +259,8 @@ unsigned long countsToTime(const unsigned long duration)
     return converted;
 }
 
+// these were used with portisch
+#if 0
 void SetTimer2Reload(const uint16_t reload)
 {
 	/***********************************************************************
@@ -377,3 +381,5 @@ bool IsTimer3Finished(void)
 {
 	return ((TMR3CN0 & TR3__BMASK) != TR3__RUN);
 }
+
+#endif

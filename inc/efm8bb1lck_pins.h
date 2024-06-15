@@ -17,4 +17,7 @@
 // software uart
 #define SOFT_TX_PIN P1_5
 
+// for reading by oscilloscope
+#define DEBUG_PIN_01 P1_7
+
 #endif

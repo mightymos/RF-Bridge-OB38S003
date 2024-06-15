@@ -125,6 +125,20 @@ inline void soft_tx_pin_toggle(void)
 	SOFT_TX_PIN = !SOFT_TX_PIN;
 }
 
+inline void debug_pin01_on(void)
+{
+	DEBUG_PIN_01 = 1;
+}
+
+inline void debug_pin01_off(void)
+{
+	DEBUG_PIN_01 = 0;
+}
+
+inline void debug_pin01_toggle(void)
+{
+	DEBUG_PIN_01 = !DEBUG_PIN_01;
+}
 
 inline void enable_global_interrupts(void)
 {

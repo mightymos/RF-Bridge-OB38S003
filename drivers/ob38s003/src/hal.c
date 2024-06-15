@@ -57,6 +57,10 @@ void init_port_pins(void)
     // buzzer push pull
     P0M1 &= ~0x01;
     P0M0 |=  0x01;
+	
+	// radio transmit push pull
+	//P0M1 &= ~0x80;
+	//P0M0 |=  0x80;
     
     // uart tx push pull
     //P1M1 &= ~0x01;

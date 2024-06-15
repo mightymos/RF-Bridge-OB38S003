@@ -7,40 +7,47 @@
 #include <stdio.h>
 #include <stdint.h>
 
-// hold past bytes so we can parse when sync end is received
+#include "uart_software.h"
+
+
+// FIXME: I think this is incorrect because we can receive variable data length with some commands
 #define PACKET_MAX_SIZE  12
+
+__xdata uint8_t uartPacket[PACKET_MAX_SIZE];
+__xdata uint8_t rfTXRepeats;
 
 //-----------------------------------------------------------------------------
 // Portisch generally used this type of state machine, which I had a lot of trouble reading
 //-----------------------------------------------------------------------------
-void uart_state_machine(const unsigned int rxdataWithFlags)
+RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 {
     // FIXME: need to check what appropriate initialization values are
-    static UART_STATE_T state = IDLE;
-    static UART_COMMAND_T command = NONE;
+    __xdata static UART_STATE_T     state = IDLE;
+    __xdata static UART_COMMAND_T command = NONE;
 
-	static uint8_t packet[PACKET_MAX_SIZE];
+	//RF_COMMAND_T rfCommand = NO_RF;
+	__xdata RF_COMMAND_T rfCommand = NO_COMMAND;
 	
     // FIXME: need to know what initialization value is appropriate
-    static uint8_t position = 0;
-	static uint8_t lengthExpected = 0;
+    __xdata static uint8_t position = 0;
+	__xdata static uint8_t lengthExpected = 0;
 
     // FIXME: needed?
     //uint16_t bucket = 0;
 	
-	// strip uart flags to 
-	const uint8_t rxdata = rxdata & 0xFF;
-
-
     // track count of entries into function
-    static uint16_t idleResetCount = 0;
+    __xdata static uint16_t idleResetCount = 0;
 
-    // FIXME: this seems to reset state machine if we do not receive data after some time
-	// FIXME: but we need to determine this outside of state machine I think ?
+	// strip uart flags to 
+	const uint8_t rxdata = rxdataWithFlags & 0xFF;	
+
+    // FIXME: we need some documentation of how count relates to real world time
     if (rxdataWithFlags == UART_NO_DATA)
     {
         if (state == IDLE)
+		{
             idleResetCount = 0;
+		}
         else
         {
             idleResetCount++;
@@ -70,15 +77,21 @@ void uart_state_machine(const unsigned int rxdataWithFlags)
             {
                 state = SYNC_INIT;
 				
+				position = 0;
+				
 				// go ahead and store the sync start (should be 0xAA)
-				packet[position] = SYNC_INIT;
+				uartPacket[position] = rxdata;
 				position++;
+				
+				puthex2(uartPacket[0]);
             }
             
             break;
 
         // sync byte got received, so next read command
         case SYNC_INIT:
+		
+			// FIXME: add comment
             command = rxdata;
             
             // FIXME: not sure if setting this here is correct
@@ -93,11 +106,15 @@ void uart_state_machine(const unsigned int rxdataWithFlags)
                 case RF_CODE_RFIN:
                     break;
                 case RF_CODE_RFOUT:
-					packet[position] = command;
+					uartPacket[position] = command;
+					
+					puthex2(uartPacket[position]);
+					
 					position++;
 					
-					lengthExpected = 11;
+					lengthExpected = 12;
 					state = RECEIVING;
+					
                     break;
                 case RF_DO_BEEP:
                     // FIXME: replace with timer rather than delay(), although appears original code was blocking too
@@ -132,24 +149,7 @@ void uart_state_machine(const unsigned int rxdataWithFlags)
                     // re-enable default RF_CODE_RFIN sniffing
                     //gLastSniffingCommand = PCA0_DoSniffing(gLastSniffingCommand);
                     //state = IDLE;
-                    break;
-                case SINGLE_STEP_DEBUG:
-                    //gSingleStep = true;
-                    break;
-
-                    
-                // wait until data got transfered
-                case RF_FINISHED:
-                    //if (trRepeats == 0)
-                    //{
-                    //    // disable RF transmit
-                    //    tdata_off();
-                    //
-                    //    uart_put_command(RF_CODE_ACK);
-                    //} else {
-                    //    gRFState = RF_IDLE;
-                    //}
-                    break;
+                    break; 
 
                 // unknown command
                 default:
@@ -176,10 +176,14 @@ void uart_state_machine(const unsigned int rxdataWithFlags)
 
         // receiving UART data
         case RECEIVING:
-            packet[position] = rxdata;
+            uartPacket[position] = rxdata;
+			
+			puthex2(uartPacket[position]);
+			
             position++;
 
-            if (position == lengthExpected)
+			// index starts from zero, whereas length starts from one
+            if (position == lengthExpected - 1)
             {
                 state = SYNC_FINISH;
             }
@@ -193,71 +197,116 @@ void uart_state_machine(const unsigned int rxdataWithFlags)
 
         // wait and check for UART_SYNC_END
         case SYNC_FINISH:
+
             if (rxdata == RF_CODE_STOP)
             {
+				puthex2(rxdata);
+				
+				// indicate this round of receiving uart packet is finished
                 state = IDLE;
-            }
+				
+				// the last command received should still be saved while we received any additional data bytes
+				if (command == RF_CODE_RFOUT)
+				{
+					rfCommand = RF_RFOUT_START;
+					rfTXRepeats = 8;
+				}
+            } else {
+				// we should have received stop code at this point
+				// if we do not, assume something was mangled and just go back to idle
+				state = IDLE;
+			}
             break;
     }
 	
-	// this should be occuring after an entire uart packet is received (i.e., after SYNC_FINISH)
-	switch(command)
-	{
-		case RF_CODE_RFOUT:
-		
-				// only do the job if all data got received by UART
-				if (state != IDLE)
-					break;
-
-				// do transmit of the data
-				switch(rf_state)
-				{
-					// init and start RF transmit
-					case RF_IDLE:
-						transmissionRepeats--;
-						//PCA0_StopSniffing();
-
-						// bytes 0..1:	Tsyn
-						// bytes 2..3:	Tlow
-						// bytes 4..5:	Thigh
-						// bytes 6..7:	24bit Data
-						buckets[0] = *(uint16_t *)&packet[2];
-						buckets[1] = *(uint16_t *)&packet[4];
-						buckets[2] = *(uint16_t *)&packet[0];
-
-						FIXME: send
-						//SendBuckets(
-						//		buckets,
-						//		PROTOCOL_DATA[0].start.dat, PROTOCOL_DATA[0].start.size,
-						//		PROTOCOL_DATA[0].bit0.dat, PROTOCOL_DATA[0].bit0.size,
-						//		PROTOCOL_DATA[0].bit1.dat, PROTOCOL_DATA[0].bit1.size,
-						//		PROTOCOL_DATA[0].end.dat, PROTOCOL_DATA[0].end.size,
-						//		PROTOCOL_DATA[0].bit_count,
-						//		RF_DATA + 6
-						//		);
-						break;
-
-					// wait until data got transfered
-					case RF_FINISHED:
-						// FIXME: how do we ever get to this case in original portisch?
-						if (transmissionRepeats == 0)
-						{
-							// disable RF transmit
-							tdata_off();
-
-							finish_command(RF_CODE_ACK);
-						}
-						else
-						{
-							rf_state = RF_IDLE;
-						}
-						break;
-				}
-				break;
-	}
+	return rfCommand;
 }
 
+void rf_state_machine(RF_COMMAND_T command)
+{
+	static RF_STATE_T state = RF_IDLE;
+	
+	// FIXME: send() handles transmission repeats in rcswitch, so this might not be needed
+	static uint8_t transmissionRepeats = 0;
+	
+	// this should be occuring after an entire uart packet is received (i.e., after SYNC_FINISH)
+	switch(state)
+	{
+		case RF_IDLE:
+			if (command == RF_RFOUT_START)
+			{
+				puthex2(state);
+				
+				state = RF_CHECK_REPEATS;
+//				transmissionRepeats = 1;
+			}
+			break;
 
+		// init and start RF transmit
+		case RF_CHECK_REPEATS:
+			puthex2(state);
+			
+			state = RF_TRANSMIT;
+			
+//			if (transmissionRepeats > 0)
+//			{
+//				state = RF_TRANSMIT;
+//			}
+			break;
+		case RF_TRANSMIT:
+		
+			puthex2(state);
+		
+			//PCA0_StopSniffing();
+			disable_capture_interrupt();
+
+			// bytes 0..1:	Tsyn
+			// bytes 2..3:	Tlow
+			// bytes 4..5:	Thigh
+			// bytes 6..7:	24bit Data
+			//buckets[0] = *(uint16_t *)&uartPacket[2];
+			//buckets[1] = *(uint16_t *)&uartPacket[4];
+			//buckets[2] = *(uint16_t *)&uartPacket[0];
+
+#if 1
+			putstring("start\r\n");
+#endif
+			
+			//
+			send(1, 0xD00358, 24);
+			
+#if 1
+			putstring("end\r\n");
+#endif
+			
+			enable_capture_interrupt();
+			
+			state = RF_FINISHED;
+			
+//			transmissionRepeats--;
+			
+//			if (transmissionRepeats == 0)
+//			{
+//				state = RF_FINISHED;
+//			}
+			break;
+
+		// wait until data got transfered
+		case RF_FINISHED:
+			
+			puthex2(state);
+			
+			// disable RF transmit
+			tdata_off();
+
+			uart_put_command(RF_CODE_ACK);
+
+			state = RF_IDLE;
+
+			break;
+
+	}
+}
 
 // FIXME: some of these function names really need fixing
 void radio_decode_report(void)

@@ -138,8 +138,18 @@ extern bool receive_protocol(const int p, unsigned int changeCount);
 extern bool radio_tx_blocking(const uint8_t totalRepeats, const int protocolID);
 extern void capture_handler(const uint16_t);
 
+void setRepeatTransmit(const int repeat);
+void setProtocol(const struct Protocol pro);
+
+//void send(const char* sCodeWord);
+void send(const int nProtocol, unsigned long code, const unsigned int length);
+
+
 extern volatile __xdata struct RC_SWITCH_T gRCSwitch;
 extern volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
+
+
+
 
 extern const struct Protocol protocols[];
 extern const unsigned int numProto;

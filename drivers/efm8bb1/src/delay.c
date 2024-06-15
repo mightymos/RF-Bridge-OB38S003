@@ -3,7 +3,14 @@
 
 #include "delay.h"
 
+#define F_CPU 24500000ULL
+
+#if !defined(F_CPU)
+	#error Please define F_CPU
+#endif
+
 // don't care too much if this isn't accurate
+// FIXME: how inaccurate are these?
 void delay_us(uint16_t us) {
     while (us--) {
 		__asm

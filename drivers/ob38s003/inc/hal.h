@@ -94,6 +94,23 @@ inline void tdata_off(void)
     TDATA = 0;
 }
 
+inline void debug_pin01_on(void)
+{
+	// blank function until pin is assigned
+	//__asm
+	//	nop
+	//__endasm;
+}
+
+inline void debug_pin01_off(void)
+{
+	// blank function until pin is assigned
+}
+
+inline void debug_pin01_toggle(void)
+{
+	// blank function until pin is assigned
+}
 
 inline void uart_tx_pin_off(void)
 {

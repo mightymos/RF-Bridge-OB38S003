@@ -20,8 +20,7 @@ typedef enum
 	RECEIVE_LEN,
 	RECEIVING,
 	TRANSMIT,
-	COMMAND,
-    RF_FINISHED
+	COMMAND
 } UART_STATE_T;
 
 
@@ -45,11 +44,25 @@ typedef enum
 	RF_CODE_RFOUT_BUCKET       = 0xB0,
 	RF_CODE_SNIFFING_ON_BUCKET = 0xB1,
 	RF_DO_BEEP                 = 0xC0,
-    SINGLE_STEP_DEBUG          = 0xFE,
 	RF_ALTERNATIVE_FIRMWARE    = 0xFF
 } UART_COMMAND_T;
 
-void uart_state_machine(const unsigned int rxdata);
+typedef enum
+{
+	RF_IDLE                    = 0x00,
+	RF_CHECK_REPEATS           = 0x01,
+	RF_TRANSMIT                = 0x02,
+	RF_FINISHED                = 0x03
+} RF_STATE_T;
+
+typedef enum
+{
+	NO_COMMAND                = 0x00,
+	RF_RFOUT_START            = 0xA5
+} RF_COMMAND_T;
+
+RF_COMMAND_T uart_state_machine(const unsigned int rxdata);
+void rf_state_machine(RF_COMMAND_T command);
 void radio_decode_report(void);
 void radio_timings(void);
 

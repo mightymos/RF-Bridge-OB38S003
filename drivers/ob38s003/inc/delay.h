@@ -30,7 +30,9 @@
 #ifndef _DELAY_H
 #define _DELAY_H
 
-extern void delay10us(const unsigned int usCount);
-extern void delay1ms(const unsigned int msCount);
+#include <stdint.h>
+
+extern void delay_us(uint16_t us);
+extern void delay1ms(const uint16_t msCount);
 
 #endif // _DELAY_H

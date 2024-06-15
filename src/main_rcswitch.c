@@ -175,7 +175,9 @@ int main (void)
     
     
     // upper eight bits hold error or no data flags
-    unsigned int rxdata = UART_NO_DATA;
+    unsigned int rxdataWithFlags = UART_NO_DATA;
+	
+	RF_COMMAND_T rfCommand = NONE;
     
 
     // hardware initialization
@@ -193,6 +195,7 @@ int main (void)
     led_off();
     buzzer_off();
     tdata_off();
+	debug_pin01_off();
     
 	startup_blink();
 	delay1ms(500);
@@ -268,7 +271,7 @@ int main (void)
 
         
     // watchdog will force a reset, unless we periodically write to it, demonstrating loop is not stuck somewhere
-    enable_watchdog();
+    //enable_watchdog();
 
 #if 1
 	// demonstrate software uart is working
@@ -283,7 +286,7 @@ int main (void)
     
 
         // try to get one byte from uart rx buffer
-        rxdata = uart_getc();
+        rxdataWithFlags = uart_getc();
 
      
         // check if serial transmit buffer is empty
@@ -298,10 +301,13 @@ int main (void)
         
 
         // process serial receive data
-        if (rxdata != UART_NO_DATA)
-        {
-            uart_state_machine(rxdata);
-        }
+        rfCommand = uart_state_machine(rxdataWithFlags);
+		
+		
+		// it seems better to separate the state machine for the radio and uart
+		rf_state_machine(rfCommand);
+		
+		
             
 
         if (available())
