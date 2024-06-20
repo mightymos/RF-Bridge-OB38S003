@@ -2,17 +2,6 @@
 // https://github.com/grigorig/stcgal/issues/26
 
 
-#if defined(TARGET_BOARD_OB38S003)
-#include "OB38S003.h"
-#elif defined(TARGET_BOARD_EFM8BB1)
-#include <stdint.h>
-#include "EFM8BB1.h"
-#elif defined(TARGET_BOARD_EFM8BB1LCB)
-#include <stdint.h>
-#include "EFM8BB1.h"
-#endif
-
-
 #include "hal.h"
 #include "uart_software.h"
 
@@ -62,10 +51,11 @@ void tm0(void) __interrupt (TIMER0_VECTOR)
         REND = 1; //set receive completed flag
       } else {
         RDAT >>= 1;
-        if (RXB) RDAT |= 0x80; //shift RX data to RX buffer
+		//shift RX data to RX buffer
+        if (get_soft_rx_pin()) RDAT |= 0x80;
       }
     }
-  } else if (!RXB) {
+  } else if (!get_soft_rx_pin()) {
     //set start receive flag
     RING = 1;
     //initial receive baudrate counter
@@ -82,19 +72,26 @@ void tm0(void) __interrupt (TIMER0_VECTOR)
 	{  //judge whether sending
       if (TBIT == 0)
 	  {
-        TXB = 0; //send start bit
-        TDAT = TBUF; //load data from TBUF to TDAT
-        TBIT = 9; //initial send bit number (8 data bits + 1 stop bit)
+		// send start bit
+        //TXB = 0;
+		soft_tx_pin_off();
+		// load data from TBUF to TDAT
+        TDAT = TBUF;
+		// initial send bit number (8 data bits + 1 stop bit)
+        TBIT = 9;
       } else {
 		  TDAT >>= 1; //shift data to CY
 		  
 		  if (--TBIT == 0)
 		  {
-			TXB = 1;
+			//TXB = 1;
+			soft_tx_pin_on();
 			TING = 0; //stop send
 			TEND = 1; //set send completed flag
 		  } else {
-			TXB = CY; //write CY to TX port
+			// write CY to TX port
+			//TXB = CY;
+			set_soft_tx_pin(CY);
 		  }
       }
     }

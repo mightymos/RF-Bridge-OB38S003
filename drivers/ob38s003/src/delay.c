@@ -30,61 +30,34 @@
 #include "delay.h"
 
 
-#define F_CPU 16000000ULL
+//#define F_CPU 16000000ULL
 
 // if we use delay style of efm8bb1
-#if !defined(F_CPU)
-	#error Please define F_CPU
-#endif
+//#if !defined(F_CPU)
+//	#error Please define F_CPU
+//#endif
 
-void delay_us(uint16_t us)
+void delay_us(uint8_t us)
 {
 	// these assume 1T mode @ 16 MHz on OB38S003 microcontroller
 	// in other words, they were tuned by observing oscilloscope traces
 	// and are therefore useless with other clock modes or with another microcontroller
 	
+	// tuned with oscilloscope for 10 microseconds
     //unsigned int i,j;
     //for(i = 0; i < us; i++)
     //{
     //    for(j = 0; j < 11; j++);
     //}
 	
-	// these are from efm8bb1 style delay
+	//   1us (observed  10us)
+	//  10us (observed  15us)
+	//  50us (observed  70us)
+	// 100us (observed 150us)
     while (us--) {
-		__asm
-#if F_CPU >=  8000000ULL
-			nop
-			nop
-#endif
-#if F_CPU >= 16000000ULL
-			nop
-			nop
-#endif
-#if F_CPU >= 24000000ULL
-			nop
-			nop
-			nop
-			nop
-#endif
-#if F_CPU >= 32000000ULL
-			nop
-			nop
-			nop
-			nop
-#endif
-#if F_CPU >= 40000000ULL
-			nop
-			nop
-			nop
-			nop
-#endif
-#if F_CPU >= 48000000ULL
-			nop
-			nop
-			nop
-			nop
-#endif
-		__endasm;
+		//__asm
+		//	nop
+		//__endasm;
     }
 }
 

@@ -70,17 +70,30 @@ inline bool get_radio_wake(void)
 
 inline void soft_tx_pin_on(void)
 {
-    SOFT_TX_PIN = 1;
+    RESET_PIN = 1;
 }
 
 inline void soft_tx_pin_off(void)
 {
-    SOFT_TX_PIN = 0;
+    RESET_PIN = 0;
 }
 
 inline void soft_tx_pin_toggle(void)
 {
-    SOFT_TX_PIN = !SOFT_TX_PIN;
+    RESET_PIN = !RESET_PIN;
+}
+
+inline void set_soft_tx_pin(const bool state)
+{
+	RESET_PIN = state;
+}
+
+inline bool get_soft_rx_pin(void)
+{
+	// FIXME: undefined for now because no pins available
+	//        so force default of nothing received
+	//return BUZZER;
+	return true;
 }
 
 inline void tdata_on(void)
@@ -94,22 +107,35 @@ inline void tdata_off(void)
     TDATA = 0;
 }
 
+inline void set_tdata(const bool state)
+{
+	TDATA = state;
+}
+
 inline void debug_pin01_on(void)
 {
 	// blank function until pin is assigned
 	//__asm
 	//	nop
 	//__endasm;
+	BUZZER = 1;
 }
 
 inline void debug_pin01_off(void)
 {
 	// blank function until pin is assigned
+	BUZZER = 0;
+}
+
+inline void set_debug_pin01(const bool state)
+{
+	BUZZER = state;
 }
 
 inline void debug_pin01_toggle(void)
 {
 	// blank function until pin is assigned
+	BUZZER = !BUZZER;
 }
 
 inline void uart_tx_pin_off(void)
@@ -189,8 +215,7 @@ extern bool get_radio_wake(void);
 extern unsigned char get_stack_pointer(void);
 
 
-extern void set_clock_1t_mode(void);
-extern void set_clock_6t_mode(void);
+extern void set_clock_mode(void);
 extern void enable_watchdog(void);
 extern void disable_watchdog(void);
 extern void refresh_watchdog(void);
@@ -198,7 +223,7 @@ extern void init_port_pins(void);
 extern void init_serial_interrupt(void);
 extern void init_uart(void);
 extern void init_timer0(const uint16_t);
-extern void init_timer1(const uint16_t);
+extern void init_timer1(const uint8_t, const uint8_t);
 extern void init_timer2_as_capture(void);
 extern void enable_capture_interrupt(void);
 extern void disable_capture_interrupt(void);
@@ -207,10 +232,7 @@ extern void disable_serial_interrupt(void);
 
 extern bool global_interrupts_are_enabled(void);
 
-
-extern void load_timer0(const uint16_t value);
-extern void load_timer1(const uint16_t value);
-
+void load_timer0(const uint16_t load);
 extern uint16_t get_timer2(void);
 
 extern void clear_capture_flag(void);

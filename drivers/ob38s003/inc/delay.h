@@ -32,7 +32,7 @@
 
 #include <stdint.h>
 
-extern void delay_us(uint16_t us);
-extern void delay1ms(const uint16_t msCount);
+void delay_us(uint8_t us);
+void delay1ms(const uint16_t msCount);
 
 #endif // _DELAY_H

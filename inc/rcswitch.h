@@ -46,33 +46,6 @@ struct RC_SWITCH_T
     const unsigned int nSeparationLimit;
 };
 
-struct TRANSMIT_PACKET_T
-{
-//    unsigned int pulseLength;
-    unsigned int syncHigh;
-    unsigned int syncLow;
-    
-    unsigned int syncHighMS;
-    unsigned int syncHighUS;
-    unsigned int syncLowMS;
-    unsigned int syncLowUS;
-    
-    unsigned int zeroHigh;
-    unsigned int zeroLow;
-    unsigned int oneHigh;
-    unsigned int oneLow;
-    
-    unsigned int zeroHighMS;
-    unsigned int zeroHighUS;
-    unsigned int zeroLowMS;
-    unsigned int zeroLowUS;
-    
-    unsigned int oneHighMS;
-    unsigned int oneHighUS;
-    unsigned int oneLowMS;
-    unsigned int oneLowUS;
-};
-
 
 /**
  * Description of a single pulse, which consists of a high signal

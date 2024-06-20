@@ -22,7 +22,7 @@ unsigned long get_current_timer0(void)
 }
 
 
-unsigned long get_elapsed_timer0(unsigned long previousTime)
+unsigned long get_elapsed_timer0(const unsigned long previousTime)
 {
     unsigned long currentTime;
     unsigned long elapsed;
@@ -41,11 +41,10 @@ unsigned long get_elapsed_timer0(unsigned long previousTime)
     return elapsed;
 }
 
-unsigned long get_current_timer1(void)
+uint16_t get_current_timer1(void)
 {
-    unsigned long currentTime;
+    uint16_t currentTime;
     
-
     disable_timer1_interrupt();
     
     // FIXME: compute the proper conversion from counts to microseconds
@@ -58,14 +57,12 @@ unsigned long get_current_timer1(void)
 }
 
 
-unsigned long get_elapsed_timer1(unsigned long previousTime)
+uint16_t get_elapsed_timer1(const unsigned long previousTime)
 {
-    unsigned long currentTime;
-    unsigned long elapsed;
+    uint16_t currentTime;
+    uint16_t elapsed;
     
     currentTime = get_current_timer1();
-    
-    //printf("currentTime: %lu\r\n", currentTime);
     
     // handle typical versus wraparound condition
     if (previousTime <= currentTime)
@@ -73,7 +70,7 @@ unsigned long get_elapsed_timer1(unsigned long previousTime)
         elapsed = currentTime - previousTime;
     } else {
 		// FIXME: seems like a bad idea to hardcode unsigned long maximum because what if type changes
-        elapsed = ULONG_MAX - previousTime + currentTime;
+        elapsed = UINT_MAX - previousTime + currentTime;
     }
     
     return elapsed;
@@ -96,7 +93,7 @@ unsigned long get_current_timer2(void)
 }
 
 
-unsigned long get_elapsed_timer2(unsigned long previousTime)
+unsigned long get_elapsed_timer2(const unsigned long previousTime)
 {
     unsigned long currentTime;
     unsigned long elapsed;

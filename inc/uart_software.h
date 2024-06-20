@@ -9,38 +9,19 @@
 //NOTE: (FOSC/3/BAUDRATE) must be greater than 98, (RECOMMEND GREATER THAN 110)
 
 #if defined(TARGET_BOARD_EFM8BB1LCB)
-#include "efm8bb1lck_pins.h"
 
-// pin definitions
-#define RXB BUZZER
-#define TXB SOFT_TX_PIN
-//#define BTN P3_2
-
-// e.g., hex(65536 - (24500000/2400/12))
-#define SOFT_BAUD 0xFCAD
+	// e.g., hex(65536 - (24500000/2400/12))
+	#define SOFT_BAUD 0xFCAD
 
 #elif defined(TARGET_BOARD_EFM8BB1)
 
-#include "sonoffr20_pins.h"
-
-// pin definitions
-#define RXB BUZZER
-#define TXB SOFT_TX_PIN
-//#define BTN P3_2
-
-// e.g., hex(65536 - (24500000/2400/12))
-#define SOFT_BAUD 0xFCAD
+	// e.g., hex(65536 - (24500000/2400/12))
+	#define SOFT_BAUD 0xFCAD
 
 #elif defined(TARGET_BOARD_OB38S003)
 
-#include "sonoffr22_pins.h"
-
-#define RXB BUZZER
-#define TXB SOFT_TX_PIN
-//#define BTN P3_2
-
-// e.g, hex(65536 - (16000000/2400/1))
-#define SOFT_BAUD 0xE5F5
+	// e.g, hex(65536 - (16000000/2400/1))
+	#define SOFT_BAUD 0xE5F5
 
 #endif
 

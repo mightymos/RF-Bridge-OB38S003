@@ -63,8 +63,10 @@ typedef enum
 
 RF_COMMAND_T uart_state_machine(const unsigned int rxdata);
 void rf_state_machine(RF_COMMAND_T command);
-void radio_decode_report(void);
-void radio_timings(void);
+
+void radio_rfin(void);
+void radio_decode_debug(void);
+void radio_decode_timings(void);
 
 
 #endif // STATE_MACHINE_H

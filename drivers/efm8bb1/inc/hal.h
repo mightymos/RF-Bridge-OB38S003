@@ -78,6 +78,11 @@ inline void tdata_off(void)
     TDATA = 0;
 }
 
+inline void set_tdata(const bool state)
+{
+	TDATA = state;
+}
+
 inline void uart_tx_pin_off(void)
 {
     UART_TX_PIN = 0;
@@ -120,24 +125,39 @@ inline void soft_tx_pin_off(void)
 	SOFT_TX_PIN = 0;
 }
 
+inline void set_soft_tx_pin(const bool state)
+{
+	SOFT_TX_PIN = state;
+}
+
 inline void soft_tx_pin_toggle(void)
 {
 	SOFT_TX_PIN = !SOFT_TX_PIN;
 }
 
+inline bool get_soft_rx_pin(void)
+{
+	return BUZZER;
+}
+
 inline void debug_pin01_on(void)
 {
-	DEBUG_PIN_01 = 1;
+	DEBUG_PIN01 = 1;
 }
 
 inline void debug_pin01_off(void)
 {
-	DEBUG_PIN_01 = 0;
+	DEBUG_PIN01 = 0;
+}
+
+inline void set_debug_pin01(const bool state)
+{
+	DEBUG_PIN01 = state;
 }
 
 inline void debug_pin01_toggle(void)
 {
-	DEBUG_PIN_01 = !DEBUG_PIN_01;
+	DEBUG_PIN01 = !DEBUG_PIN01;
 }
 
 inline void enable_global_interrupts(void)
@@ -223,6 +243,7 @@ extern unsigned char get_timer2_high(void);
 extern void clear_capture_flag(void);
 
 extern unsigned long countsToTime(const unsigned long duration);
+
 
 extern void InitTimer2_us(const uint16_t interval, const uint16_t timeout);
 extern void InitTimer3_us(const uint16_t interval, const uint16_t timeout);

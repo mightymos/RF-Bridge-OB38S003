@@ -9,7 +9,7 @@
 	#error Please define F_CPU
 #endif
 
-// don't care too much if this isn't accurate
+// do not care too much if this isn't accurate
 // FIXME: how inaccurate are these?
 void delay_us(uint16_t us) {
     while (us--) {

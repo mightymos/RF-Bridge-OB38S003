@@ -6,7 +6,10 @@
 #include "delay.h"
 #include "hal.h"
 #include "rcswitch.h"
-//#include "timer.h"
+
+#include "timer_interrupts.h"
+
+#include "ticks.h"
 
 
 // FIXME: explain constants
@@ -14,7 +17,7 @@ volatile __xdata struct RC_SWITCH_T gRCSwitch = {0, 0, 0, 0, 60, 4300};
 volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
 
 //static __xdata struct TRANSMIT_PACKET_T gTXPacket;
-int nRepeatTransmit = 8;
+__xdata int nRepeatTransmit = 8;
 
 //
 const struct Protocol protocols[] = {
@@ -278,36 +281,30 @@ void setRepeatTransmit(const int repeat)
 /**
  * Transmit a single high-low pulse.
  */
-void transmit(struct Protocol *pro, struct HighLow pulses)
+void transmit(struct Protocol *pro, struct HighLow pulses, uint16_t highdelay, uint16_t lowdelay)
 {
-  uint8_t firstLogicLevel  = (pro->invertedSignal) ? 0 : 1;
-  uint8_t secondLogicLevel = (pro->invertedSignal) ? 1 : 0;
+	__xdata uint8_t firstLogicLevel  = (pro->invertedSignal) ? 0 : 1;
+	__xdata uint8_t secondLogicLevel = (pro->invertedSignal) ? 1 : 0;
+
+	//__xdata uint16_t previous;
+	//__xdata uint16_t elapsed;
+	//__xdata uint16_t delay;
   
-    if (firstLogicLevel)
-    {
-        tdata_on();
-		debug_pin01_on();
-    } else {
-        tdata_off();
-		debug_pin01_off();
-    }
+    set_tdata(firstLogicLevel);
+	// mirror transmitted pulses to another pin for easier probing by oscilloscope
+	set_debug_pin01(!firstLogicLevel);
+	//delay_us(pro->pulseLength * pulses.high);
+	//delay = pro->pulseLength * pulses.high;
+	init_timer1_us(1, highdelay);
+	wait_timer1_finished();
 
-#if 1
-	delay_us(pro->pulseLength * pulses.high);
-#endif
 
-    if (secondLogicLevel)
-    {
-        tdata_on();
-		debug_pin01_on();
-    } else {
-        tdata_off();
-		debug_pin01_off();
-    }
-
-#if 1
-	delay_us(pro->pulseLength * pulses.low);
-#endif
+    set_tdata(secondLogicLevel);
+    set_debug_pin01(!secondLogicLevel);
+	//delay_us(pro->pulseLength * pulses.low);
+	//delay = pro->pulseLength * pulses.low;
+	init_timer1_us(1, lowdelay);
+	wait_timer1_finished();
 }
 
 /**
@@ -362,15 +359,15 @@ void send(const int nProtocol, unsigned long code, const unsigned int length)
         {
 		    if (code & (1L << index))
 	      	{
-			    transmit(&pro, pro.one);
+			    transmit(&pro, pro.one, 105, 35);
 	      	}
 		    else
 	      	{
-			    transmit(&pro, pro.zero);
+			    transmit(&pro, pro.zero, 35, 105);
 	      	}
 	    }
 
-		transmit(&pro, pro.syncFactor);
+		transmit(&pro, pro.syncFactor, 35, 1085);
 	}
 
 	// disable transmit after sending (i.e., for inverted protocols)

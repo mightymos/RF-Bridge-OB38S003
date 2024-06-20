@@ -92,13 +92,7 @@ int main (void)
     
 
     // hardware initialization
-#if defined(TARGET_BOARD_OB38S003)
-    set_clock_1t_mode();
-#elif defined(TARGET_BOARD_EFM8BB1)
-    set_clock_mode();
-#elif defined(TARGET_BOARD_EFM8BB1LCB)
 	set_clock_mode();
-#endif
 
     init_port_pins();
     

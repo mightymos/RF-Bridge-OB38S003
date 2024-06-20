@@ -10,17 +10,12 @@
 
 // pg. 3 of OB38S003 datasheet
 // high speed architecture of 1 clock/machine cycle runs up to 16MHz.
-void set_clock_1t_mode(void)
+void set_clock_mode(void)
 {
     // default is 2T mode
     // ITS = 000 or 1T mode
-    CKCON = 0x00;
-}
-
-void set_clock_6t_mode(void)
-{
-    // ITS = 101 or 6T mode
-    CKCON = 0x50;
+	// ITS = 101 or 6T mode
+    CKCON &= ~0x70;
 }
 
 // pg. 44 - once the watchdog is started it cannot be stopped
@@ -32,7 +27,10 @@ void enable_watchdog(void)
     TAKEY = 0x5A;
     
     // sets WDTE bit
-    WDTC |= 0x20;
+    //WDTC |= 0x20;
+	
+	// enable WDT and select time-out reset period is 3.2768s
+	WDTC = 0x28;
 }
 
 void disable_watchdog(void)
@@ -59,8 +57,8 @@ void init_port_pins(void)
     P0M0 |=  0x01;
 	
 	// radio transmit push pull
-	//P0M1 &= ~0x80;
-	//P0M0 |=  0x80;
+	P0M1 &= ~0x80;
+	P0M0 |=  0x80;
     
     // uart tx push pull
     //P1M1 &= ~0x01;
@@ -92,13 +90,13 @@ void init_uart(void)
     // BRGS = 1 so uart baud rate generator uses SREL (instead of timer 1)
     AUX |= 0x80;
     
-    // mode 1, no parity bit SM0 = 0 and SM2 = 0 by default
+    // mode 1, no parity bit SM0 = 0 and SM2 = 0 by default for 8-bit uart
     SM1 = 1;
     
     // see formula below with SMOD = 1
     PCON |= 0x80;
     
-    // SRELPS0 = 1;
+    // SRELPS0 = 1 so prescaller is Fosc / 32 for eq. 8.4.1.2
     PFCON |= 0x10;
     
     // pg. 43, sec. 8.4.1.2
@@ -163,23 +161,29 @@ void init_timer0(const uint16_t value)
     TR0 = true;
 }
 
-void init_timer1(const uint16_t value)
+void init_timer1(const uint8_t reload, const uint8_t initial)
 {
     // 16-bit mode
-    TMOD |= 0x10;
+    //TMOD |= 0x10;
+	//  8-bit auto reload mode
+	TMOD |= 0x20;
     
     // T1PS prescaler Fosc
     // b01 = FOCS
     PFCON |= 0x04;
     
     // ten microseconds to overflow
-    //TH1 = 0xff;
-    //TL1 = 0x5f;
-    TH1 = (value >> 8) & 0xff;
-    TL1 = value & 0xff;
+    //TH1 = reload;
+    //TL1 = initial;
     
     // enable timer1
-    TR1 = true;
+    //TR1 = true;
+}
+
+void load_timer0(const uint16_t load)
+{
+    TH0 = (load >> 8) & 0xff;
+    TL0 =  load & 0xff;
 }
 
 //================================================================================
@@ -203,17 +207,6 @@ bool global_interrupts_are_enabled(void)
     return EA;
 }
 
-void load_timer0(const uint16_t value)
-{
-    TH0 = (value >> 8) & 0xff;
-    TL0 = value & 0xff;
-}
-
-void load_timer1(const uint16_t value)
-{
-    TH1 = (value >> 8) & 0xff;
-    TL1 = value & 0xff;
-}
 
 uint16_t get_timer2(void)
 {

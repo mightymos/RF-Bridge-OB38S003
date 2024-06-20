@@ -15,6 +15,9 @@ __xdata uint16_t Timer_2_Timeout  = 0x0000;
 __xdata uint16_t Timer_2_Interval = 0x0000;
 __xdata uint16_t Timer_3_Timeout  = 0x0000;
 __xdata uint16_t Timer_3_Interval = 0x0000;
+
+// useful delay() discussion using timer2 for this processor
+// https://forum.digikey.com/t/how-to-program-a-blocking-delay-function-in-the-8051-microcontroller/37051
 #endif
 
 // pg. 3 of OB38S003 datasheet
@@ -48,7 +51,10 @@ void enable_watchdog(void)
     //timebase = timebase;
     //idleState = idleState;
     //WDTCN = interval;
-	WDTCN = 0xA5;
+	//WDTCN = 0xA5;
+	
+	// 3.2768 seconds
+	WDTCN = 0xA6;
 }
 
 void disable_watchdog(void)
@@ -61,6 +67,7 @@ void disable_watchdog(void)
 
 void refresh_watchdog(void)
 {
+	//WDTCN = 0xA5;
 	WDTCN = 0xA5;
 }
 

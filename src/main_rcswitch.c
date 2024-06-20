@@ -97,6 +97,27 @@ extern void uart_isr(void)   __interrupt (UART0_VECTOR);
 // radio decoding
 extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
 
+// unique ID is stored in xram (MSB at 0xFF)
+#define ID0_ADDR_RAM 0xFF
+#define ID1_ADDR_RAM 0xFE
+#define ID2_ADDR_RAM 0xFD
+#define ID3_ADDR_RAM 0xFC
+
+
+// 
+static const __xdata unsigned char *guid0 = (__xdata unsigned char*) ID0_ADDR_RAM;
+//static const __xdata unsigned char *guid1 = (__xdata unsigned char*) ID1_ADDR_RAM;
+//static const __xdata unsigned char *guid2 = (__xdata unsigned char*) ID2_ADDR_RAM;
+//static const __xdata unsigned char *guid3 = (__xdata unsigned char*) ID3_ADDR_RAM;
+
+void startup_uid(void)
+{
+	puthex2(*guid0);
+	puthex2(*(guid0--));
+	puthex2(*(guid0-2));
+	puthex2(*(guid0-3));
+}
+
 #else
 	#error Please define TARGET_BOARD in makefile
 #endif
@@ -108,7 +129,6 @@ void __sdcc_external_startup(void)
 {
 
 }
-
 
 
 #if 0
@@ -161,42 +181,38 @@ int main (void)
     //const __idata unsigned char* stackStart = (__idata unsigned char*) get_stack_pointer() + 1;
 
     // have only tested decoding with two protocols so far
-    const uint8_t repeats = 8;
+    //const uint8_t repeats = 8;
     // FIXME: comment on what this does
     // lowest ID is 1
-    const uint8_t protocolId = 1;
+    //const uint8_t protocolId = 1;
     
-    // track elapsed time for doing something periodically (e.g., every 10 seconds)
-    unsigned long previousTimeSendRadio = 0;
-    unsigned long previousTimeHeartbeat = 0;
-    unsigned long elapsedTimeSendRadio;
-    unsigned long elapsedTimeHeartbeat;
-    unsigned long heartbeat = 0;
+    // track elapsed time for doing something periodically (e.g., toggle LED every 10 seconds)
+    //unsigned long previousTimeSendRadio = 0;
+    //unsigned long elapsedTimeSendRadio;
+    __xdata uint16_t previousTimeHeartbeat = 0;
+    __xdata uint16_t elapsedTimeHeartbeat;
     
     
     // upper eight bits hold error or no data flags
-    unsigned int rxdataWithFlags = UART_NO_DATA;
+    __xdata unsigned int rxdataWithFlags = UART_NO_DATA;
 	
-	RF_COMMAND_T rfCommand = NONE;
+	__xdata RF_COMMAND_T rfCommand = NONE;
     
 
     // hardware initialization
-#if defined(TARGET_BOARD_OB38S003)
-    set_clock_1t_mode();
-#elif defined(TARGET_BOARD_EFM8BB1)
-    set_clock_mode();
-#elif defined(TARGET_BOARD_EFM8BB1LCB)
 	set_clock_mode();
-#endif
 
+	//
     init_port_pins();
     
     // set default pin levels
     led_off();
     buzzer_off();
     tdata_off();
-	debug_pin01_off();
-    
+	// pin effect is inverted if using buzzer
+	debug_pin01_on();
+	
+    //
 	startup_blink();
 	delay1ms(500);
     
@@ -223,7 +239,10 @@ int main (void)
     // timer 1 provides ten microsecond tick
 	// for ob38s003 0xFFFF - (10*10^-6)/(1/16000000)
     init_timer0(SOFT_BAUD);
-    init_timer1(TIMER1_RELOAD_10MICROS);
+    //init_timer1(TH1_RELOAD_10MICROS, TL1_RELOAD_10MICROS);
+	// 0x5F for 10 microsecs
+	// 0xEF for  1 microsec
+	init_timer1(0x5F, 0x5F);
 	// timer 2 supports compare and capture module
 	// for determining pulse lengths of received radio signals
     init_timer2_as_capture();
@@ -271,11 +290,17 @@ int main (void)
 
         
     // watchdog will force a reset, unless we periodically write to it, demonstrating loop is not stuck somewhere
-    //enable_watchdog();
+    enable_watchdog();
 
 #if 1
 	// demonstrate software uart is working
 	putstring("boot\r\n");
+#endif
+
+#if defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+	putstring("uid:");
+	startup_uid();
+	putstring("\r\n");
 #endif
 
     while (true)
@@ -286,6 +311,7 @@ int main (void)
     
 
         // try to get one byte from uart rx buffer
+		// otherwise, the flags will indicate no data
         rxdataWithFlags = uart_getc();
 
      
@@ -306,99 +332,56 @@ int main (void)
 		
 		// it seems better to separate the state machine for the radio and uart
 		rf_state_machine(rfCommand);
-		
-		
             
 
         if (available())
         {
             // FIXME: there must be a better way to lock
-            // this is needed to avoid corrupting the currently received packet
+            // disable interrupt is needed to avoid corrupting the currently received packet
             disable_capture_interrupt();
             
-            // formatted for tasmota
-            radio_decode_report();
+            // formatted for tasmota for output to web interface
+            radio_rfin();
             
-            // DEBUG: formatted like rc-switch example
-            //radio_decode_debug();
-            
-            // DEBUG:
-            //radio_timings();
-            
-            led_toggle();
-
-            reset_available();
-            
-            enable_capture_interrupt();
-            
-#if 1
-            // DEBUG: using software uart
-            // FIXME: a little dangerous as-is because basically sits in a while() loop ?
-            // protocol index
-            putc('p');
-            putc('x');
-            puthex2(get_received_protocol());
-            putc(' ');
-
-            // bits received
-            putc('b');
-            putc('x');
-            puthex2(get_received_bitlength());
-            putc('\r');
-            putc('\n');
-#endif
-
-        }
-        
-        
-#if 1
-        // do a task like blink led about every ten seconds to show loop is alive
-        elapsedTimeHeartbeat = get_elapsed_timer1(previousTimeHeartbeat);
-
-        //if (elapsedTimeHeartbeat >= 1000000)
-		if (elapsedTimeHeartbeat >= 500000)
-        {
-            // test software uart
-            //puthex2(heartbeat);
-            //putc('\r');
-            //putc('\n');
-            
+			// causes the led to strobe for visual feedback packet is being received
             led_toggle();
             
-            previousTimeHeartbeat = get_current_timer1();
-            
-            heartbeat++;
-        }
-        
-#endif
-        
-     
-     
 #if 0
-        // FIXME: future use for transmitting
-        // FIXME: should we check to see if we are in the middle of receiving?
-        
-        // periodically send out a radio transmission
-        elapsedTimeSendRadio = get_elapsed_timer1(previousTimeSendRadio);
+            // DEBUG: using software uart
+            // this is slow because of low baud rate, so either exclude reporting data or exclude with conditional compilation
+			radio_decode_debug();
+#endif
 
-        if (elapsedTimeSendRadio >= 30000)
-        {
-            // FIXME: not sure if we NEED to disable radio receiver but we probably should (to avoid loopback)
-            //radio_receiver_off();
-            
-            led_toggle();
-            
-            // FIXME: do stuff
-            
-            //radio_receiver_on();
-            
-            previousTimeSendRadio = get_current_timer1();
+			// clears received data
+            reset_available();
+			
+			// FIXME: if we use software uart to send debug output, this will be slow to be re-enabled
+            enable_capture_interrupt();
+
         }
         
-#endif 
-      
         
+#if 1
+        // do a task like blink led about every XX seconds to show loop is alive
+        //elapsedTimeHeartbeat = get_elapsed_timer1(previousTimeHeartbeat);
+
+		//
+        //if (elapsedTimeHeartbeat >= 1000000)
+		if (elapsedTimeHeartbeat >= 2^16)
+		//if (elapsedTimeHeartbeat >= 10)
+        {
+			// DEBUG
+			//debug_pin01_toggle();
+			
+            led_toggle();
+            
+        //    previousTimeHeartbeat = get_current_timer1();
+            
+        }
         
+#endif
+        
+     
 
     }
     
