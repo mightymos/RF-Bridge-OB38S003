@@ -209,7 +209,8 @@ int main (void)
     led_off();
     buzzer_off();
     tdata_off();
-	// pin effect is inverted if using buzzer
+	
+	// pin effect is inverted if using buzzer footprint as output
 	debug_pin01_on();
 	
     //
@@ -257,7 +258,7 @@ int main (void)
 	init_timer0(SOFT_BAUD);
 	// uart must use timer1 on this controller
 	init_timer1(TIMER1_UART0);
-	init_timer2(TIMER2_RELOAD_10MICROS);
+	//init_timer2(TIMER2_RELOAD_10MICROS);
 	// timer 3 is unused for now
 	
 	enable_timer0_interrupt();

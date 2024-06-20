@@ -9,28 +9,107 @@
 #include "timer_interrupts.h"
 
 // track time since startup in one millisecond increments
-static unsigned long gTimeMilliseconds = 0;
-static unsigned long gTimeTenMicroseconds = 0;
+//static unsigned long gTimeMilliseconds = 0;
+//static unsigned long gTimeTenMicroseconds = 0;
+
+static __xdata uint16_t gTimer2Timeout;
+static __xdata uint16_t gTimer2Interval;
 
 unsigned long get_time_milliseconds(void)
 {
-	return gTimeMilliseconds;
+//	return gTimeMilliseconds;
+	return 0;
 }
 
 unsigned long get_time_ten_microseconds(void)
 {
-	return gTimeTenMicroseconds;
+//	return gTimeTenMicroseconds;
+	return 0;
 }
 
+// Portisch favored this approach to timer delay
+void set_timer2_reload(const uint16_t reload)
+{
+	/***********************************************************************
+	 - Timer 2 Reload High Byte
+	 ***********************************************************************/
+	TMR2RLH = ((reload >> 8) & 0xFF);
+	/***********************************************************************
+	 - Timer 2 Reload Low Byte = 0x86
+	 ***********************************************************************/
+	TMR2RLL = (reload & 0xFF);
+}
+
+
+/*
+ * Init Timer 2 with microseconds interval, maximum is 65535micros.
+ */
+void init_timer2_us(const uint16_t interval, const uint16_t timeout)
+{
+    //
+	set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
+	//TH1 = 0x60;
+	//TL1 = 0x60;
+
+	// remove 65micros because of startup delay
+	gTimer2Timeout  = timeout;
+	gTimer2Interval = interval;
+
+	// start timer
+	TR2 = true;
+}
+
+
+/*
+ * Init Timer 2 with milliseconds interval, maximum is ~2.5ms.
+ */
+void init_timer2_ms(const uint16_t interval, const uint16_t timeout)
+{    
+	set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000 / (uint32_t)interval))));
+
+	gTimer2Timeout  = timeout;
+	gTimer2Interval = interval;
+
+	// start timer
+	TR2 = true;
+}
+
+
+void wait_timer2_finished(void)
+{
+	// wait until timer has finished
+	while(TR2);
+}
+
+
+void stop_timer2(void)
+{
+	// stop timer
+	TR2 = false;
+	
+	// clear overflow flag (why, to avoid triggering interrupt next enable?)
+	TF2 = false;
+}
+
+bool is_timer2_finished(void)
+{
+	return !TR2;
+}
 
 // timer 2 interrupt
 void timer2_isr(void) __interrupt (TIMER2_VECTOR)
 {
-    // tracks time since timer enabled, used to track long periods of time
-    gTimeTenMicroseconds++;
-    
-	// clear interrupt flag
+	// FIXME: clear at start or end of interrupt?
 	TF2 = 0;
+	
+	gTimer2Timeout--;
+		
+	// check if pulse time is over
+	if(gTimer2Timeout == 0)
+	{
+		// stop timer
+		TR2 = false;
+	}	
 }
 
 

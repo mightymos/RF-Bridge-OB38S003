@@ -295,16 +295,20 @@ void transmit(struct Protocol *pro, struct HighLow pulses, uint16_t highdelay, u
 	set_debug_pin01(!firstLogicLevel);
 	//delay_us(pro->pulseLength * pulses.high);
 	//delay = pro->pulseLength * pulses.high;
-	init_timer1_us(1, highdelay);
-	wait_timer1_finished();
+	//init_timer1_us(1, highdelay);
+	//wait_timer1_finished();
+	init_timer2_us(1, highdelay);
+	wait_timer2_finished();
 
 
     set_tdata(secondLogicLevel);
     set_debug_pin01(!secondLogicLevel);
 	//delay_us(pro->pulseLength * pulses.low);
 	//delay = pro->pulseLength * pulses.low;
-	init_timer1_us(1, lowdelay);
-	wait_timer1_finished();
+	//init_timer1_us(1, lowdelay);
+	//wait_timer1_finished();
+	init_timer2_us(1, lowdelay);
+	wait_timer2_finished();
 }
 
 /**
@@ -359,15 +363,15 @@ void send(const int nProtocol, unsigned long code, const unsigned int length)
         {
 		    if (code & (1L << index))
 	      	{
-			    transmit(&pro, pro.one, 105, 35);
+			    transmit(&pro, pro.one, 136, 47);
 	      	}
 		    else
 	      	{
-			    transmit(&pro, pro.zero, 35, 105);
+			    transmit(&pro, pro.zero, 47, 136);
 	      	}
 	    }
 
-		transmit(&pro, pro.syncFactor, 35, 1085);
+		transmit(&pro, pro.syncFactor, 47, 1406);
 	}
 
 	// disable transmit after sending (i.e., for inverted protocols)

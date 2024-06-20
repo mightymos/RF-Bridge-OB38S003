@@ -111,34 +111,26 @@ void timer0_isr(void) __interrupt (d_T0_Vector)
 // timer 1 interrupt
 void timer1_isr(void) __interrupt (d_T1_Vector)
 {
-	// we avoid reloading with a function because the function call slows down interrupt
-	//TH1 = TH1_RELOAD_10MICROS;
-	//TL1 = TL1_RELOAD_10MICROS;
+	// we use autoreload instead of manually reloading count so that interrupt is short
+	// ob38s003 microcontroller automatically clears timer flag
 	
-    // tracks time since timer enabled, used to track long periods of time
-    //gTimeTenMicroseconds++;
-	
-	// Clear Timer 2 high overflow flag
-	// (our microcontroller automatically clears this flag)
-	//TF1 = false;
+	// DEBUG:
 	//debug_pin01_toggle();
-
+	
+	
+	// we avoid handling intervals of more than one because instructions slow done interrupt too much
+	
+	// we decrement because if we incremented we would have to compare to a timeout external to interrupt
+	// and we would then have to access variable atomically (e.g., by disabling interrupts briefly)
+	// and as a result we might miss counts
+	gTimer1Timeout--;
+		
 	// check if pulse time is over
 	if(gTimer1Timeout == 0)
 	{
 		// stop timer
 		TR1 = false;
-	} else {
-	
-	//if (gTimer1Timeout < gTimer1Interval)
-	//{
-	//	gTimer1Timeout = 0;
-	//} else {
-	//	gTimer1Timeout -= gTimer1Interval;
-		gTimer1Timeout--;
-	//}
-	}
-    
+	}		
 }
 
 //-----------------------------------------------------------------------------

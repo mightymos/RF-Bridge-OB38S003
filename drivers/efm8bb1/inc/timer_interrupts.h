@@ -20,4 +20,8 @@
 unsigned long get_time_milliseconds(void);
 unsigned long get_time_ten_microseconds(void);
 
+void init_timer2_us(const uint16_t interval, const uint16_t timeout);
+void wait_timer2_finished(void);
+
+
 #endif
