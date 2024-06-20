@@ -9,7 +9,7 @@
 
 #include "timer_interrupts.h"
 
-#include "ticks.h"
+//#include "ticks.h"
 
 
 // FIXME: explain constants
@@ -19,7 +19,26 @@ volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
 //static __xdata struct TRANSMIT_PACKET_T gTXPacket;
 __xdata int nRepeatTransmit = 8;
 
-//
+// units of microseconds
+const struct Protocol protocols[] = {
+  { 350, {  1, 31 }, {  1,  3 }, {  3,  1 }, false },    // protocol 1
+  { 650, {  1, 10 }, {  1,  2 }, {  2,  1 }, false },    // protocol 2
+  { 100, { 30, 71 }, {  4, 11 }, {  9,  6 }, false },    // protocol 3
+  { 380, {  1,  6 }, {  1,  3 }, {  3,  1 }, false },    // protocol 4
+  { 500, {  6, 14 }, {  1,  2 }, {  2,  1 }, false },    // protocol 5
+  { 450, { 23,  1 }, {  1,  2 }, {  2,  1 }, true },     // protocol 6 (HT6P20B)
+  { 150, {  2, 62 }, {  1,  6 }, {  6,  1 }, false },    // protocol 7 (HS2303-PT, i. e. used in AUKEY Remote)
+  { 200, {  3, 130}, {  7, 16 }, {  3,  16}, false},     // protocol 8 Conrad RS-200 RX
+  { 200, { 130, 7 }, {  16, 7 }, { 16,  3 }, true},      // protocol 9 Conrad RS-200 TX
+  { 365, { 18,  1 }, {  3,  1 }, {  1,  3 }, true },     // protocol 10 (1ByOne Doorbell) (rounded)
+  { 270, { 36,  1 }, {  1,  2 }, {  2,  1 }, true },     // protocol 11 (HT12E)
+  { 320, { 36,  1 }, {  1,  2 }, {  2,  1 }, true }      // protocol 12 (SM5212)
+};
+
+
+
+#if 0
+// units of 10 microseconds
 const struct Protocol protocols[] = {
   { 35, {  1, 31 }, {  1,  3 }, {  3,  1 }, false },    // protocol 1
   { 65, {  1, 10 }, {  1,  2 }, {  2,  1 }, false },    // protocol 2
@@ -34,6 +53,7 @@ const struct Protocol protocols[] = {
   { 27, { 36,  1 }, {  1,  2 }, {  2,  1 }, true },     // protocol 11 (HT12E)
   { 32, { 36,  1 }, {  1,  2 }, {  2,  1 }, true }      // protocol 12 (SM5212)
 };
+#endif
 
 
 // count of number of protocol entries
@@ -281,7 +301,7 @@ void setRepeatTransmit(const int repeat)
 /**
  * Transmit a single high-low pulse.
  */
-void transmit(struct Protocol *pro, struct HighLow pulses, uint16_t highdelay, uint16_t lowdelay)
+void transmit(struct Protocol *pro, uint16_t delayHigh, uint16_t delayLow)
 {
 	__xdata uint8_t firstLogicLevel  = (pro->invertedSignal) ? 0 : 1;
 	__xdata uint8_t secondLogicLevel = (pro->invertedSignal) ? 1 : 0;
@@ -294,16 +314,18 @@ void transmit(struct Protocol *pro, struct HighLow pulses, uint16_t highdelay, u
 	// mirror transmitted pulses to another pin for easier probing by oscilloscope
 	set_debug_pin01(firstLogicLevel);
 	//delay_us(pro->pulseLength * pulses.high);
-	delay = pro->pulseLength * pulses.high;
-	init_delay_timer_us(1, delay);
+	//delay = pro->pulseLength * pulses.high;
+	//delay = delay / 10;
+	init_delay_timer_us(1, delayHigh);
 	wait_delay_timer_finished();
 
 
     set_tdata(secondLogicLevel);
     set_debug_pin01(secondLogicLevel);
 	//delay_us(pro->pulseLength * pulses.low);
-	delay = pro->pulseLength * pulses.low;
-	init_delay_timer_us(1, delay);
+	//delay = pro->pulseLength * pulses.low;
+	//delay = delay / 10;
+	init_delay_timer_us(1, delayLow);
 	wait_delay_timer_finished();
 }
 
@@ -343,12 +365,29 @@ void send(const int nProtocol, unsigned long code, const unsigned int length)
 	
 	int nRepeat;
 	int index;
+	
+	// we precompute these because doing the multiplies and divides
+	// inside the transmit function interferes with generating proper signal timing
+	uint16_t oneHigh;
+	uint16_t oneLow;
+	uint16_t zeroHigh;
+	uint16_t zeroLow;
+	uint16_t syncHigh;
+	uint16_t syncLow;
 
     // also checks for out of bound index (e.g., less than one)
 	//setProtocol(nProtocol);
 
     // FIXME: consider checking index out of bound
     memcpy(&pro, &protocols[nProtocol-1], sizeof(struct Protocol));
+	
+	// divide by ten to convert from microseconds to tens of microseconds
+	oneHigh  = pro.pulseLength * pro.one.high / 10;
+	oneLow   = pro.pulseLength * pro.one.low / 10;
+	zeroHigh = pro.pulseLength * pro.zero.high / 10;
+	zeroLow  = pro.pulseLength * pro.zero.low / 10;
+	syncHigh = pro.pulseLength * pro.syncFactor.high / 10;
+	syncLow  = pro.pulseLength * pro.syncFactor.low / 10;
 
 	// make sure the receiver is disabled while we transmit
 	//radio_receiver_off();
@@ -359,15 +398,15 @@ void send(const int nProtocol, unsigned long code, const unsigned int length)
         {
 		    if (code & (1L << index))
 	      	{
-			    transmit(&pro, pro.one, 105, 35);
+			    transmit(&pro, oneHigh, oneLow);
 	      	}
 		    else
 	      	{
-			    transmit(&pro, pro.zero, 35, 105);
+			    transmit(&pro, zeroHigh, zeroLow);
 	      	}
 	    }
 
-		transmit(&pro, pro.syncFactor, 35, 1050);
+		transmit(&pro, syncHigh, syncLow);
 	}
 
 	// disable transmit after sending (i.e., for inverted protocols)

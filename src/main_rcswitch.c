@@ -55,7 +55,8 @@
 #include "state_machine.h"
 
 // generic tick logic independent of controller
-#include "ticks.h"
+//#include "ticks.h"
+
 // hardware specific
 #include "timer_interrupts.h"
 
