@@ -44,7 +44,7 @@ void set_timer2_reload(const uint16_t reload)
 /*
  * Init Timer 2 with microseconds interval, maximum is 65535micros.
  */
-void init_timer2_us(const uint16_t interval, const uint16_t timeout)
+void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
 {
     //
 	set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
@@ -63,7 +63,7 @@ void init_timer2_us(const uint16_t interval, const uint16_t timeout)
 /*
  * Init Timer 2 with milliseconds interval, maximum is ~2.5ms.
  */
-void init_timer2_ms(const uint16_t interval, const uint16_t timeout)
+void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout)
 {    
 	set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000 / (uint32_t)interval))));
 
@@ -75,14 +75,14 @@ void init_timer2_ms(const uint16_t interval, const uint16_t timeout)
 }
 
 
-void wait_timer2_finished(void)
+void wait_delay_timer_finished(void)
 {
 	// wait until timer has finished
 	while(TR2);
 }
 
 
-void stop_timer2(void)
+void stop_delay_timer(void)
 {
 	// stop timer
 	TR2 = false;
@@ -91,7 +91,7 @@ void stop_timer2(void)
 	TF2 = false;
 }
 
-bool is_timer2_finished(void)
+bool is_delay_timer_finished(void)
 {
 	return !TR2;
 }

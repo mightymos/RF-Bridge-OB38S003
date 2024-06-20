@@ -9,17 +9,6 @@
 
 #include <EFM8BB1.h>
 
-#if 0
-    // FIXME: it would be more useful to eventually have tick system like rtos/rcswitch style
-__xdata uint16_t Timer_2_Timeout  = 0x0000;
-__xdata uint16_t Timer_2_Interval = 0x0000;
-__xdata uint16_t Timer_3_Timeout  = 0x0000;
-__xdata uint16_t Timer_3_Interval = 0x0000;
-
-// useful delay() discussion using timer2 for this processor
-// https://forum.digikey.com/t/how-to-program-a-blocking-delay-function-in-the-8051-microcontroller/37051
-#endif
-
 // pg. 3 of OB38S003 datasheet
 // high speed architecture of 1 clock/machine cycle runs up to 16MHz.
 void set_clock_mode(void)

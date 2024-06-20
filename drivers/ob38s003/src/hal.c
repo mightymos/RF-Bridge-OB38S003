@@ -161,7 +161,7 @@ void init_timer0(const uint16_t value)
     TR0 = true;
 }
 
-void init_timer1(const uint8_t reload, const uint8_t initial)
+void init_timer1(void)
 {
     // 16-bit mode
     //TMOD |= 0x10;

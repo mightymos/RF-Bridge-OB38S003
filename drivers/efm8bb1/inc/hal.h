@@ -137,7 +137,10 @@ inline void soft_tx_pin_toggle(void)
 
 inline bool get_soft_rx_pin(void)
 {
-	return BUZZER;
+	// FIXME: undefined for now because no pins available
+	//        so force default of nothing received
+	//return BUZZER;
+	return true;
 }
 
 inline void debug_pin01_on(void)

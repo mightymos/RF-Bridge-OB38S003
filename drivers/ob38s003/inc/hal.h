@@ -118,18 +118,19 @@ inline void debug_pin01_on(void)
 	//__asm
 	//	nop
 	//__endasm;
-	BUZZER = 1;
+	// buzzer pin is inverted
+	BUZZER = 0;
 }
 
 inline void debug_pin01_off(void)
 {
-	// blank function until pin is assigned
-	BUZZER = 0;
+	// buzzer has an external transistor which inverts output
+	BUZZER = 1;
 }
 
 inline void set_debug_pin01(const bool state)
 {
-	BUZZER = state;
+	BUZZER = !state;
 }
 
 inline void debug_pin01_toggle(void)
@@ -223,7 +224,7 @@ extern void init_port_pins(void);
 extern void init_serial_interrupt(void);
 extern void init_uart(void);
 extern void init_timer0(const uint16_t);
-extern void init_timer1(const uint8_t, const uint8_t);
+extern void init_timer1(void);
 extern void init_timer2_as_capture(void);
 extern void enable_capture_interrupt(void);
 extern void disable_capture_interrupt(void);

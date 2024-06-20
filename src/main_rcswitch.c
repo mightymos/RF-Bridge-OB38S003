@@ -243,7 +243,7 @@ int main (void)
     //init_timer1(TH1_RELOAD_10MICROS, TL1_RELOAD_10MICROS);
 	// 0x5F for 10 microsecs
 	// 0xEF for  1 microsec
-	init_timer1(0x5F, 0x5F);
+	init_timer1();
 	// timer 2 supports compare and capture module
 	// for determining pulse lengths of received radio signals
     init_timer2_as_capture();
