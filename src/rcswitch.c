@@ -16,8 +16,12 @@
 volatile __xdata struct RC_SWITCH_T gRCSwitch = {0, 0, 0, 0, 60, 4300};
 volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
 
+//__xdata long long gTXRFData;
+
+
+
 //static __xdata struct TRANSMIT_PACKET_T gTXPacket;
-__xdata int nRepeatTransmit = 8;
+const int nRepeatTransmit = 8;
 
 // units of microseconds
 const struct Protocol protocols[] = {
@@ -34,26 +38,6 @@ const struct Protocol protocols[] = {
   { 270, { 36,  1 }, {  1,  2 }, {  2,  1 }, true },     // protocol 11 (HT12E)
   { 320, { 36,  1 }, {  1,  2 }, {  2,  1 }, true }      // protocol 12 (SM5212)
 };
-
-
-
-#if 0
-// units of 10 microseconds
-const struct Protocol protocols[] = {
-  { 35, {  1, 31 }, {  1,  3 }, {  3,  1 }, false },    // protocol 1
-  { 65, {  1, 10 }, {  1,  2 }, {  2,  1 }, false },    // protocol 2
-  { 10, { 30, 71 }, {  4, 11 }, {  9,  6 }, false },    // protocol 3
-  { 38, {  1,  6 }, {  1,  3 }, {  3,  1 }, false },    // protocol 4
-  { 50, {  6, 14 }, {  1,  2 }, {  2,  1 }, false },    // protocol 5
-  { 45, { 23,  1 }, {  1,  2 }, {  2,  1 }, true },     // protocol 6 (HT6P20B)
-  { 15, {  2, 62 }, {  1,  6 }, {  6,  1 }, false },    // protocol 7 (HS2303-PT, i. e. used in AUKEY Remote)
-  { 20, {  3, 130}, {  7, 16 }, {  3,  16}, false},     // protocol 8 Conrad RS-200 RX
-  { 20, { 130, 7 }, {  16, 7 }, { 16,  3 }, true},      // protocol 9 Conrad RS-200 TX
-  { 36, { 18,  1 }, {  3,  1 }, {  1,  3 }, true },     // protocol 10 (1ByOne Doorbell) (rounded)
-  { 27, { 36,  1 }, {  1,  2 }, {  2,  1 }, true },     // protocol 11 (HT12E)
-  { 32, { 36,  1 }, {  1,  2 }, {  2,  1 }, true }      // protocol 12 (SM5212)
-};
-#endif
 
 
 // count of number of protocol entries
@@ -271,10 +255,10 @@ void capture_handler(const uint16_t currentCapture)
 /**
  * Sets Repeat Transmits
  */
-void setRepeatTransmit(const int repeat)
-{
-	nRepeatTransmit = repeat;
-}
+//void setRepeatTransmit(const int repeat)
+//{
+//	nRepeatTransmit = repeat;
+//}
 
 /**
   * Sets the protocol to send.
@@ -311,35 +295,34 @@ void transmit(struct Protocol *pro, uint16_t delayHigh, uint16_t delayLow)
 	__xdata uint16_t delay;
   
     set_tdata(firstLogicLevel);
-	// mirror transmitted pulses to another pin for easier probing by oscilloscope
+	// DEBUG: mirror transmitted pulses to another pin for easier probing by oscilloscope
 	set_debug_pin01(firstLogicLevel);
-	//delay_us(pro->pulseLength * pulses.high);
-	//delay = pro->pulseLength * pulses.high;
-	//delay = delay / 10;
+
 	init_delay_timer_us(1, delayHigh);
 	wait_delay_timer_finished();
 
 
+
     set_tdata(secondLogicLevel);
+	// DEBUG:
     set_debug_pin01(secondLogicLevel);
-	//delay_us(pro->pulseLength * pulses.low);
-	//delay = pro->pulseLength * pulses.low;
-	//delay = delay / 10;
+
 	init_delay_timer_us(1, delayLow);
 	wait_delay_timer_finished();
 }
 
 /**
- * @param sCodeWord   a binary code word consisting of the letter 0, 1
+ * @param 
  */
-//void send(const char* sCodeWord)
+//long long send(const char* sCodeWord)
 //{
 //
-//  // turn the tristate code word into the corresponding bit pattern, then send it
-//  unsigned long code = 0;
+//  // 
+//  long long code = 0;
 //  unsigned int length = 0;
 //
-//  for (const char* p = sCodeWord; *p; p++) {
+//  for (const char* p = sCodeWord; *p; p++)
+//  {
 //    code <<= 1L;
 //    if (*p != '0')
 //      code |= 1L;
@@ -347,7 +330,8 @@ void transmit(struct Protocol *pro, uint16_t delayHigh, uint16_t delayLow)
 //    length++;
 //  }
 //
-//  send(code, length);
+//  //send(code, length);
+//  return 0;
 //}
 
 
@@ -355,16 +339,21 @@ void transmit(struct Protocol *pro, uint16_t delayHigh, uint16_t delayLow)
  * Transmit the first 'length' bits of the integer 'code'. The
  * bits are sent from MSB to LSB, i.e., first the bit at position length-1,
  * then the bit at position length-2, and so on, till finally the bit at position 0.
- * e.g., for Tasmota: RfRaw AAA524E001400384D0035855
+ * e.g., for Tasmota:
+ * with timings
+ * RfRaw AAA524E001400384D0035855
+ * by protocol
+ * RfRaw AAA80401D0035855
  */
-void send(const int nProtocol, unsigned long code, const unsigned int length)
+//void sendByProtocol(const int nProtocol, const unsigned int length)
+void sendByProtocol(const int nProtocol, unsigned char* packetStart, const unsigned char bitsInPacket)
 {
     // FIXME: it might just be easier to make this global
     // and possibly share with receive protocol, if they are never used at the same time
     struct Protocol pro;
 	
-	int nRepeat;
-	int index;
+	//int nRepeat;
+	//int index;
 	
 	// we precompute these because doing the multiplies and divides
 	// inside the transmit function interferes with generating proper signal timing
@@ -374,6 +363,14 @@ void send(const int nProtocol, unsigned long code, const unsigned int length)
 	uint16_t zeroLow;
 	uint16_t syncHigh;
 	uint16_t syncLow;
+	
+    uint8_t bitIndex;
+    uint8_t currentBit;
+	uint8_t currentByte;
+	
+	uint8_t nRepeat;
+	
+	unsigned char* packetPtr;
 
     // also checks for out of bound index (e.g., less than one)
 	//setProtocol(nProtocol);
@@ -389,6 +386,7 @@ void send(const int nProtocol, unsigned long code, const unsigned int length)
 	syncHigh = pro.pulseLength * pro.syncFactor.high / 10;
 	syncLow  = pro.pulseLength * pro.syncFactor.low / 10;
 
+#if 0
 	// make sure the receiver is disabled while we transmit
 	//radio_receiver_off();
 
@@ -396,7 +394,7 @@ void send(const int nProtocol, unsigned long code, const unsigned int length)
     {
 		for (index = length - 1; index >= 0; index--)
         {
-		    if (code & (1L << index))
+		    if (gTXRFData & (1L << index))
 	      	{
 			    transmit(&pro, oneHigh, oneLow);
 	      	}
@@ -406,6 +404,48 @@ void send(const int nProtocol, unsigned long code, const unsigned int length)
 	      	}
 	    }
 
+		transmit(&pro, syncHigh, syncLow);
+	}
+#endif
+
+	for (nRepeat = 0; nRepeat < nRepeatTransmit; nRepeat++)
+    {
+		currentBit = 0;
+		packetPtr = packetStart;
+		currentByte = *packetPtr;
+		
+		for (bitIndex = 0; bitIndex < bitsInPacket; bitIndex++)
+		{
+			if (currentBit == 8)
+			{
+				// FIXME:
+				packetPtr++;
+				
+				// FIXME: why is this done, looking for wrap around?
+				//if(packetPtr == &packet[0]){bitIndex = bitsInPacket + 1;}
+				
+				currentBit = 0;
+				currentByte = *packetPtr;
+			}
+			
+			// mask out all but left most bit value, and if byte is not equal to zero (i.e. left most bit must be one) then send one level
+			//if((*packetPtr & 0x80) == 0x80)
+			if ((currentByte & 0x80) == 0x80)
+			{
+				transmit(&pro, oneHigh, oneLow);
+			}
+			else
+			{
+				transmit(&pro, zeroHigh, zeroLow);
+			}
+			
+			//
+			currentByte = currentByte << 1;
+			
+			//
+			currentBit++;
+		}
+		
 		transmit(&pro, syncHigh, syncLow);
 	}
 

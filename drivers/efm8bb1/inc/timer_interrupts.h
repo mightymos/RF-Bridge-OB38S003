@@ -17,8 +17,8 @@
 #define TIMER1_UART0 0xCB
 #define TIMER2_RELOAD_10MICROS  0xFFEA
 
-unsigned long get_time_milliseconds(void);
-unsigned long get_time_ten_microseconds(void);
+//unsigned long get_time_milliseconds(void);
+//unsigned long get_time_ten_microseconds(void);
 
 void init_delay_timer_us(const uint16_t interval, const uint16_t timeout);
 void wait_delay_timer_finished(void);

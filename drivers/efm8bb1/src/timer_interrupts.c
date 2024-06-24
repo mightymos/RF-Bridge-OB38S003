@@ -15,17 +15,17 @@
 static __xdata uint16_t gTimer2Timeout;
 static __xdata uint16_t gTimer2Interval;
 
-unsigned long get_time_milliseconds(void)
-{
+//unsigned long get_time_milliseconds(void)
+//{
 //	return gTimeMilliseconds;
-	return 0;
-}
+//	return 0;
+//}
 
-unsigned long get_time_ten_microseconds(void)
-{
+//unsigned long get_time_ten_microseconds(void)
+//{
 //	return gTimeTenMicroseconds;
-	return 0;
-}
+//	return 0;
+//}
 
 // Portisch favored this approach to timer delay
 void set_timer2_reload(const uint16_t reload)

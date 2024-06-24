@@ -115,14 +115,13 @@ void setRepeatTransmit(const int repeat);
 void setProtocol(const struct Protocol pro);
 
 //void send(const char* sCodeWord);
-void send(const int nProtocol, unsigned long code, const unsigned int length);
+void sendByProtocol(const int nProtocol, unsigned char* packetPtr, const unsigned char bitsInPacket);
 
 
 extern volatile __xdata struct RC_SWITCH_T gRCSwitch;
 extern volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
 
-
-
+//extern __xdata long long gTXRFData;
 
 extern const struct Protocol protocols[];
 extern const unsigned int numProto;

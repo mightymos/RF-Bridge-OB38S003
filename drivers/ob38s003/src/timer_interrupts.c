@@ -10,23 +10,31 @@
 #include "timer_interrupts.h"
 
 // track time since startup in one millisecond increments
-static __xdata uint16_t gTimeMilliseconds = 0;
-static __xdata uint16_t gTimeTenMicroseconds = 0;
+//static __xdata uint16_t gTimeMilliseconds = 0;
+//static __xdata uint16_t gTimeTenMicroseconds = 0;
 
 static __xdata uint16_t gTimer1Timeout;
 static __xdata uint16_t gTimer1Interval;
 
-uint16_t get_time_milliseconds(void)
-{
-	return gTimeMilliseconds;
-}
+//uint16_t get_time_milliseconds(void)
+//{
+//	return gTimeMilliseconds;
+//}
 
-uint16_t get_time_ten_microseconds(void)
-{
-	return gTimeTenMicroseconds;
-}
+//uint16_t get_time_ten_microseconds(void)
+//{
+//	return gTimeTenMicroseconds;
+//}
 
-// Portisch favored this approach to timer delay
+// appears that a tick implementation that increments a counter
+// is difficult to obtain accurate timings for on this processor
+// we think because accessing the count atomically requires disabling interrupts
+// and therefore some interrupt counts are missed
+
+// therefore Portisch favored this approach to timer delay
+// which decrements a timer all within the interrupt
+// and essentially indicates completion by disabling timer
+// and checking in user land that it has been disabled as a sort of finished flag
 void set_timer1_reload(const uint16_t reload)
 {
 	/***********************************************************************

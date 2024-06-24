@@ -9,12 +9,20 @@
 
 #include "uart_software.h"
 
+// using commands documented here:
+// https://github.com/Portisch/RF-Bridge-EFM8BB1/wiki
 
 // FIXME: I think this is incorrect because we can receive variable data length with some commands
 #define PACKET_MAX_SIZE  12
 
 __xdata uint8_t uartPacket[PACKET_MAX_SIZE];
+
+// includes protocol ID and actual radio data
+__xdata uint8_t lengthExpected = 0;
+	
+// how many times to repeat sending radio packet (receiver decoding relies on gap between repeats)
 __xdata uint8_t rfTXRepeats;
+
 
 //-----------------------------------------------------------------------------
 // Portisch generally used this type of state machine
@@ -31,7 +39,7 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 	
     // FIXME: need to know what initialization value is appropriate
     __xdata static uint8_t position = 0;
-	__xdata static uint8_t lengthExpected = 0;
+
 
     // FIXME: needed?
     //uint16_t bucket = 0;
@@ -114,6 +122,11 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 						state = RECEIVING;
 						
 						break;
+					case RF_CODE_RFOUT_NEW:
+						position = 0;
+						// this command has a variable length which is provided by the sender
+						state = RECEIVE_LENGTH;
+						break;
 					case RF_DO_BEEP:
 						position = 0;
 						lengthExpected = 2;
@@ -152,22 +165,29 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 				break;
 
 			// this is used for commands that have a variable length
-			case RECEIVE_LEN:
-				//position = 0;
-				//gLength = rxdata & 0xFF;
-				//if (gLength > 0)
-				//{
-				//    // stop sniffing while handling received data
-				//    pca_stop_sniffing();
-				//    state = RECEIVING;
-				//} else {
-				//    state = SYNC_FINISH;
-				//}
+			case RECEIVE_LENGTH:
+
+				lengthExpected = rxdata & 0xFF;
+				
+				if (lengthExpected > 0)
+				{
+				    state = RECEIVING;
+					
+					// store length in bytes of protocol id and actual data
+					//uartPacket[position] = lengthExpected;
+					//position++;
+					
+					// DEBUG:
+					puthex2(lengthExpected);
+				} else {
+				    state = SYNC_FINISH;
+				}
 				
 				break;
 
 			// receiving UART data
 			case RECEIVING:
+				// actual data
 				uartPacket[position] = rxdata;
 				position++;
 
@@ -207,6 +227,10 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 							rfCommand = RF_RFOUT_START;
 							rfTXRepeats = 8;
 							break;
+						case RF_CODE_RFOUT_NEW:
+							rfCommand = RF_RFOUT_NEW_START;
+							rfTXRepeats = 8;
+							break;
 						case RF_DO_BEEP:
 							uint16_t delay = *(uint16_t *)&uartPacket[0];
 							
@@ -235,76 +259,99 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 
 void rf_state_machine(RF_COMMAND_T command)
 {
-	static RF_STATE_T state = RF_IDLE;
+	__xdata static RF_STATE_T state = RF_IDLE;
 	
-	unsigned long txdata = 0;
-
 	
-	// FIXME: send() handles transmission repeats in rcswitch, so this might not be needed
-	static uint8_t transmissionRepeats = 0;
+	// only used when timings are provided
+	//uint16_t sync;
+	//uint16_t low;
+	//uint16_t high;
+			
+	// only used when sending by protocol number
+	uint8_t dataLength;
+	uint8_t ident;
+	
 	
 	// this should be occuring after an entire uart packet is received (i.e., after SYNC_FINISH)
 	switch(state)
 	{
 		case RF_IDLE:
-			if (command == RF_RFOUT_START)
-			{				
-				state = RF_CHECK_REPEATS;
-//				transmissionRepeats = 1;
+			switch(command)
+			{
+				case RF_RFOUT_START:
+					state = RF_TRANSMIT_BY_TIMING;
+					break;
+				case RF_RFOUT_NEW_START:
+					state = RF_TRANSMIT_BY_PROTOCOL;
+					break;
 			}
+
 			break;
 
-		// init and start RF transmit
-		case RF_CHECK_REPEATS:			
-			state = RF_TRANSMIT;
-			
-//			if (transmissionRepeats > 0)
-//			{
-//				state = RF_TRANSMIT;
-//			}
-			break;
-		case RF_TRANSMIT:
+		case RF_TRANSMIT_BY_TIMING:
 				
-			//PCA0_StopSniffing();
 			disable_capture_interrupt();
 
-			// bytes 0..1:	Tsyn
-			// bytes 2..3:	Tlow
-			// bytes 4..5:	Thigh
-			// bytes 6..8:	24bit Data
-			//buckets[0] = *(uint16_t *)&uartPacket[2];
-			//buckets[1] = *(uint16_t *)&uartPacket[4];
-			//buckets[2] = *(uint16_t *)&uartPacket[0];
-			
-			// FIXME: this may need some scrutiny for correctness
-			txdata = ((unsigned long)uartPacket[6] << 16) | (uartPacket[7] << 8) | (uartPacket[8]);
-			
-			// FIXME: this is a bit of a hack, and does not seem to work!
-			// we ultimately only keep bytes 6, 7, and 8
-			//txdata = *(unsigned long *)&uartPacket[5];
-			//txdata &= ~0xFF000000;
+			// DEBUG:
+			putstring("timing\r\n");
 
-#if 1
-			putstring("rf\r\n");
-#endif
+	
+			// user provided pulse timings
+			//sync = uartPacket[0] << 8 | uartPacket[1];
+			//low  = uartPacket[2] << 8 | uartPacket[3];
+			//high = uartPacket[4] << 8 | uartPacket[5];
 			
 			//
-			send(1, txdata, 24);
+			//sendByTimings(JUNK);
 			
-#if 1
+			// DEBUG:
 			putstring("end\r\n");
-#endif
 			
 			enable_capture_interrupt();
 			
 			state = RF_FINISHED;
 			
-//			transmissionRepeats--;
+
+			break;
 			
-//			if (transmissionRepeats == 0)
-//			{
-//				state = RF_FINISHED;
-//			}
+		case RF_TRANSMIT_BY_PROTOCOL:
+			// 
+			disable_capture_interrupt();
+			
+			// DEBUG:
+			putstring("protocol\r\n");
+	
+
+
+			// bytes 0..1:	Tsyn
+			// bytes 2..3:	Tlow
+			// bytes 4..5:	Thigh
+			// bytes 6..8:	24bit Data
+			//index = uartPacket[0] - 1;
+			//shift = 0;
+			dataLength = lengthExpected - 1;
+			ident  = uartPacket[0];
+			
+			//gTXRFData = 0;
+			//while (index > 0)
+			//{
+			//	//txdata |= ((long long)uartPacket[1] << 16) | (uartPacket[2] << 8) | (uartPacket[3]);
+			//	gTXRFData |= (long long)uartPacket[index] << shift;
+			//	
+			//	index--;
+			//	shift += 8;
+			//}
+
+			// use a known protocol for transmitting
+			sendByProtocol(ident, &uartPacket[1], dataLength * 8);
+			
+			// DEBUG:
+			putstring("end\r\n");
+			
+			enable_capture_interrupt();
+			
+			state = RF_FINISHED;
+		
 			break;
 
 		// wait until data got transfered

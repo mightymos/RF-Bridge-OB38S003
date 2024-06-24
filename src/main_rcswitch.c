@@ -211,8 +211,8 @@ int main (void)
     buzzer_off();
     tdata_off();
 	
-	// pin effect is inverted if using buzzer footprint as output
-	debug_pin01_on();
+	// 
+	debug_pin01_off();
 	
     //
 	startup_blink();
