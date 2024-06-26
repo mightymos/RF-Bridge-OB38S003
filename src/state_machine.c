@@ -259,13 +259,17 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 
 void rf_state_machine(RF_COMMAND_T command)
 {
+	struct Protocol* protocolPtr;
+	
 	__xdata static RF_STATE_T state = RF_IDLE;
+	__xdata struct Pulse pulses;
 	
 	
 	// only used when timings are provided
-	//uint16_t sync;
-	//uint16_t low;
-	//uint16_t high;
+	uint16_t sync;
+	uint16_t low;
+	uint16_t high;
+	//uint16_t pulseLength;
 			
 	// only used when sending by protocol number
 	uint8_t dataLength;
@@ -297,12 +301,26 @@ void rf_state_machine(RF_COMMAND_T command)
 
 	
 			// user provided pulse timings
-			//sync = uartPacket[0] << 8 | uartPacket[1];
-			//low  = uartPacket[2] << 8 | uartPacket[3];
-			//high = uartPacket[4] << 8 | uartPacket[5];
+			sync = uartPacket[0] << 8 | uartPacket[1];
+			low  = uartPacket[2] << 8 | uartPacket[3];
+			high = uartPacket[4] << 8 | uartPacket[5];
 			
+			sync = sync / 10;
+			low  =  low / 10;
+			high = high / 10;
+			
+
+			pulses.syncHigh = high;
+			pulses.syncLow  = sync;
+			pulses.zeroHigh = high;
+			pulses.zeroLow  = low;
+			pulses.oneHigh  = low;
+			pulses.oneLow   = high;
+			
+			pulses.invertedSignal = false;
+
 			//
-			//sendByTimings(JUNK);
+			send(&pulses, &uartPacket[6], 24);
 			
 			// DEBUG:
 			putstring("end\r\n");
@@ -332,18 +350,28 @@ void rf_state_machine(RF_COMMAND_T command)
 			dataLength = lengthExpected - 1;
 			ident  = uartPacket[0];
 			
-			//gTXRFData = 0;
-			//while (index > 0)
-			//{
-			//	//txdata |= ((long long)uartPacket[1] << 16) | (uartPacket[2] << 8) | (uartPacket[3]);
-			//	gTXRFData |= (long long)uartPacket[index] << shift;
-			//	
-			//	index--;
-			//	shift += 8;
-			//}
+			protocolPtr = &protocols[ident];
+			
+			// divide by ten to convert from microseconds to tens of microseconds
+			pulses.oneHigh  = protocolPtr->pulseLength * protocolPtr->one.high;
+			pulses.oneLow   = protocolPtr->pulseLength * protocolPtr->one.low;
+			pulses.zeroHigh = protocolPtr->pulseLength * protocolPtr->zero.high;
+			pulses.zeroLow  = protocolPtr->pulseLength * protocolPtr->zero.low;
+			pulses.syncHigh = protocolPtr->pulseLength * protocolPtr->syncFactor.high;
+			pulses.syncLow  = protocolPtr->pulseLength * protocolPtr->syncFactor.low;
+			
+			pulses.oneHigh  = pulses.oneHigh  / 10;
+			pulses.oneLow   = pulses.oneLow   / 10;
+			pulses.zeroHigh = pulses.zeroHigh / 10;
+			pulses.zeroLow  = pulses.zeroLow  / 10;
+			pulses.syncHigh = pulses.syncHigh / 10;
+			pulses.syncLow  = pulses.syncLow  / 10;
+			
+			
+			pulses.invertedSignal = protocolPtr->invertedSignal;
 
 			// use a known protocol for transmitting
-			sendByProtocol(ident, &uartPacket[1], dataLength * 8);
+			send(&pulses, &uartPacket[1], dataLength * 8);
 			
 			// DEBUG:
 			putstring("end\r\n");

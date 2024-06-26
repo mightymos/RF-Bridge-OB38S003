@@ -3,26 +3,26 @@
 An alternative firmware for 433 MHz radio to wifi bridges, targetting these boards/microcontrollers:  
 This microcontroller is present in the  433 MHz radio to wifi bridge.  
 
-| Board | Microcontroller | Passthrough |  RCSwitch | Portisch |
-| ------------- | ------------- | ------------- | ------------- | ------------- |
-| Sonoff Bridge R2 v1.0 (black box) | OB38S003 | Supported | Decode only | No |
-| Sonoff Bridge R2 v2.2 (white box) | EFM8BB1 | Supported | Decode only | No |
-| EFM8BB1 Busy Bee Low Cost Kit Board | EFM8BB1 | Supported | Decode only | No |
+| Board | Microcontroller | Passthrough |  RCSwitch | Portisch | Notes |
+| ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
+| Sonoff Bridge R2 v1.0 (black box) | OB38S003 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | No | Untested, should work similar to Busy Bee board |
+| Sonoff Bridge R2 v2.2 (white box) | EFM8BB1 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | No | Requires reprogramming with official/open source flasher |
+| EFM8BB1 Busy Bee Low Cost Kit Board | EFM8BB1 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | No | Requires external receiver and/or transmitter |
 
 These microcontrollers were originally intended for radio decoding but lacked support for additional protocols.  
 As a consequence many people just bypass the microcontroller with a hardware modification:  
 https://github.com/arendst/Tasmota/discussions/13283  
 
-Decoding may then be done directly on the ESP8265 (e.g., ESPHome or Tasmota or typically used for this purpose).  
+Decoding may then be done directly on the ESP8265 (e.g., ESPHome/Tasmota/ESPurna typically used for this purpose).  
 
 
 The intent here is to avoid the need to perform hardware modification.  
 This can be accomplished in two ways:  
 
-1) microcontroller mirrors the voltage levels on the radio data pins over to uart pins (used as gpio) already connected to ESP8265.  
-   (this essentially bypasses the microcontroller but using software instead of hardware modification)  
+1) Mirroring the voltage levels on the radio data pins over to uart pins (used as gpio) already connected to ESP8265.  
+   (this uses the microcontroller as a passthrough but using software instead of hardware modification)  
    
-2) microcontroller decodes radio packets and sends formatted to ESP8265 over uart/serial  
+2) Decoding/encoding radio packets on the microcontroller and sending formatted to ESP8265 over uart/serial  
    (similar to factory firmware but with ability for source code protocols to be added, behavior modified, etc.)  
    
 A benefit to keeping the microcontroller involved is that the radio LED and buzzer may still be controlled.  
@@ -33,8 +33,11 @@ The firmware radio decoding is inspired by 1) RF-Bridge-EFM8BB1 (Portisch) and 2
 # Status
 THIS IS A WORK IN PROGRESS and should not be used by typical users.  
 
-Erasing and reprogramming the microcontroller is cumbersome without the official programmer.  
+Erasing and reprogramming the OB38S003 is cumbersome without the official programmer.  
 However, an open source and inexpensive programmer is discussed under Flasher section.  
+
+It is probably easiest to flash the passthrough mode.  
+Then perform any actual decoding/encoding on the ESP8265 itself.  
 
 # Installation
 Install SDCC compiler for your platform:  
@@ -47,8 +50,9 @@ See Flasher section below.
 
 # Previous Work
 
-An successful attempt was made to compile "Portisch" with the open source SDCC compiler.  
+A successful attempt was made to compile "Portisch" with the open source SDCC compiler.  
 I personally found the source code to be difficult to read.  
+It is additionally difficult to fit all features and protocols in code and ram spaces.  
 I hope to be able to use this work to use Portisch on the newer Sonoff boxes.  
 https://github.com/mightymos/SonOfPortisch
 

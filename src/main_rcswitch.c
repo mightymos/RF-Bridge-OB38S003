@@ -98,7 +98,7 @@ extern void uart_isr(void)   __interrupt (UART0_VECTOR);
 // radio decoding
 extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
 
-// unique ID is stored in xram (MSB at 0xFF)
+// unique ID is stored in xram (MSB at address 0xFF)
 #define ID0_ADDR_RAM 0xFF
 #define ID1_ADDR_RAM 0xFE
 #define ID2_ADDR_RAM 0xFD
@@ -106,17 +106,17 @@ extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
 
 
 // 
-static const __xdata unsigned char *guid0 = (__xdata unsigned char*) ID0_ADDR_RAM;
+//static const __xdata unsigned char *guid0 = (__xdata unsigned char*) ID0_ADDR_RAM;
 //static const __xdata unsigned char *guid1 = (__xdata unsigned char*) ID1_ADDR_RAM;
 //static const __xdata unsigned char *guid2 = (__xdata unsigned char*) ID2_ADDR_RAM;
 //static const __xdata unsigned char *guid3 = (__xdata unsigned char*) ID3_ADDR_RAM;
 
 void startup_uid(void)
 {
-	puthex2(*guid0);
-	puthex2(*(guid0--));
-	puthex2(*(guid0-2));
-	puthex2(*(guid0-3));
+	puthex2(*((__xdata unsigned char*) ID0_ADDR_RAM));
+	puthex2(*((__xdata unsigned char*) ID1_ADDR_RAM));
+	puthex2(*((__xdata unsigned char*) ID2_ADDR_RAM));
+	puthex2(*((__xdata unsigned char*) ID3_ADDR_RAM));
 }
 
 #else
@@ -190,8 +190,8 @@ int main (void)
     // track elapsed time for doing something periodically (e.g., toggle LED every 10 seconds)
     //unsigned long previousTimeSendRadio = 0;
     //unsigned long elapsedTimeSendRadio;
-    __xdata uint16_t previousTimeHeartbeat = 0;
-    __xdata uint16_t elapsedTimeHeartbeat;
+    //__xdata uint16_t previousTimeHeartbeat = 0;
+    //__xdata uint16_t elapsedTimeHeartbeat;
     
     
     // upper eight bits hold error or no data flags
@@ -363,7 +363,7 @@ int main (void)
         }
         
         
-#if 1
+#if 0
         // do a task like blink led about every XX seconds to show loop is alive
         //elapsedTimeHeartbeat = get_elapsed_timer1(previousTimeHeartbeat);
 

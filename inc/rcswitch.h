@@ -91,6 +91,20 @@ struct Protocol
     bool invertedSignal;
 };
 
+struct Pulse
+{
+	// we precompute these because doing the multiplies and divides
+	// inside the transmit function interferes with generating proper signal timing
+	uint16_t syncHigh;
+	uint16_t syncLow;
+	uint16_t zeroHigh;
+	uint16_t zeroLow;
+	uint16_t oneHigh;
+	uint16_t oneLow;
+	
+	bool invertedSignal;
+};
+
 
 
 extern bool available(void);
@@ -115,7 +129,7 @@ void setRepeatTransmit(const int repeat);
 void setProtocol(const struct Protocol pro);
 
 //void send(const char* sCodeWord);
-void sendByProtocol(const int nProtocol, unsigned char* packetPtr, const unsigned char bitsInPacket);
+void send(struct Pulse* pro, unsigned char* packetPtr, const unsigned char bitsInPacket);
 
 
 extern volatile __xdata struct RC_SWITCH_T gRCSwitch;

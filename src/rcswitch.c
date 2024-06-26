@@ -7,6 +7,8 @@
 #include "hal.h"
 #include "rcswitch.h"
 
+//#include "uart_software.h"
+
 #include "timer_interrupts.h"
 
 //#include "ticks.h"
@@ -16,14 +18,10 @@
 volatile __xdata struct RC_SWITCH_T gRCSwitch = {0, 0, 0, 0, 60, 4300};
 volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
 
-//__xdata long long gTXRFData;
 
-
-
-//static __xdata struct TRANSMIT_PACKET_T gTXPacket;
 const int nRepeatTransmit = 8;
 
-// units of microseconds
+// pulse length is units of 10 microseconds, modified from the microsecond version because it is unreasonable to generate microsecond timing on these microcontrollers
 const struct Protocol protocols[] = {
   { 350, {  1, 31 }, {  1,  3 }, {  3,  1 }, false },    // protocol 1
   { 650, {  1, 10 }, {  1,  2 }, {  2,  1 }, false },    // protocol 2
@@ -34,7 +32,7 @@ const struct Protocol protocols[] = {
   { 150, {  2, 62 }, {  1,  6 }, {  6,  1 }, false },    // protocol 7 (HS2303-PT, i. e. used in AUKEY Remote)
   { 200, {  3, 130}, {  7, 16 }, {  3,  16}, false},     // protocol 8 Conrad RS-200 RX
   { 200, { 130, 7 }, {  16, 7 }, { 16,  3 }, true},      // protocol 9 Conrad RS-200 TX
-  { 365, { 18,  1 }, {  3,  1 }, {  1,  3 }, true },     // protocol 10 (1ByOne Doorbell) (rounded)
+  { 365, { 18,  1 }, {  3,  1 }, {  1,  3 }, true },     // protocol 10 (1ByOne Doorbell)
   { 270, { 36,  1 }, {  1,  2 }, {  2,  1 }, true },     // protocol 11 (HT12E)
   { 320, { 36,  1 }, {  1,  2 }, {  2,  1 }, true }      // protocol 12 (SM5212)
 };
@@ -285,10 +283,10 @@ void capture_handler(const uint16_t currentCapture)
 /**
  * Transmit a single high-low pulse.
  */
-void transmit(struct Protocol *pro, uint16_t delayHigh, uint16_t delayLow)
+void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
 {
-	__xdata uint8_t firstLogicLevel  = (pro->invertedSignal) ? 0 : 1;
-	__xdata uint8_t secondLogicLevel = (pro->invertedSignal) ? 1 : 0;
+	__xdata uint8_t firstLogicLevel  = invertedSignal ? 0 : 1;
+	__xdata uint8_t secondLogicLevel = invertedSignal ? 1 : 0;
 
 	//__xdata uint16_t previous;
 	//__xdata uint16_t elapsed;
@@ -311,58 +309,27 @@ void transmit(struct Protocol *pro, uint16_t delayHigh, uint16_t delayLow)
 	wait_delay_timer_finished();
 }
 
-/**
- * @param 
- */
-//long long send(const char* sCodeWord)
-//{
-//
-//  // 
-//  long long code = 0;
-//  unsigned int length = 0;
-//
-//  for (const char* p = sCodeWord; *p; p++)
-//  {
-//    code <<= 1L;
-//    if (*p != '0')
-//      code |= 1L;
-//
-//    length++;
-//  }
-//
-//  //send(code, length);
-//  return 0;
-//}
-
 
 /**
  * Transmit the first 'length' bits of the integer 'code'. The
  * bits are sent from MSB to LSB, i.e., first the bit at position length-1,
  * then the bit at position length-2, and so on, till finally the bit at position 0.
  * e.g., for Tasmota:
- * with timings
- * RfRaw AAA524E001400384D0035855
- * by protocol
+ * with timings (sync, low, high)
+ * (timings identical to protocol 1)
+ * RfRaw AAA52A62041A015ED0035855
+ * by protocol (protocol 1)
  * RfRaw AAA80401D0035855
  */
 //void sendByProtocol(const int nProtocol, const unsigned int length)
-void sendByProtocol(const int nProtocol, unsigned char* packetStart, const unsigned char bitsInPacket)
+void send(struct Pulse* pro, unsigned char* packetStart, const unsigned char bitsInPacket)
 {
     // FIXME: it might just be easier to make this global
     // and possibly share with receive protocol, if they are never used at the same time
-    struct Protocol pro;
+    //struct Protocol pro;
 	
 	//int nRepeat;
 	//int index;
-	
-	// we precompute these because doing the multiplies and divides
-	// inside the transmit function interferes with generating proper signal timing
-	uint16_t oneHigh;
-	uint16_t oneLow;
-	uint16_t zeroHigh;
-	uint16_t zeroLow;
-	uint16_t syncHigh;
-	uint16_t syncLow;
 	
     uint8_t bitIndex;
     uint8_t currentBit;
@@ -376,42 +343,19 @@ void sendByProtocol(const int nProtocol, unsigned char* packetStart, const unsig
 	//setProtocol(nProtocol);
 
     // FIXME: consider checking index out of bound
-    memcpy(&pro, &protocols[nProtocol-1], sizeof(struct Protocol));
+    //memcpy(&pro, &protocols[nProtocol-1], sizeof(struct Protocol));
 	
-	// divide by ten to convert from microseconds to tens of microseconds
-	oneHigh  = pro.pulseLength * pro.one.high / 10;
-	oneLow   = pro.pulseLength * pro.one.low / 10;
-	zeroHigh = pro.pulseLength * pro.zero.high / 10;
-	zeroLow  = pro.pulseLength * pro.zero.low / 10;
-	syncHigh = pro.pulseLength * pro.syncFactor.high / 10;
-	syncLow  = pro.pulseLength * pro.syncFactor.low / 10;
 
-#if 0
-	// make sure the receiver is disabled while we transmit
-	//radio_receiver_off();
 
-	for (nRepeat = 0; nRepeat < nRepeatTransmit; nRepeat++)
-    {
-		for (index = length - 1; index >= 0; index--)
-        {
-		    if (gTXRFData & (1L << index))
-	      	{
-			    transmit(&pro, oneHigh, oneLow);
-	      	}
-		    else
-	      	{
-			    transmit(&pro, zeroHigh, zeroLow);
-	      	}
-	    }
-
-		transmit(&pro, syncHigh, syncLow);
-	}
-#endif
-
+	// must repeat sent packet so that receiver interprets it as valid
 	for (nRepeat = 0; nRepeat < nRepeatTransmit; nRepeat++)
     {
 		currentBit = 0;
+		
+		// reset to first byte of data
 		packetPtr = packetStart;
+		
+		// make a copy of current byte in order to shift that copy
 		currentByte = *packetPtr;
 		
 		for (bitIndex = 0; bitIndex < bitsInPacket; bitIndex++)
@@ -429,14 +373,13 @@ void sendByProtocol(const int nProtocol, unsigned char* packetStart, const unsig
 			}
 			
 			// mask out all but left most bit value, and if byte is not equal to zero (i.e. left most bit must be one) then send one level
-			//if((*packetPtr & 0x80) == 0x80)
 			if ((currentByte & 0x80) == 0x80)
 			{
-				transmit(&pro, oneHigh, oneLow);
+				transmit(pro->invertedSignal, pro->oneHigh, pro->oneLow);
 			}
 			else
 			{
-				transmit(&pro, zeroHigh, zeroLow);
+				transmit(pro->invertedSignal, pro->zeroHigh, pro->zeroLow);
 			}
 			
 			//
@@ -446,7 +389,7 @@ void sendByProtocol(const int nProtocol, unsigned char* packetStart, const unsig
 			currentBit++;
 		}
 		
-		transmit(&pro, syncHigh, syncLow);
+		transmit(pro->invertedSignal, pro->syncHigh, pro->syncLow);
 	}
 
 	// disable transmit after sending (i.e., for inverted protocols)
