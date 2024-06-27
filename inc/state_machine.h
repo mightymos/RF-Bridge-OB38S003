@@ -70,7 +70,4 @@ void radio_rfin(void);
 void radio_decode_debug(void);
 void radio_decode_timings(void);
 
-
-//extern __xdata uint8_t lengthExpected;
-
 #endif // STATE_MACHINE_H

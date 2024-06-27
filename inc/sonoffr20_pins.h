@@ -14,4 +14,7 @@
 // software uart
 #define SOFT_TX_PIN P2_0
 
+// this is the buzzer pin so we would not normally use this on hardware without removing buzzer
+#define DEBUG_PIN01  P1_6
+
 #endif

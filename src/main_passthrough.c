@@ -112,7 +112,9 @@ int main (void)
     
     // just to give some startup time
     delay1ms(500);
-
+	
+	// shows power is on
+	led_on();
         
     // watchdog will force a reset, unless we periodically write to it, demonstrating loop is not stuck somewhere
     enable_watchdog();

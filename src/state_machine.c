@@ -20,9 +20,6 @@ __xdata uint8_t uartPacket[PACKET_MAX_SIZE];
 // includes protocol ID and actual radio data
 __xdata uint8_t lengthExpected = 0;
 	
-// how many times to repeat sending radio packet (receiver decoding relies on gap between repeats)
-__xdata uint8_t rfTXRepeats;
-
 
 //-----------------------------------------------------------------------------
 // Portisch generally used this type of state machine
@@ -49,7 +46,7 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 
 	// strip uart flags to 
 	__xdata const uint8_t rxdata = rxdataWithFlags & 0xFF;	
-
+	
 
     // if we do not receive any data over uart in a long time, we reset state machine
 	// also, if we do not receive data when we check, we do not enter state machine
@@ -91,7 +88,7 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 					state = SYNC_INIT;
 					
 					// DEBUG: over software uart
-					puthex2(rxdata);
+					//puthex2(rxdata);
 				}
 				
 				break;
@@ -103,7 +100,7 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 				command = rxdata;
 				
 				// DEBUG
-				puthex2(command);
+				//puthex2(command);
 
 				// FIXME: comment
 				switch(command)
@@ -178,7 +175,7 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 					//position++;
 					
 					// DEBUG:
-					puthex2(lengthExpected);
+					//puthex2(lengthExpected);
 				} else {
 				    state = SYNC_FINISH;
 				}
@@ -192,7 +189,7 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 				position++;
 
 				// DEBUG:
-				puthex2(rxdata);
+				//puthex2(rxdata);
 				
 				// look for expected end of packet and also avoid buffer overflow
 				if (position == lengthExpected)
@@ -213,9 +210,9 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 				if (rxdata == RF_CODE_STOP)
 				{
 					// DEBUG:
-					puthex2(rxdata);
-					putc('\r');
-					putc('\n');
+					//puthex2(rxdata);
+					//putc('\r');
+					//putc('\n');
 					
 					// indicate this round of receiving uart packet is finished
 					state = IDLE;
@@ -225,11 +222,9 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 					{
 						case RF_CODE_RFOUT:
 							rfCommand = RF_RFOUT_START;
-							rfTXRepeats = 8;
 							break;
 						case RF_CODE_RFOUT_NEW:
 							rfCommand = RF_RFOUT_NEW_START;
-							rfTXRepeats = 8;
 							break;
 						case RF_DO_BEEP:
 							uint16_t delay = *(uint16_t *)&uartPacket[0];
@@ -297,7 +292,7 @@ void rf_state_machine(RF_COMMAND_T command)
 			disable_capture_interrupt();
 
 			// DEBUG:
-			putstring("timing\r\n");
+			//putstring("timing\r\n");
 
 	
 			// user provided pulse timings
@@ -323,7 +318,7 @@ void rf_state_machine(RF_COMMAND_T command)
 			send(&pulses, &uartPacket[6], 24);
 			
 			// DEBUG:
-			putstring("end\r\n");
+			//putstring("end\r\n");
 			
 			enable_capture_interrupt();
 			
@@ -337,7 +332,7 @@ void rf_state_machine(RF_COMMAND_T command)
 			disable_capture_interrupt();
 			
 			// DEBUG:
-			putstring("protocol\r\n");
+			//putstring("protocol\r\n");
 	
 
 
@@ -374,7 +369,7 @@ void rf_state_machine(RF_COMMAND_T command)
 			send(&pulses, &uartPacket[1], dataLength * 8);
 			
 			// DEBUG:
-			putstring("end\r\n");
+			//putstring("end\r\n");
 			
 			enable_capture_interrupt();
 			

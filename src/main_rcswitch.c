@@ -51,7 +51,7 @@
 // the classic library for radio packet decoding
 #include "rcswitch.h"
 
-//
+// similar to portisch commands
 #include "state_machine.h"
 
 // generic tick logic independent of controller
@@ -60,6 +60,7 @@
 // hardware specific
 #include "timer_interrupts.h"
 
+// ring buffer supported
 #include "uart.h"
 
 
@@ -74,24 +75,18 @@
 // for software uart
 // FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
 extern void tm0(void)        __interrupt (d_T0_Vector);
-// tick
+// supports timeout
 extern void timer1_isr(void) __interrupt (d_T1_Vector);
 // pca like capture mode for radio decoding
 extern void timer2_isr(void) __interrupt (d_T2_Vector);
 // hardware uart
 extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 
-#elif defined(TARGET_BOARD_EFM8BB1)
-extern void tm0(void)        __interrupt (TIMER0_VECTOR);
-extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
-extern void uart_isr(void)   __interrupt (UART0_VECTOR);
-extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
-
-#elif defined(TARGET_BOARD_EFM8BB1LCB)
+#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
 
 // software uart
 extern void tm0(void)        __interrupt (TIMER0_VECTOR);
-// tick
+// supports timeout
 extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
 // hardware uart (uses timer 1)
 extern void uart_isr(void)   __interrupt (UART0_VECTOR);
@@ -99,25 +94,20 @@ extern void uart_isr(void)   __interrupt (UART0_VECTOR);
 extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
 
 // unique ID is stored in xram (MSB at address 0xFF)
-#define ID0_ADDR_RAM 0xFF
-#define ID1_ADDR_RAM 0xFE
-#define ID2_ADDR_RAM 0xFD
-#define ID3_ADDR_RAM 0xFC
+//#define ID0_ADDR_RAM 0xFF
+//#define ID1_ADDR_RAM 0xFE
+//#define ID2_ADDR_RAM 0xFD
+//#define ID3_ADDR_RAM 0xFC
 
-
-// 
-//static const __xdata unsigned char *guid0 = (__xdata unsigned char*) ID0_ADDR_RAM;
-//static const __xdata unsigned char *guid1 = (__xdata unsigned char*) ID1_ADDR_RAM;
-//static const __xdata unsigned char *guid2 = (__xdata unsigned char*) ID2_ADDR_RAM;
-//static const __xdata unsigned char *guid3 = (__xdata unsigned char*) ID3_ADDR_RAM;
-
-void startup_uid(void)
-{
-	puthex2(*((__xdata unsigned char*) ID0_ADDR_RAM));
-	puthex2(*((__xdata unsigned char*) ID1_ADDR_RAM));
-	puthex2(*((__xdata unsigned char*) ID2_ADDR_RAM));
-	puthex2(*((__xdata unsigned char*) ID3_ADDR_RAM));
-}
+// this will fail if we assign external ram to values which are initialized
+// and we really do not need the feature anyway
+//void startup_uid(void)
+//{
+//	puthex2(*((__xdata unsigned char*) ID0_ADDR_RAM));
+//	puthex2(*((__xdata unsigned char*) ID1_ADDR_RAM));
+//	puthex2(*((__xdata unsigned char*) ID2_ADDR_RAM));
+//	puthex2(*((__xdata unsigned char*) ID3_ADDR_RAM));
+//}
 
 #else
 	#error Please define TARGET_BOARD in makefile
@@ -177,26 +167,17 @@ void startup_blink(void)
 // ----------------------------------------------------------------------------
 int main (void)
 {
-
-    // holdover from when we considered using rtos
-    //const __idata unsigned char* stackStart = (__idata unsigned char*) get_stack_pointer() + 1;
-
-    // have only tested decoding with two protocols so far
-    //const uint8_t repeats = 8;
-    // FIXME: comment on what this does
-    // lowest ID is 1
-    //const uint8_t protocolId = 1;
-    
-    // track elapsed time for doing something periodically (e.g., toggle LED every 10 seconds)
-    //unsigned long previousTimeSendRadio = 0;
-    //unsigned long elapsedTimeSendRadio;
-    //__xdata uint16_t previousTimeHeartbeat = 0;
-    //__xdata uint16_t elapsedTimeHeartbeat;
-    
+	// just track how many loops have transpired as a very rough way of tracking time
+    __xdata uint32_t ticks = 0;
+	
+	// set a threshold
+	// about every six seconds @ 24500000 MHz
+	const uint32_t heartbeat = 0x80000;
     
     // upper eight bits hold error or no data flags
     __xdata unsigned int rxdataWithFlags = UART_NO_DATA;
 	
+	// allows communication between uart state machine and radio state machine
 	__xdata RF_COMMAND_T rfCommand = NONE;
     
 
@@ -211,8 +192,10 @@ int main (void)
     buzzer_off();
     tdata_off();
 	
-	// 
-	debug_pin01_off();
+	// DEBUG:
+	// on some boards, "debug pin" is actually buzzer
+	// so we do not want to use it for debugging unless buzzer has been removed
+	//debug_pin01_off();
 	
     //
 	startup_blink();
@@ -290,6 +273,8 @@ int main (void)
     // just to give some startup time
     delay1ms(500);
 
+	// shows power is on
+	led_on();
         
     // watchdog will force a reset, unless we periodically write to it, demonstrating loop is not stuck somewhere
     enable_watchdog();
@@ -299,11 +284,11 @@ int main (void)
 	putstring("boot\r\n");
 #endif
 
-#if defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
-	putstring("uid:");
-	startup_uid();
-	putstring("\r\n");
-#endif
+//#if defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+//	putstring("uid:");
+//	startup_uid();
+//	putstring("\r\n");
+//#endif
 
     while (true)
     {
@@ -359,26 +344,24 @@ int main (void)
 			
 			// FIXME: if we use software uart to send debug output, this will be slow to be re-enabled
             enable_capture_interrupt();
-
         }
         
         
-#if 0
-        // do a task like blink led about every XX seconds to show loop is alive
-        //elapsedTimeHeartbeat = get_elapsed_timer1(previousTimeHeartbeat);
+#if 1
 
-		//
-        //if (elapsedTimeHeartbeat >= 1000000)
-		if (elapsedTimeHeartbeat >= 2^16)
-		//if (elapsedTimeHeartbeat >= 10)
+		// track time roughly
+        ticks++;
+		
+		// compare to threshold
+		if (ticks > heartbeat)
         {
 			// DEBUG
 			//debug_pin01_toggle();
 			
             led_toggle();
-            
-        //    previousTimeHeartbeat = get_current_timer1();
-            
+			
+			// reset count
+			ticks = 0;
         }
         
 #endif

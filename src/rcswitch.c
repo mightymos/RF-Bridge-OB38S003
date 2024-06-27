@@ -288,13 +288,10 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
 	__xdata uint8_t firstLogicLevel  = invertedSignal ? 0 : 1;
 	__xdata uint8_t secondLogicLevel = invertedSignal ? 1 : 0;
 
-	//__xdata uint16_t previous;
-	//__xdata uint16_t elapsed;
-	__xdata uint16_t delay;
   
     set_tdata(firstLogicLevel);
 	// DEBUG: mirror transmitted pulses to another pin for easier probing by oscilloscope
-	set_debug_pin01(firstLogicLevel);
+	//set_debug_pin01(firstLogicLevel);
 
 	init_delay_timer_us(1, delayHigh);
 	wait_delay_timer_finished();
@@ -303,7 +300,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
 
     set_tdata(secondLogicLevel);
 	// DEBUG:
-    set_debug_pin01(secondLogicLevel);
+    //set_debug_pin01(secondLogicLevel);
 
 	init_delay_timer_us(1, delayLow);
 	wait_delay_timer_finished();
@@ -322,29 +319,19 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
  * RfRaw AAA80401D0035855
  */
 //void sendByProtocol(const int nProtocol, const unsigned int length)
-void send(struct Pulse* pro, unsigned char* packetStart, const unsigned char bitsInPacket)
+void send(struct Pulse* pulses, unsigned char* packetStart, const unsigned char bitsInPacket)
 {
-    // FIXME: it might just be easier to make this global
-    // and possibly share with receive protocol, if they are never used at the same time
-    //struct Protocol pro;
-	
-	//int nRepeat;
-	//int index;
-	
+	// this allows us to send an abitrary amount of bits from a byte array
     uint8_t bitIndex;
     uint8_t currentBit;
 	uint8_t currentByte;
 	
+	// track packet repeat count
 	uint8_t nRepeat;
 	
+	// pointer to byte intended to be sent currently
 	unsigned char* packetPtr;
 
-    // also checks for out of bound index (e.g., less than one)
-	//setProtocol(nProtocol);
-
-    // FIXME: consider checking index out of bound
-    //memcpy(&pro, &protocols[nProtocol-1], sizeof(struct Protocol));
-	
 
 
 	// must repeat sent packet so that receiver interprets it as valid
@@ -358,8 +345,13 @@ void send(struct Pulse* pro, unsigned char* packetStart, const unsigned char bit
 		// make a copy of current byte in order to shift that copy
 		currentByte = *packetPtr;
 		
+		// moved sync pulse sending here to match manchester encoding style shown in application notes
+		transmit(pulses->invertedSignal, pulses->syncHigh, pulses->syncLow);
+		
+		// we must send repeat transmission for decoder to accept radio packet
 		for (bitIndex = 0; bitIndex < bitsInPacket; bitIndex++)
 		{
+			
 			if (currentBit == 8)
 			{
 				// FIXME:
@@ -375,11 +367,11 @@ void send(struct Pulse* pro, unsigned char* packetStart, const unsigned char bit
 			// mask out all but left most bit value, and if byte is not equal to zero (i.e. left most bit must be one) then send one level
 			if ((currentByte & 0x80) == 0x80)
 			{
-				transmit(pro->invertedSignal, pro->oneHigh, pro->oneLow);
+				transmit(pulses->invertedSignal, pulses->oneHigh, pulses->oneLow);
 			}
 			else
 			{
-				transmit(pro->invertedSignal, pro->zeroHigh, pro->zeroLow);
+				transmit(pulses->invertedSignal, pulses->zeroHigh, pulses->zeroLow);
 			}
 			
 			//
@@ -389,12 +381,14 @@ void send(struct Pulse* pro, unsigned char* packetStart, const unsigned char bit
 			currentBit++;
 		}
 		
-		transmit(pro->invertedSignal, pro->syncHigh, pro->syncLow);
+		// FIXME: sync is actually supposed to be transmitted before data
+		//        even if rcswitch ignores the first sync pulse and just looks for gaps (the sync) between repeat transmissions
+		//transmit(pulses->invertedSignal, pulses->syncHigh, pulses->syncLow);
 	}
 
 	// disable transmit after sending (i.e., for inverted protocols)
 	tdata_off();
 
-	// enable receiver again if we just disabled it
+	// we do this outside of the function
 	//radio_receiver_on();
 }
