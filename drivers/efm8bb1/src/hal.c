@@ -83,13 +83,6 @@ void init_port_pins_for_passthrough(void)
 	P0SKIP = 0xFF;
 	P1SKIP = 0xFF;
 	
-	
-	// UART TX, RX routed to Port pins P0.4 and P0.5
-	//XBR0 |= URT0E__ENABLED;
-	
-	// CEX0 routed to port pin
-	//XBR1 |= PCA0ME__CEX0;
-	
 	// FIXME: why do the examples set this when it is the default?
 	// default is weak pullups enabled (makes sure input pins always have a known state even if externally disconnected) 
 	// crossbar enabled
@@ -158,13 +151,13 @@ void disable_serial_interrupt(void)
 void enable_capture_interrupt(void)
 {
 	PCA0CPM0 |= ECCF__ENABLED;
-	EIE1 |= EPCA0__ENABLED;
+	EIE1     |= EPCA0__ENABLED;
 }
 
 void disable_capture_interrupt(void)
 {
 	PCA0CPM0 &= ~ECCF__ENABLED;
-	EIE1 &= ~EPCA0__ENABLED;
+	EIE1     &= ~EPCA0__ENABLED;
 }
 
 

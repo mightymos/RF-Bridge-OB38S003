@@ -170,7 +170,7 @@ void startup_blink(void)
 int main (void)
 {
 	// just track how many loops have transpired as a very rough way of tracking time
-    __xdata uint32_t ticks = HEARTBEAT_THRESHOLD;
+    //__xdata uint32_t ticks = HEARTBEAT_THRESHOLD;
 	
 	// set a threshold
 	// about every six seconds @ 24500000 MHz
@@ -260,6 +260,7 @@ int main (void)
 	enable_timer2_interrupt();
 	
 	// pca0 clock source was timer 0 on portisch
+	// however we use system clock divided by 12 as source here
     pca0_init();
 	pca0_run();
 #endif
@@ -283,8 +284,6 @@ int main (void)
     // just to give some startup time
     delay1ms(500);
 
-	// shows power is on
-	led_on();
         
     // watchdog will force a reset, unless we periodically write to it, demonstrating loop is not stuck somewhere
     enable_watchdog();

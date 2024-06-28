@@ -159,6 +159,12 @@ void pca0_isr(void) __interrupt (PCA0_VECTOR)
 			debug_pin01_off();
 		}
 	}
+	
+    // done in the interrupt already on efm8bb1
+    // but must be explicitly cleared on ob38s003
+    // so just always clear it
+    //clear pca0 interrupt flag
+    clear_capture_flag();
 
 	//if((flags & CCF1__BMASK) && (PCA0CPM1 & ECCF__BMASK))
 	//{

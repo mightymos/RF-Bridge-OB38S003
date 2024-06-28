@@ -155,6 +155,12 @@ void timer2_isr(void) __interrupt (d_T2_Vector)
     
     capture_handler(currentCapture);
 	
+    // done in the interrupt already on efm8bb1
+    // but must be explicitly cleared on ob38s003
+    // so just always clear it
+    //clear pca0 interrupt flag
+    clear_capture_flag();
+	
 	// DEBUG:
 	if (rdata_level())
 	{

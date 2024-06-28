@@ -147,10 +147,10 @@ bool receive_protocol(const int p, unsigned int changeCount)
     // ignore very short transmissions: no device sends them, so this must be noise
     if (changeCount > 7)
     {
-        gRCSwitch.nReceivedValue = code;
+        gRCSwitch.nReceivedValue     = code;
         gRCSwitch.nReceivedBitlength = (changeCount - 1) / 2;
-        gRCSwitch.nReceivedDelay = delay;
-        gRCSwitch.nReceivedProtocol = p;
+        gRCSwitch.nReceivedDelay     = delay;
+        gRCSwitch.nReceivedProtocol  = p;
         
         return true;
     }
@@ -252,11 +252,6 @@ void capture_handler(const uint16_t currentCapture)
 	// DEBUG: this is a decent way of seeing the actual timing on an oscilloscope
 	//debug_pin01_toggle();
     
-    // done in the interrupt already on efm8bb1
-    // but must be explicitly cleared on ob38s003
-    // so just always clear it
-    //clear pca0 interrupt flag
-    clear_capture_flag();
 }
 
 /**

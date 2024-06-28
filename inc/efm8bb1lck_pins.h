@@ -4,8 +4,8 @@
 // EFM8BB1LCK board
 #define TDATA  P0_0
 
-// error in UG377: EFM8BB1LCK Users Guide ??
-// lists PCA0 and LED pin as the same
+// UG377: EFM8BB1LCK Users Guide
+// lists PCA0 and LED pin as the same but depends on crossbar
 #define LED    P1_4
 #define RDATA  P1_3
 #define BUZZER P1_6
