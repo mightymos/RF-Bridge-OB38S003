@@ -100,6 +100,8 @@ int main (void)
     led_off();
     buzzer_off();
     tdata_off();
+	
+	uart_tx_pin_off();
 
     
     // enable radio receiver

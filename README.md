@@ -47,6 +47,36 @@ For now modify Makefile to select desired target.
 Built firmware placed in build directory.  
 See Flasher section below.  
 
+# Tasmota/ESPHome
+Using passthrough hex file.
+
+The following pins can be used in ESPHome / Tasmota (flash **tasmota-sensors.bin** to ESP on RF Bridge and configure as e.g. **Generic(0)**)
+
+TX pin to GPIO1 (RFSend)
+RX pin to GPIO3 (RFRecv)
+
+# Flasher (official)
+OB38S003 reprogamming requires erasing the chip because the stock firmware is protected.  
+The stock firmware cannot be recovered because it has not been read out.  
+
+An official MSM9066 programmer or open source flasher (see below) can be used.  
+
+EFM8BB1 reprogramming can be done with Tasmota.  
+I have not tested this myself.  
+If someone does it would be helpful to report results:  
+https://tasmota.github.io/docs/devices/Sonoff-RF-Bridge-433/
+
+
+# Flasher (open source)
+An Arduino based flasher written for the built in ESP8265/ESP8266/ESP32 is available:  
+https://github.com/mightymos/OnbrightFlasher
+
+Logic analyzer decodings of several flasher operations/programming cycles had been captured:  
+https://github.com/mightymos/msm9066_capture  
+
+While cumbersome to use, several people have successfully flashed hex files.  
+
+
 # Previous Work
 
 A successful attempt was made to compile "Portisch" with the open source SDCC compiler.  
@@ -60,28 +90,7 @@ We attempt to use the simplest and most understandable for now (from sui77).
 https://github.com/sui77/rc-switch  
 https://github.com/1technophile/rc-switch  
 https://github.com/arendst/Tasmota/tree/development/lib/lib_rf/rc-switch  
- 
 
-# Flasher
-Reprogramming the OB38S003 requires erasing the chip because the stock firmware is protected.  
-This means that, once erased, the stock firmware cannot be recovered because it has not been read out.  
-
-An official MSM9066 programmer or open source flasher can be used.  
-
-Reprogramming the EFM8BB1 can be done with Tasmota itself.  
-I have not tested this myself.  
-If someone does it would be helpful to report results:  
-https://tasmota.github.io/docs/devices/Sonoff-RF-Bridge-433/
-
-
-# Flasher (alternative)
-Logic analyzer decodings of several flasher operations/programming cycles have been captured:  
-https://github.com/mightymos/msm9066_capture  
-
-An Arduino based flasher written for the built in ESP8265/ESP8266/ESP32 is available:  
-https://github.com/mightymos/OnbrightFlasher
-
-While cumbersome to use, several people have successfully flashed hex files manually and by script.  
 
 # Special Thanks
 We thank Vincent Defert for the use of modified makefiles and familiarity with 8051/8052 based microcontrollers:  

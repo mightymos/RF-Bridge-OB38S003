@@ -68,6 +68,8 @@
 // it is helpful to have serial output on another pin (e.g., reset pin)
 #include "uart_software.h"
 
+// a rough way of setting a blink period
+#define HEARTBEAT_THRESHOLD 0x80000
 
 // sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
 
@@ -168,11 +170,11 @@ void startup_blink(void)
 int main (void)
 {
 	// just track how many loops have transpired as a very rough way of tracking time
-    __xdata uint32_t ticks = 0;
+    __xdata uint32_t ticks = HEARTBEAT_THRESHOLD;
 	
 	// set a threshold
 	// about every six seconds @ 24500000 MHz
-	const uint32_t heartbeat = 0x80000;
+	//const uint32_t heartbeat = 0x80000;
     
     // upper eight bits hold error or no data flags
     __xdata unsigned int rxdataWithFlags = UART_NO_DATA;
@@ -203,6 +205,7 @@ int main (void)
     
     // setup hardware serial
 	// timer 1 is clock source for uart0 on efm8bb1
+	// should call these after initializing port pins
     init_uart();
     uart_rx_enabled();
     
@@ -330,12 +333,12 @@ int main (void)
             // formatted for tasmota for output to web interface
             radio_rfin();
             
-			// causes the led to strobe for visual feedback packet is being received
+			// causes the led to strobe for visual feedback as packet is being received
             led_toggle();
             
 #if 0
             // DEBUG: using software uart
-            // this is slow because of low baud rate, so either exclude reporting data or exclude with conditional compilation
+            // this is slow because of low baud rate, so prefer to exclude in normal operation
 			radio_decode_debug();
 #endif
 
@@ -347,22 +350,22 @@ int main (void)
         }
         
         
-#if 1
-
+#if 0
+		// FIXME: why does this interfere with radio decoding?
 		// track time roughly
-        ticks++;
+		ticks--;
 		
 		// compare to threshold
-		if (ticks > heartbeat)
-        {
+		if (ticks == 0)
+		{
 			// DEBUG
 			//debug_pin01_toggle();
 			
-            led_toggle();
+			led_toggle();
 			
 			// reset count
-			ticks = 0;
-        }
+			ticks = HEARTBEAT_THRESHOLD;
+		}
         
 #endif
         
