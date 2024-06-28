@@ -50,10 +50,10 @@ See Flasher section below.
 # Tasmota/ESPHome
 Using passthrough hex file.
 
-The following pins can be used in ESPHome / Tasmota (flash **tasmota-sensors.bin** to ESP on RF Bridge and configure as e.g. **Generic(0)**)
+The following pins can be used in ESPHome / Tasmota (flash **tasmota-sensors.bin** to ESP on RF Bridge and configure as e.g. **Generic(0)**)  
 
-TX pin to GPIO1 (RFSend)
-RX pin to GPIO3 (RFRecv)
+TX pin to GPIO1 (RFSend)  
+RX pin to GPIO3 (RFRecv)  
 
 # Flasher (official)
 OB38S003 reprogamming requires erasing the chip because the stock firmware is protected.  

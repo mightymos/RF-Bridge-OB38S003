@@ -61,45 +61,80 @@ void refresh_watchdog(void)
 }
 
 
-void init_port_pins(void)
+void init_port_pins_for_passthrough(void)
 {
 	// FIXME: add comment to explain pin functions
 	// sec 11.3.1 Port I/O Modes of Operation
 	// P0MDIN is configured as digital i/o by default
+	// P1MDIN is configured as digital i/o by default
+	
+	// FIXME: correctly handle LED on sonoff different from LED on EFM8BB1LCK board
 	P0MDOUT = B0__PUSH_PULL | B1__OPEN_DRAIN | B2__OPEN_DRAIN | B3__OPEN_DRAIN | B4__PUSH_PULL | B5__OPEN_DRAIN | B6__OPEN_DRAIN | B7__OPEN_DRAIN;
+	P1MDOUT = B0__PUSH_PULL | B1__OPEN_DRAIN | B2__OPEN_DRAIN | B3__OPEN_DRAIN | B4__PUSH_PULL | B5__PUSH_PULL  | B6__PUSH_PULL  | B7__PUSH_PULL;
+	
+	// FIXME: none of the example code ever does this, needed as stated in datasheet?
+	// disables high side driver so uart rx is used as input
+	// disables high side driver so radio receive is used as input
+	//P0_5 = 1;
+	//P1_3 = 1;
+
+	// default is not skipped (i.e. available to crossbar)
+	// but we will skip all to use as gpio
+	P0SKIP = 0xFF;
+	P1SKIP = 0xFF;
+	
+	
+	// UART TX, RX routed to Port pins P0.4 and P0.5
+	//XBR0 |= URT0E__ENABLED;
+	
+	// CEX0 routed to port pin
+	//XBR1 |= PCA0ME__CEX0;
+	
+	// FIXME: why do the examples set this when it is the default?
+	// default is weak pullups enabled (makes sure input pins always have a known state even if externally disconnected) 
+	// crossbar enabled
+	//XBR2 &= ~WEAKPUD__BMASK;
+	
+	// FIXME: why does enabling the crossbar allow passthrough to work?
+	XBR2 |= XBARE__BMASK;
+}
+
+void init_port_pins_for_serial(void)
+{
+	// FIXME: add comment to explain pin functions
+	// sec 11.3.1 Port I/O Modes of Operation
+	// P0MDIN is configured as digital i/o by default
+	// P1MDIN is configured as digital i/o by default
+	
+	// FIXME: correctly handle LED on sonoff different from LED on EFM8BB1LCK board
+	P0MDOUT = B0__PUSH_PULL | B1__OPEN_DRAIN | B2__OPEN_DRAIN | B3__OPEN_DRAIN | B4__PUSH_PULL | B5__OPEN_DRAIN | B6__OPEN_DRAIN | B7__OPEN_DRAIN;
+	P1MDOUT = B0__PUSH_PULL | B1__OPEN_DRAIN | B2__OPEN_DRAIN | B3__OPEN_DRAIN | B4__PUSH_PULL | B5__PUSH_PULL  | B6__PUSH_PULL  | B7__PUSH_PULL;
 	
 	// disables high side driver so uart rx is used as input
-	P0_5 = 1;
-
-	// add explanation
-	P0SKIP = B0__SKIPPED | B1__SKIPPED | B2__SKIPPED | B3__SKIPPED | B4__NOT_SKIPPED | B5__NOT_SKIPPED | B6__SKIPPED | B7__SKIPPED;
-
-	// FIXME: correctly handle LED on sonoff different from LED on EFM8BB1LCK board
-	// P1MDIN is configured as digital i/o by default
-	P1MDOUT = B0__PUSH_PULL | B1__OPEN_DRAIN | B2__OPEN_DRAIN | B3__OPEN_DRAIN | B4__PUSH_PULL | B5__PUSH_PULL | B6__PUSH_PULL | B7__PUSH_PULL;
-	
 	// disables high side driver so radio receive is used as input
-	P1_3 = 1;
+	//P0_5 = 1;
+	//P1_3 = 1;
 
-
-	P1SKIP = B0__SKIPPED | B1__SKIPPED | B2__SKIPPED | B3__NOT_SKIPPED | B4__SKIPPED | B5__SKIPPED | B6__SKIPPED | B7__SKIPPED;
-
-
-	// $[XBR2 - Port I/O Crossbar 2]
-	/***********************************************************************
-	 - Weak Pullups enabled 
-	 - Crossbar enabled
-	 ***********************************************************************/
-	XBR2 = WEAKPUD__PULL_UPS_ENABLED | XBARE__ENABLED;
+	// default is not skipped (i.e. available to crossbar)
+	P0SKIP = B0__SKIPPED | B1__SKIPPED | B2__SKIPPED | B3__SKIPPED     | B4__NOT_SKIPPED | B5__NOT_SKIPPED | B6__SKIPPED | B7__SKIPPED;
+	P1SKIP = B0__SKIPPED | B1__SKIPPED | B2__SKIPPED | B3__NOT_SKIPPED | B4__SKIPPED     | B5__SKIPPED     | B6__SKIPPED | B7__SKIPPED;
+	
+	// UART TX, RX routed to Port pins P0.4 and P0.5
+	XBR0 |= URT0E__ENABLED;
+	
+	// CEX0 routed to port pin
+	XBR1 |= PCA0ME__CEX0;
+	
+	// default is weak pullups enabled (makes sure input pins always have a known state even if externally disconnected) 
+	// crossbar enabled
+	//XBR2 |= WEAKPUD__PULL_UPS_ENABLED;
+	XBR2 |= XBARE__ENABLED;
 }
 
 void init_uart(void)
 {	
     SCON0 &= ~(SMODE__BMASK | MCE__BMASK | REN__BMASK);
 	SCON0 = REN__RECEIVE_ENABLED | SMODE__8_BIT | MCE__MULTI_DISABLED;
-	
-	// UART TX, RX routed to Port pins P0.4 and P0.5
-	XBR0 |= URT0E__ENABLED;
 }
 
 // this is necessary so that uart ring buffer logic operates correctly the first time it is used
@@ -200,9 +235,6 @@ void pca0_init(void)
 	// enable both positive and negative edge triggers
 	PCA0CPM0 |= CAPP__ENABLED;
 	PCA0CPM0 |= CAPN__ENABLED;
-	
-	// CEX0 routed to port pin
-	XBR1 = PCA0ME__CEX0;
 }
 
 void pca0_run(void)

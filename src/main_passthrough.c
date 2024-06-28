@@ -94,7 +94,7 @@ int main (void)
     // hardware initialization
 	set_clock_mode();
 
-    init_port_pins();
+    init_port_pins_for_passthrough();
     
     // set default pin levels
     led_off();

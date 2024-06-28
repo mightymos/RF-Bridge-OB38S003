@@ -187,7 +187,7 @@ int main (void)
 	set_clock_mode();
 
 	//
-    init_port_pins();
+    init_port_pins_for_serial();
     
     // set default pin levels
     led_off();
@@ -336,7 +336,7 @@ int main (void)
 			// causes the led to strobe for visual feedback as packet is being received
             led_toggle();
             
-#if 0
+#if 1
             // DEBUG: using software uart
             // this is slow because of low baud rate, so prefer to exclude in normal operation
 			radio_decode_debug();
