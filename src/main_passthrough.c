@@ -93,9 +93,16 @@ int main (void)
 
     // hardware initialization
 	set_clock_mode();
-
+	
+#if defined(TARGET_BOARD_OB38S003)
+	init_port_pins();
+#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+	// the crossbar on this microcontroller makes initialization more complicated
     init_port_pins_for_passthrough();
-    
+#else
+	#error Please define TARGET_BOARD in makefile
+#endif
+
     // set default pin levels
     led_off();
     buzzer_off();

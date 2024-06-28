@@ -74,42 +74,42 @@
 // sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
 
 #if defined(TARGET_BOARD_OB38S003)
-// for software uart
-// FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
-extern void tm0(void)        __interrupt (d_T0_Vector);
-// supports timeout
-extern void timer1_isr(void) __interrupt (d_T1_Vector);
-// pca like capture mode for radio decoding
-extern void timer2_isr(void) __interrupt (d_T2_Vector);
-// hardware uart
-extern void uart_isr(void)   __interrupt (d_UART0_Vector);
+	// for software uart
+	// FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
+	//extern void tm0(void)        __interrupt (d_T0_Vector);
+	// supports timeout
+	extern void timer1_isr(void) __interrupt (d_T1_Vector);
+	// pca like capture mode for radio decoding
+	extern void timer2_isr(void) __interrupt (d_T2_Vector);
+	// hardware uart
+	extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
 
-// software uart
-extern void tm0(void)        __interrupt (TIMER0_VECTOR);
-// supports timeout
-extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
-// hardware uart (uses timer 1)
-extern void uart_isr(void)   __interrupt (UART0_VECTOR);
-// radio decoding
-extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
+	// software uart
+	//extern void tm0(void)        __interrupt (TIMER0_VECTOR);
+	// supports timeout
+	extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
+	// hardware uart (uses timer 1)
+	extern void uart_isr(void)   __interrupt (UART0_VECTOR);
+	// radio decoding
+	extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
 
-// unique ID is stored in xram (MSB at address 0xFF)
-//#define ID0_ADDR_RAM 0xFF
-//#define ID1_ADDR_RAM 0xFE
-//#define ID2_ADDR_RAM 0xFD
-//#define ID3_ADDR_RAM 0xFC
+	// unique ID is stored in xram (MSB at address 0xFF)
+	//#define ID0_ADDR_RAM 0xFF
+	//#define ID1_ADDR_RAM 0xFE
+	//#define ID2_ADDR_RAM 0xFD
+	//#define ID3_ADDR_RAM 0xFC
 
-// this will fail if we assign external ram to values which are initialized
-// and we really do not need the feature anyway
-//void startup_uid(void)
-//{
-//	puthex2(*((__xdata unsigned char*) ID0_ADDR_RAM));
-//	puthex2(*((__xdata unsigned char*) ID1_ADDR_RAM));
-//	puthex2(*((__xdata unsigned char*) ID2_ADDR_RAM));
-//	puthex2(*((__xdata unsigned char*) ID3_ADDR_RAM));
-//}
+	// this will fail if we assign external ram to values which are initialized
+	// and we really do not need the feature anyway
+	//void startup_uid(void)
+	//{
+	//	puthex2(*((__xdata unsigned char*) ID0_ADDR_RAM));
+	//	puthex2(*((__xdata unsigned char*) ID1_ADDR_RAM));
+	//	puthex2(*((__xdata unsigned char*) ID2_ADDR_RAM));
+	//	puthex2(*((__xdata unsigned char*) ID3_ADDR_RAM));
+	//}
 
 #else
 	#error Please define TARGET_BOARD in makefile
@@ -185,9 +185,15 @@ int main (void)
 
     // hardware initialization
 	set_clock_mode();
-
-	//
+	
+#if defined(TARGET_BOARD_OB38S003)
+	init_port_pins();
+#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+	// the crossbar on this microcontroller makes initialization more complicated
     init_port_pins_for_serial();
+#else
+	#error Please define TARGET_BOARD in makefile
+#endif
     
     // set default pin levels
     led_off();
@@ -197,7 +203,7 @@ int main (void)
 	// DEBUG:
 	// on some boards, "debug pin" is actually buzzer
 	// so we do not want to use it for debugging unless buzzer has been removed
-	//debug_pin01_off();
+	debug_pin01_off();
 	
     //
 	startup_blink();
@@ -219,14 +225,14 @@ int main (void)
     soft_tx_pin_on();
 
 	// allows use of a gpio to output text characters because hardware uart communicates with esp8285
-    init_software_uart();
+//    init_software_uart();
 
 	
 #if defined(TARGET_BOARD_OB38S003)
     // timer 0 provides one millisecond tick or supports software uart
     // timer 1 provides ten microsecond tick
 	// for ob38s003 0xFFFF - (10*10^-6)/(1/16000000)
-    init_timer0(SOFT_BAUD);
+//    init_timer0(SOFT_BAUD);
     //init_timer1(TH1_RELOAD_10MICROS, TL1_RELOAD_10MICROS);
 	// 0x5F for 10 microsecs
 	// 0xEF for  1 microsec
@@ -236,20 +242,21 @@ int main (void)
     init_timer2_as_capture();
 	
 	//
-	enable_timer0_interrupt();
+//	enable_timer0_interrupt();
     enable_timer1_interrupt();
 	//enable_timer2_interrupt();
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
 	// pca used timer0 in portisch (why?), rcswitch can use dedicated pca counters
 	//init_timer0(TIMER0_PCA0);
-	init_timer0(SOFT_BAUD);
+	//init_timer0(SOFT_BAUD);
 	// uart must use timer1 on this controller
 	init_timer1(TIMER1_UART0);
 	//init_timer2(TIMER2_RELOAD_10MICROS);
 	// timer 3 is unused for now
 	
-	enable_timer0_interrupt();
+	//enable_timer0_interrupt();
     //enable_timer1_interrupt();
+	// timer 2 is used on demand to produce delays (i.e., time enabled at start, wait, then timer stopped at overflow)
 	enable_timer2_interrupt();
 	
 	// pca0 clock source was timer 0 on portisch
@@ -265,7 +272,7 @@ int main (void)
     enable_global_interrupts();
  
     
-    // enable radio receiver
+	// FIXME: function empty on efm8bb1, because unknown if receiver has enable pin
     radio_receiver_on();
     
     //startup_beep();
@@ -282,7 +289,7 @@ int main (void)
     // watchdog will force a reset, unless we periodically write to it, demonstrating loop is not stuck somewhere
     enable_watchdog();
 
-#if 1
+#if 0
 	// demonstrate software uart is working
 	putstring("boot\r\n");
 #endif
@@ -336,7 +343,7 @@ int main (void)
 			// causes the led to strobe for visual feedback as packet is being received
             led_toggle();
             
-#if 1
+#if 0
             // DEBUG: using software uart
             // this is slow because of low baud rate, so prefer to exclude in normal operation
 			radio_decode_debug();

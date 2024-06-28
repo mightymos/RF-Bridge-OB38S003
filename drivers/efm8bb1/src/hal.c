@@ -129,6 +129,7 @@ void init_port_pins_for_serial(void)
 	// crossbar enabled
 	//XBR2 |= WEAKPUD__PULL_UPS_ENABLED;
 	XBR2 |= XBARE__ENABLED;
+	
 }
 
 void init_uart(void)

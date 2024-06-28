@@ -150,6 +150,14 @@ void pca0_isr(void) __interrupt (PCA0_VECTOR)
 	{
 	    // apparently our radio input
 	    pca0_channel0EventCb();
+		
+		// DEBUG:
+		if (rdata_level())
+		{
+			debug_pin01_on();
+		} else {
+			debug_pin01_off();
+		}
 	}
 
 	//if((flags & CCF1__BMASK) && (PCA0CPM1 & ECCF__BMASK))

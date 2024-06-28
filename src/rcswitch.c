@@ -128,10 +128,16 @@ bool receive_protocol(const int p, unsigned int changeCount)
         if (abs(timings[i] - delay * pro.zero.high) < delayTolerance &&
             abs(timings[i + 1] - delay * pro.zero.low) < delayTolerance) {
             // zero
+			
+			// DEBUG:
+			//debug_pin01_off();
         } else if (abs(timings[i] - delay * pro.one.high) < delayTolerance &&
             abs(timings[i + 1] - delay * pro.one.low) < delayTolerance) {
             // one
             code |= 1;
+			
+			// DEBUG:
+			//debug_pin01_on();
         } else {
             // failed
             return false;
@@ -172,7 +178,7 @@ void capture_handler(const uint16_t currentCapture)
     // FIXME: move to rcswitch.h
     const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
 
-    // go from 8-bit to 16-bit variables
+    // update
     previous = current;
     current = currentCapture;
     
@@ -182,7 +188,7 @@ void capture_handler(const uint16_t currentCapture)
         // FIXME: no magic numbers
         // FIXME: seems like a bad idea to make wrap around calculation depend on variable type, what if it changes
         // if overflow, we must compute difference by taking into account wrap around at maximum variable size
-        duration = USHRT_MAX  - previous + current;
+        duration = ULONG_MAX  - previous + current;
     } else {
         duration = current - previous;
     }
@@ -242,6 +248,9 @@ void capture_handler(const uint16_t currentCapture)
     }
 
     timings[changeCount++] = duration;
+	
+	// DEBUG: this is a decent way of seeing the actual timing on an oscilloscope
+	//debug_pin01_toggle();
     
     // done in the interrupt already on efm8bb1
     // but must be explicitly cleared on ob38s003

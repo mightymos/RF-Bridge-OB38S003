@@ -69,7 +69,7 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
                 command = NONE;
 				
 				// DEBUG:
-				putstring("idleReset\r\n");
+				//putstring("idleReset\r\n");
             }
         }
     }
@@ -422,7 +422,7 @@ void radio_rfin(void)
 }
 
 
-#if 1
+#if 0
 
 // send out over software uart for debugging help
 void radio_decode_debug(void)
@@ -450,7 +450,7 @@ void radio_decode_debug(void)
 
 #endif
 
-#if 1
+#if 0
 
 // FIXME: adapt to send out over software uart or for sniffing mode
 void radio_decode_timings(void)

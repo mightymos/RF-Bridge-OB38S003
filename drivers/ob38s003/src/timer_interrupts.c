@@ -154,4 +154,12 @@ void timer2_isr(void) __interrupt (d_T2_Vector)
     uint16_t currentCapture = get_timer2();
     
     capture_handler(currentCapture);
+	
+	// DEBUG:
+	if (rdata_level())
+	{
+		debug_pin01_on();
+	} else {
+		debug_pin01_off();
+	}
 }
