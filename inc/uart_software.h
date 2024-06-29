@@ -48,7 +48,6 @@ void puthex(unsigned char v);
 void puthex2(const unsigned char x);
 
 unsigned char uart_rx(bool* result);
-void uart_loop_test(void);
 
 
 #endif // _SOFTWARE_UART_H

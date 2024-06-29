@@ -71,12 +71,14 @@
 // a rough way of setting a blink period
 #define HEARTBEAT_THRESHOLD 0x80000
 
-// sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
 
+// sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
+// it is probably more proper to achieve this through include files but also easy to omit
+// and then things just will not work with no clear reason why, even though compilation is succcessful
 #if defined(TARGET_BOARD_OB38S003)
 	// for software uart
 	// FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
-	//extern void tm0(void)        __interrupt (d_T0_Vector);
+	extern void tm0(void)        __interrupt (d_T0_Vector);
 	// supports timeout
 	extern void timer1_isr(void) __interrupt (d_T1_Vector);
 	// pca like capture mode for radio decoding
@@ -87,7 +89,7 @@
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
 
 	// software uart
-	//extern void tm0(void)        __interrupt (TIMER0_VECTOR);
+	extern void tm0(void)        __interrupt (TIMER0_VECTOR);
 	// supports timeout
 	extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
 	// hardware uart (uses timer 1)
@@ -224,15 +226,15 @@ int main (void)
     // default state is reset/pin1 high if using software uart as transmit pin
     soft_tx_pin_on();
 
-	// allows use of a gpio to output text characters because hardware uart communicates with esp8285
-//    init_software_uart();
+	// allows use of a gpio to output text characters because hardware uart is assigned for communicating with esp8285
+    init_software_uart();
 
 	
 #if defined(TARGET_BOARD_OB38S003)
     // timer 0 provides one millisecond tick or supports software uart
     // timer 1 provides ten microsecond tick
 	// for ob38s003 0xFFFF - (10*10^-6)/(1/16000000)
-//    init_timer0(SOFT_BAUD);
+    init_timer0(SOFT_BAUD);
     //init_timer1(TH1_RELOAD_10MICROS, TL1_RELOAD_10MICROS);
 	// 0x5F for 10 microsecs
 	// 0xEF for  1 microsec
@@ -242,19 +244,19 @@ int main (void)
     init_timer2_as_capture();
 	
 	//
-//	enable_timer0_interrupt();
+	enable_timer0_interrupt();
     enable_timer1_interrupt();
 	//enable_timer2_interrupt();
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
 	// pca used timer0 in portisch (why?), rcswitch can use dedicated pca counters
 	//init_timer0(TIMER0_PCA0);
-	//init_timer0(SOFT_BAUD);
+	init_timer0(SOFT_BAUD);
 	// uart must use timer1 on this controller
 	init_timer1(TIMER1_UART0);
 	//init_timer2(TIMER2_RELOAD_10MICROS);
 	// timer 3 is unused for now
 	
-	//enable_timer0_interrupt();
+	enable_timer0_interrupt();
     //enable_timer1_interrupt();
 	// timer 2 is used on demand to produce delays (i.e., time enabled at start, wait, then timer stopped at overflow)
 	enable_timer2_interrupt();
@@ -288,7 +290,7 @@ int main (void)
     // watchdog will force a reset, unless we periodically write to it, demonstrating loop is not stuck somewhere
     enable_watchdog();
 
-#if 0
+#if 1
 	// demonstrate software uart is working
 	putstring("boot\r\n");
 #endif

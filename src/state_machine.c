@@ -18,7 +18,7 @@
 __xdata uint8_t uartPacket[PACKET_MAX_SIZE];
 
 // includes protocol ID and actual radio data
-__xdata uint8_t lengthExpected = 0;
+__xdata uint8_t gLengthExpected = 0;
 	
 
 //-----------------------------------------------------------------------------
@@ -115,7 +115,7 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 						// reset index into packet storage array
 						position = 0;
 						// only count data bytes, we exclude start sync, end, and command bytes
-						lengthExpected = 9;
+						gLengthExpected = 9;
 						state = RECEIVING;
 						
 						break;
@@ -126,7 +126,7 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 						break;
 					case RF_DO_BEEP:
 						position = 0;
-						lengthExpected = 2;
+						gLengthExpected = 2;
 						state = RECEIVING;
 						break;
 					case RF_ALTERNATIVE_FIRMWARE:
@@ -164,18 +164,18 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 			// this is used for commands that have a variable length
 			case RECEIVE_LENGTH:
 
-				lengthExpected = rxdata & 0xFF;
+				gLengthExpected = rxdata & 0xFF;
 				
-				if (lengthExpected > 0)
+				if (gLengthExpected > 0)
 				{
 				    state = RECEIVING;
 					
 					// store length in bytes of protocol id and actual data
-					//uartPacket[position] = lengthExpected;
+					//uartPacket[position] = gLengthExpected;
 					//position++;
 					
 					// DEBUG:
-					//puthex2(lengthExpected);
+					//puthex2(gLengthExpected);
 				} else {
 				    state = SYNC_FINISH;
 				}
@@ -192,14 +192,14 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 				//puthex2(rxdata);
 				
 				// look for expected end of packet and also avoid buffer overflow
-				if (position == lengthExpected)
+				if (position == gLengthExpected)
 				{
 					state = SYNC_FINISH;
 				}
 				else if (position >= PACKET_MAX_SIZE)
 				{
 					// FIXME: review this logic
-					lengthExpected = PACKET_MAX_SIZE;
+					gLengthExpected = PACKET_MAX_SIZE;
 					state = SYNC_FINISH;
 				}
 				break;
@@ -259,17 +259,9 @@ void rf_state_machine(RF_COMMAND_T command)
 	__xdata static RF_STATE_T state = RF_IDLE;
 	__xdata struct Pulse pulses;
 	
-	
 	// only used when timings are provided
-	uint16_t sync;
-	uint16_t low;
-	uint16_t high;
-	//uint16_t pulseLength;
-			
-	// only used when sending by protocol number
-	uint8_t dataLength;
-	uint8_t ident;
-	
+	uint16_t timing;
+
 	
 	// this should be occuring after an entire uart packet is received (i.e., after SYNC_FINISH)
 	switch(state)
@@ -296,22 +288,25 @@ void rf_state_machine(RF_COMMAND_T command)
 
 	
 			// user provided pulse timings
-			sync = uartPacket[0] << 8 | uartPacket[1];
-			low  = uartPacket[2] << 8 | uartPacket[3];
-			high = uartPacket[4] << 8 | uartPacket[5];
+			// sync
+			timing = uartPacket[0] << 8 | uartPacket[1];
+			timing = timing / 10;
+			pulses.syncLow  = timing;
 			
-			sync = sync / 10;
-			low  =  low / 10;
-			high = high / 10;
+			// low
+			timing  = uartPacket[2] << 8 | uartPacket[3];
+			timing  =  timing / 10;
+			pulses.zeroLow  = timing;
+			pulses.oneHigh  = timing;
 			
-
-			pulses.syncHigh = high;
-			pulses.syncLow  = sync;
-			pulses.zeroHigh = high;
-			pulses.zeroLow  = low;
-			pulses.oneHigh  = low;
-			pulses.oneLow   = high;
+			// high
+			timing = uartPacket[4] << 8 | uartPacket[5];
+			timing = timing / 10;
+			pulses.syncHigh = timing;
+			pulses.zeroHigh = timing;
+			pulses.oneLow   = timing;
 			
+			// 
 			pulses.invertedSignal = false;
 
 			//
@@ -335,19 +330,13 @@ void rf_state_machine(RF_COMMAND_T command)
 			//putstring("protocol\r\n");
 	
 
-
 			// bytes 0..1:	Tsyn
 			// bytes 2..3:	Tlow
 			// bytes 4..5:	Thigh
 			// bytes 6..8:	24bit Data
-			//index = uartPacket[0] - 1;
-			//shift = 0;
-			dataLength = lengthExpected - 1;
-			ident  = uartPacket[0];
+			protocolPtr = &protocols[uartPacket[0]];
 			
-			protocolPtr = &protocols[ident];
-			
-			// divide by ten to convert from microseconds to tens of microseconds
+			// calculate timing pulses in microseconds
 			pulses.oneHigh  = protocolPtr->pulseLength * protocolPtr->one.high;
 			pulses.oneLow   = protocolPtr->pulseLength * protocolPtr->one.low;
 			pulses.zeroHigh = protocolPtr->pulseLength * protocolPtr->zero.high;
@@ -355,6 +344,7 @@ void rf_state_machine(RF_COMMAND_T command)
 			pulses.syncHigh = protocolPtr->pulseLength * protocolPtr->syncFactor.high;
 			pulses.syncLow  = protocolPtr->pulseLength * protocolPtr->syncFactor.low;
 			
+			// divide by ten to convert from microseconds to tens of microseconds
 			pulses.oneHigh  = pulses.oneHigh  / 10;
 			pulses.oneLow   = pulses.oneLow   / 10;
 			pulses.zeroHigh = pulses.zeroHigh / 10;
@@ -366,7 +356,7 @@ void rf_state_machine(RF_COMMAND_T command)
 			pulses.invertedSignal = protocolPtr->invertedSignal;
 
 			// use a known protocol for transmitting
-			send(&pulses, &uartPacket[1], dataLength * 8);
+			send(&pulses, &uartPacket[1], (gLengthExpected - 1) * 8);
 			
 			// DEBUG:
 			//putstring("end\r\n");

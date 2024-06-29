@@ -263,7 +263,7 @@ void clear_capture_flag(void)
 	CCF0 = 0;
 }
 
-// FIXME: on counts to time conversion
+// FIXME: explain counts to time conversion constant
 unsigned long countsToTime(const unsigned long duration)
 {
     unsigned long converted;

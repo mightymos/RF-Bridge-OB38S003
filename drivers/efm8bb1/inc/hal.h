@@ -9,9 +9,9 @@
 #define INC_HAL_H_
 
 #if defined(TARGET_BOARD_EFM8BB1LCB)
-#include "efm8bb1lck_pins.h"
+	#include "efm8bb1lck_pins.h"
 #elif defined(TARGET_BOARD_EFM8BB1)
-#include "sonoffr20_pins.h"
+	#include "sonoffr20_pins.h"
 #endif
 
 #include <stdbool.h>

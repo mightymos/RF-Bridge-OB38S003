@@ -38,11 +38,11 @@ struct RC_SWITCH_T
 {
     // FIXME: we changed some ints to char so that printing over software uart was reasonable
     // would we ever have more than 256 protocols or bit length anyway ?
-    unsigned long long nReceivedValue;
-    unsigned char nReceivedBitlength;
-    unsigned int nReceivedDelay;
-    unsigned char nReceivedProtocol;
-    int nReceiveTolerance;
+    unsigned long      nReceivedValue;
+    unsigned char      nReceivedBitlength;
+    unsigned int       nReceivedDelay;
+    unsigned char      nReceivedProtocol;
+    int                nReceiveTolerance;
     const unsigned int nSeparationLimit;
 };
 
@@ -110,11 +110,11 @@ struct Pulse
 extern bool available(void);
 extern void reset_available(void);
 
-extern unsigned long long get_received_value(void);
-extern unsigned char      get_received_bitlength(void);
-extern unsigned int       get_received_delay(void);
-extern unsigned char      get_received_protocol(void);
-extern int                get_received_tolerance(void);
+extern unsigned long get_received_value(void);
+extern unsigned char get_received_bitlength(void);
+extern unsigned int  get_received_delay(void);
+extern unsigned char get_received_protocol(void);
+extern int           get_received_tolerance(void);
 
 
 //void setProtocol(struct Protocol protocol);
@@ -128,7 +128,6 @@ extern void capture_handler(const uint16_t);
 void setRepeatTransmit(const int repeat);
 void setProtocol(const struct Protocol pro);
 
-//void send(const char* sCodeWord);
 void send(struct Pulse* pro, unsigned char* packetPtr, const unsigned char bitsInPacket);
 
 

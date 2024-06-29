@@ -8,11 +8,8 @@
 
 #if defined(TARGET_BOARD_OB38S003)
 #include "OB38S003.h"
-#elif defined(TARGET_BOARD_EFM8BB1)
+#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
 // these are just a difference in naming convention
-#define SBUF SBUF0
-#define SCON SCON0
-#elif defined(TARGET_BOARD_EFM8BB1LCB)
 #define SBUF SBUF0
 #define SCON SCON0
 #endif
@@ -36,9 +33,11 @@ __xdata static volatile uint8_t UART_TX_Buffer_Position = 0;
 __xdata static volatile uint8_t UART_Buffer_Read_Position = 0;
 __xdata static volatile uint8_t UART_Buffer_Write_Position = 0;
 __xdata static volatile uint8_t UART_Buffer_Write_Len = 0;
-__xdata static volatile uint8_t lastRxError;
 
-__xdata static volatile bool gTXFinished = true;
+//__xdata static volatile uint8_t lastRxError;
+
+// prefer to avoid storing in external ram to take advantage of bit addressable internal ram
+static volatile bool gTXFinished = true;
 
 //-----------------------------------------------------------------------------
 // UART ISR Callbacks
@@ -97,9 +96,7 @@ void uart_init_tx_polling(void)
 //=========================================================
 #if defined(TARGET_BOARD_OB38S003)
 void uart_isr(void) __interrupt (d_UART0_Vector)
-#elif defined(TARGET_BOARD_EFM8BB1)
-void uart_isr(void) __interrupt (UART0_VECTOR)
-#elif defined(TARGET_BOARD_EFM8BB1LCB)
+#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
 void uart_isr(void) __interrupt (UART0_VECTOR)
 #endif
 {
@@ -165,15 +162,13 @@ bool is_uart_tx_finished(void)
 }
 
 bool is_uart_tx_buffer_empty(void)
-{
-    bool isBufferEmpty = true;
-    
+{    
     if ( UART_Buffer_Write_Len > 0 )
     {
-        isBufferEmpty = false;
+        return false;
     }
     
-    return isBufferEmpty;
+    return true;
 }
 
 
@@ -203,8 +198,8 @@ unsigned int uart_getc(void)
     }
 
     // FIXME: can not see where lastRxError is ever set?
-    rxdata |= (lastRxError << 8);
-    lastRxError = 0;
+    //rxdata |= (lastRxError << 8);
+    //lastRxError = 0;
     
     return rxdata;
 }

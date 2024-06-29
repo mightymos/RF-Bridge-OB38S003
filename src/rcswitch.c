@@ -19,7 +19,7 @@ volatile __xdata struct RC_SWITCH_T gRCSwitch = {0, 0, 0, 0, 60, 4300};
 volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
 
 
-const int nRepeatTransmit = 8;
+const uint8_t nRepeatTransmit = 8;
 
 // pulse length is units of 10 microseconds, modified from the microsecond version because it is unreasonable to generate microsecond timing on these microcontrollers
 const struct Protocol protocols[] = {
@@ -55,7 +55,7 @@ void reset_available(void)
 }
 
 
-unsigned long long get_received_value(void)
+unsigned long get_received_value(void)
 {
     return gRCSwitch.nReceivedValue;
 }
@@ -80,7 +80,7 @@ int get_received_tolerance(void)
     return gRCSwitch.nReceiveTolerance;
 }
 
-unsigned int* getReceivedRawdata(void)
+uint16_t* getReceivedRawdata(void)
 {
     return timings;
 }
@@ -168,15 +168,17 @@ void capture_handler(const uint16_t currentCapture)
     static uint16_t current = 0;
     
     // this eventually represents the level duration in microseconds (difference between edge transitions)
+	// FIXME: we should probably comment on why this is long type once I remember
     unsigned long duration;
     
 
     // rc-switch variables
-    static unsigned int repeatCount = 0;
-    static unsigned int changeCount = 0;
+	// changed from int to uint8_t to save memory
+    static uint8_t repeatCount = 0;
+    static uint8_t changeCount = 0;
 
-    // FIXME: move to rcswitch.h
-    const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
+
+	const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
 
     // update
     previous = current;
@@ -251,7 +253,6 @@ void capture_handler(const uint16_t currentCapture)
 	
 	// DEBUG: this is a decent way of seeing the actual timing on an oscilloscope
 	//debug_pin01_toggle();
-    
 }
 
 /**

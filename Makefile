@@ -128,7 +128,8 @@ OBJECTS_RCSWITCH = 		$(OBJECT_DIR)/main_rcswitch.rel    \
 						$(OBJECT_DIR)/uart.rel             \
 						$(OBJECT_DIR)/delay.rel            \
 						$(OBJECT_DIR)/hal.rel	           \
-						$(OBJECT_DIR)/timer_interrupts.rel
+						$(OBJECT_DIR)/timer_interrupts.rel \
+						$(OBJECT_DIR)/uart_software.rel
 						
 #OBJECTS_PORTISCH = 		$(OBJECT_DIR)/main_portisch.rel    \
 #						$(OBJECT_DIR)/portisch.rel         \
