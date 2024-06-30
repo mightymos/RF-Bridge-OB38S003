@@ -113,20 +113,13 @@ void timer2_isr(void) __interrupt (TIMER2_VECTOR)
 }
 
 
-void pca0_channel0EventCb(void)
+void pca0_isr(void) __interrupt (PCA0_VECTOR)
 {
     //FIXME: we need to record the actual time step this represents so it is clear to human readers
     //FIXME: should be PCA0CP0 * 10 for Portisch?
     //       probably not, because we are using dedicated PCA counter instead of timer 0 as portisch did originally
 	uint16_t currentCapture = PCA0CP0;
-    
-    capture_handler(currentCapture);
-}
-
-
-
-void pca0_isr(void) __interrupt (PCA0_VECTOR)
-{
+	
 	// save and clear flags
 	uint8_t flags = PCA0CN0 & (CF__BMASK | CCF0__BMASK | CCF1__BMASK | CCF2__BMASK);
 
@@ -149,7 +142,8 @@ void pca0_isr(void) __interrupt (PCA0_VECTOR)
 	if((flags & CCF0__BMASK) && (PCA0CPM0 & ECCF__BMASK))
 	{
 	    // apparently our radio input
-	    pca0_channel0EventCb();
+	    //pca0_channel0EventCb();
+		capture_handler(currentCapture);
 		
 		// DEBUG:
 		if (rdata_level())

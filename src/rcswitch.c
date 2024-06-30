@@ -7,7 +7,7 @@
 #include "hal.h"
 #include "rcswitch.h"
 
-//#include "uart_software.h"
+#include "uart_software.h"
 
 #include "timer_interrupts.h"
 
@@ -143,7 +143,7 @@ bool receive_protocol(const int p, unsigned int changeCount)
             return false;
         }
     }
-    
+    	
     // ignore very short transmissions: no device sends them, so this must be noise
     if (changeCount > 7)
     {

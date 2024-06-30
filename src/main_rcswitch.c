@@ -295,6 +295,7 @@ int main (void)
 	putstring("boot\r\n");
 #endif
 
+
 //#if defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
 //	putstring("uid:");
 //	startup_uid();
@@ -343,6 +344,8 @@ int main (void)
             
 			// causes the led to strobe for visual feedback as packet is being received
             led_toggle();
+			
+			puthex2('H');
             
 #if 0
             // DEBUG: using software uart
