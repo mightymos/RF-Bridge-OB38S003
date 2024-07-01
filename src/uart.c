@@ -7,11 +7,11 @@
 #include "hal.h"
 
 #if defined(TARGET_BOARD_OB38S003)
-#include "OB38S003.h"
+	#include "OB38S003.h"
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
-// these are just a difference in naming convention
-#define SBUF SBUF0
-#define SCON SCON0
+	// these are just a difference in naming convention
+	#define SBUF SBUF0
+	#define SCON SCON0
 #endif
 
 #include "uart.h"

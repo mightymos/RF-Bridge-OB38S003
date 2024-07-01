@@ -8,20 +8,16 @@
 //BAUD = 65536 - FOSC/3/BAUDRATE/M (1T:M=1; 12T:M=12)
 //NOTE: (FOSC/3/BAUDRATE) must be greater than 98, (RECOMMEND GREATER THAN 110)
 
-#if defined(TARGET_BOARD_EFM8BB1LCB)
 
-	// e.g., hex(65536 - (24500000/2400/12))
-	#define SOFT_BAUD 0xFCAD
-
-#elif defined(TARGET_BOARD_EFM8BB1)
-
-	// e.g., hex(65536 - (24500000/2400/12))
-	#define SOFT_BAUD 0xFCAD
-
-#elif defined(TARGET_BOARD_OB38S003)
+#if defined(TARGET_BOARD_OB38S003)
 
 	// e.g, hex(65536 - (16000000/2400/1))
 	#define SOFT_BAUD 0xE5F5
+
+#elif defined(TARGET_BOARD_EFM8BB1) || defined (TARGET_BOARD_EFM8BB1LCB)
+
+	// e.g., hex(65536 - (24500000/2400/12))
+	#define SOFT_BAUD 0xFCAD
 
 #endif
 
