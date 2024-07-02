@@ -69,6 +69,8 @@
 #include "uart_software.h"
 
 // a rough way of setting a blink period
+// set a threshold
+// about every six seconds @ 24500000 MHz
 #define HEARTBEAT_THRESHOLD 0x80000
 
 
@@ -171,12 +173,9 @@ void startup_blink(void)
 // ----------------------------------------------------------------------------
 int main (void)
 {
-	// just track how many loops have transpired as a very rough way of tracking time
-    //__xdata uint32_t ticks = HEARTBEAT_THRESHOLD;
+	// just track how many loops have transpired as a rough way of tracking time
+    __xdata uint32_t ticks = HEARTBEAT_THRESHOLD;
 	
-	// set a threshold
-	// about every six seconds @ 24500000 MHz
-	//const uint32_t heartbeat = 0x80000;
     
     // upper eight bits hold error or no data flags
     __xdata unsigned int rxdataWithFlags = UART_NO_DATA;
@@ -361,9 +360,11 @@ int main (void)
         }
         
         
-#if 0
-		// FIXME: why does this interfere with radio decoding?
-		// track time roughly
+#if 1
+		// it would be nice to increment ticks instead and then track current minus previous
+        // so that ticks may be used with multiple thresholds for various rough timing needs
+        // or the alternative would be to repurpose or dual purpose a timer, however software uart has been very helpful for debugging
+        // finally, it is probably not necessary to use multiple ticks
 		ticks--;
 		
 		// compare to threshold
