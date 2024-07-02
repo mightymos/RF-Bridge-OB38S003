@@ -190,22 +190,22 @@ void capture_handler(const uint16_t currentCapture)
         // FIXME: no magic numbers
         // FIXME: seems like a bad idea to make wrap around calculation depend on variable type, what if it changes
         // if overflow, we must compute difference by taking into account wrap around at maximum variable size
-        duration = ULONG_MAX  - previous + current;
+        duration = UINT_MAX  - previous + current;
     } else {
         duration = current - previous;
     }
     
-    // FIXME: no magic numbers
     // e.g., EFM8BB1
 	// e.g. (1/(24500000))*(49/2) = 1      microsec
 	// e.g. (1/(24500000/12))*2   = 0.9796 microsec
+	// so need to do the inverse to go from counts to time (i.e., counts * 1/2 = time)
 	// (1/(24500000/12))*dec(0xFFFF) = 32.0987755 millisecs max
     
     // e.g., OBS38S003
     // e.g. prescale at (1/4) at 16 MHz, four counts are needed to get one microsecond
-    // e.g. prescale at (1/24) at 16 MHz
+    // e.g. prescale at (1/24) at 16 MHz, 2/3 counts are need to get one microsecond
+    // so inverse is counts * 3/2 = time
     // e.g., (1/(16000000/24)) * dec(0xFFFF) = 98.30 milliseconds maximum can be counted
-    // FIXME: show why 3/2 conversion works
     duration = countsToTime(duration);
     
     // from oscillscope readings it appears that first sync pulse of first radio packet is frequently not output properly by receiver

@@ -223,8 +223,9 @@ void load_timer1(const uint16_t value)
 void pca0_init(void)
 {
 	// default pca acts normally when controller is idle
+	// default source is system clock divided by 12
 	// default pca CF overflow is disabled
-	PCA0MD |= CPS__SYSCLK_DIV_12;
+	//PCA0MD &= ~CPS__SYSCLK_DIV_12;
 	
 	// enable both positive and negative edge triggers
 	PCA0CPM0 |= CAPP__ENABLED;
@@ -233,12 +234,12 @@ void pca0_init(void)
 
 void pca0_run(void)
 {
-    PCA0CN0 |= CR__RUN;
+    CR = true;
 }
 
 void pca0_halt(void)
 {
-    PCA0CN0 &= ~CR__RUN;
+    CR = false;
 }
 
 
@@ -263,11 +264,13 @@ void clear_capture_flag(void)
 	CCF0 = 0;
 }
 
-// FIXME: explain counts to time conversion constant
+// the time constant is explained in the rcswitch.c file
+
 unsigned long countsToTime(const unsigned long duration)
 {
     unsigned long converted;
-    converted = duration * 2;
+	
+    converted = duration / 2;
     
     return converted;
 }

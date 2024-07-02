@@ -151,7 +151,7 @@ void timer1_isr(void) __interrupt (d_T1_Vector)
 //-----------------------------------------------------------------------------
 void timer2_isr(void) __interrupt (d_T2_Vector)
 {
-    uint16_t currentCapture = get_timer2();
+    uint16_t currentCapture = get_capture_mode();
     
     capture_handler(currentCapture);
 	

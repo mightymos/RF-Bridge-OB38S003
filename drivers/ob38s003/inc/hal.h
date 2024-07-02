@@ -234,7 +234,7 @@ extern void disable_serial_interrupt(void);
 extern bool global_interrupts_are_enabled(void);
 
 void load_timer0(const uint16_t load);
-extern uint16_t get_timer2(void);
+extern uint16_t get_capture_mode(void);
 
 extern void clear_capture_flag(void);
 
