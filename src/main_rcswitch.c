@@ -205,7 +205,7 @@ int main (void)
 	// DEBUG:
 	// on some boards, "debug pin" is actually buzzer
 	// so we do not want to use it for debugging unless buzzer has been removed
-	debug_pin01_off();
+	//debug_pin01_off();
 	
     //
 	startup_blink();

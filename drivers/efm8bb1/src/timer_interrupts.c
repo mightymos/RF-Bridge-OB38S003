@@ -146,12 +146,12 @@ void pca0_isr(void) __interrupt (PCA0_VECTOR)
 		capture_handler(currentCapture);
 		
 		// DEBUG:
-		if (rdata_level())
-		{
-			debug_pin01_on();
-		} else {
-			debug_pin01_off();
-		}
+		//if (rdata_level())
+		//{
+		//	debug_pin01_on();
+		//} else {
+		//	debug_pin01_off();
+		//}
 	}
 	
     // done in the interrupt already on efm8bb1
