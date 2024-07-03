@@ -13,7 +13,7 @@ unsigned long get_current_timer0(void)
     
     // FIXME: compute the proper conversion from counts to milliseconds
     //currentTime = gTimeMilliseconds;
-	currentTime = get_time_milliseconds();
+    currentTime = get_time_milliseconds();
     
     // re-enable timer0 interrupt
     enable_timer0_interrupt();
@@ -34,7 +34,7 @@ unsigned long get_elapsed_timer0(const unsigned long previousTime)
     {
         elapsed = currentTime - previousTime;
     } else {
-		// FIXME: seems like a bad idea to hardcode unsigned long maximum because what if type changes
+        // FIXME: seems like a bad idea to hardcode unsigned long maximum because what if type changes
         elapsed = ULONG_MAX - previousTime + currentTime;
     }
     
@@ -49,7 +49,7 @@ uint16_t get_current_timer1(void)
     
     // FIXME: compute the proper conversion from counts to microseconds
     //currentTime = gTimeTenMicroseconds;
-	currentTime = get_time_ten_microseconds();
+    currentTime = get_time_ten_microseconds();
     
     enable_timer1_interrupt();
     
@@ -69,7 +69,7 @@ uint16_t get_elapsed_timer1(const unsigned long previousTime)
     {
         elapsed = currentTime - previousTime;
     } else {
-		// FIXME: seems like a bad idea to hardcode unsigned long maximum because what if type changes
+        // FIXME: seems like a bad idea to hardcode unsigned long maximum because what if type changes
         elapsed = UINT_MAX - previousTime + currentTime;
     }
     
@@ -85,7 +85,7 @@ unsigned long get_current_timer2(void)
     
     // FIXME: compute the proper conversion from counts to microseconds
     //currentTime = gTimeTenMicroseconds;
-	currentTime = get_time_ten_microseconds();
+    currentTime = get_time_ten_microseconds();
     
     enable_timer2_interrupt();
     
@@ -107,7 +107,7 @@ unsigned long get_elapsed_timer2(const unsigned long previousTime)
     {
         elapsed = currentTime - previousTime;
     } else {
-		// FIXME: seems like a bad idea to hardcode unsigned long maximum because what if type changes
+        // FIXME: seems like a bad idea to hardcode unsigned long maximum because what if type changes
         elapsed = ULONG_MAX - previousTime + currentTime;
     }
     

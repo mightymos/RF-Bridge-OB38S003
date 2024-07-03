@@ -33,8 +33,8 @@
 __xdata uint8_t RF_DATA[RF_DATA_BUFFERSIZE];
 
 // RF_DATA_STATUS
-// Bit 7:	1 Data received, 0 nothing received
-// Bit 6-0:	Protocol identifier
+// Bit 7:   1 Data received, 0 nothing received
+// Bit 6-0: Protocol identifier
 __xdata uint8_t RF_DATA_STATUS = 0;
 __xdata rf_sniffing_mode_t sniffing_mode = STANDARD;
 
@@ -84,19 +84,19 @@ uint8_t Compute_CRC8_Simple_OneByte(uint8_t byteVal)
 {
     const uint8_t generator = 0x1D;
     uint8_t i;
-	// init crc directly with input byte instead of 0, avoid useless 8 bitshifts until input byte is in crc register
+    // init crc directly with input byte instead of 0, avoid useless 8 bitshifts until input byte is in crc register
     uint8_t crc = byteVal;
 
     for (i = 0; i < 8; i++)
     {
         if ((crc & 0x80) != 0)
         { 
-			// most significant bit set, shift crc register and perform XOR operation, taking not-saved 9th set bit into account
+            // most significant bit set, shift crc register and perform XOR operation, taking not-saved 9th set bit into account
             crc = (uint8_t)((crc << 1) ^ generator);
         }
         else
         { 
-			// most significant bit not set, go to next bit
+            // most significant bit not set, go to next bit
             crc <<= 1;
         }
     }
@@ -106,367 +106,367 @@ uint8_t Compute_CRC8_Simple_OneByte(uint8_t byteVal)
 
 uint16_t compute_delta(uint16_t bucket)
 {
-	//return ((bucket >> 2) + (bucket >> 4));
-	return (bucket >> 2); // 25% delta of bucket for advanced decoding
+    //return ((bucket >> 2) + (bucket >> 4));
+    return (bucket >> 2); // 25% delta of bucket for advanced decoding
 }
 
 bool CheckRFBucket(uint16_t duration, uint16_t bucket, uint16_t delta)
 {
-	return (((bucket - delta) < duration) && (duration < (bucket + delta)));
+    return (((bucket - delta) < duration) && (duration < (bucket + delta)));
 }
 
 bool CheckRFSyncBucket(uint16_t duration, uint16_t bucket)
 {
-	uint16_t delta = compute_delta(bucket);
-	delta = delta > TOLERANCE_MAX ? TOLERANCE_MAX : delta;
-	delta = delta < TOLERANCE_MIN ? TOLERANCE_MIN : delta;
-	return CheckRFBucket(duration, bucket, delta);
+    uint16_t delta = compute_delta(bucket);
+    delta = delta > TOLERANCE_MAX ? TOLERANCE_MAX : delta;
+    delta = delta < TOLERANCE_MIN ? TOLERANCE_MIN : delta;
+    return CheckRFBucket(duration, bucket, delta);
 }
 
 bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration,
-		uint16_t *pulses,
-		uint8_t* bit0, uint8_t bit0_size,
-		uint8_t* bit1, uint8_t bit1_size,
-		uint8_t bit_count)
+        uint16_t *pulses,
+        uint8_t* bit0, uint8_t bit0_size,
+        uint8_t* bit1, uint8_t bit1_size,
+        uint8_t bit_count)
 {
-	uint8_t last_bit = 0;
+    uint8_t last_bit = 0;
 
-	// do init before first bit received
-	if (BITS_GET(status[i]) == 0)
-	{
-		ABP_RESET(status[i]);
-		memset(RF_DATA, 0, sizeof(RF_DATA));
-		crc = 0x00;
-	}
+    // do init before first bit received
+    if (BITS_GET(status[i]) == 0)
+    {
+        ABP_RESET(status[i]);
+        memset(RF_DATA, 0, sizeof(RF_DATA));
+        crc = 0x00;
+    }
 
-	// start decoding of the bits in sync of the buckets
+    // start decoding of the bits in sync of the buckets
 
-	// bit 0
-	if (CheckRFSyncBucket(duration, pulses[BUCKET_NR(bit0[BIT0_GET(status[i])])]))
-	{
-		// decode only if high/low does match
-		if (BUCKET_STATE(bit0[BIT0_GET(status[i])]) == high_low)
-		{
-			if (BIT0_GET(status[i]) == 0)
-				BIT_LOW = duration;
+    // bit 0
+    if (CheckRFSyncBucket(duration, pulses[BUCKET_NR(bit0[BIT0_GET(status[i])])]))
+    {
+        // decode only if high/low does match
+        if (BUCKET_STATE(bit0[BIT0_GET(status[i])]) == high_low)
+        {
+            if (BIT0_GET(status[i]) == 0)
+                BIT_LOW = duration;
 
-			BIT0_INC(status[i]);
-		}
-	}
-	// bucket does not match bit, reset status
-	else
-	{
-		BIT0_CLEAR(status[i]);
-	}
+            BIT0_INC(status[i]);
+        }
+    }
+    // bucket does not match bit, reset status
+    else
+    {
+        BIT0_CLEAR(status[i]);
+    }
 
-	// bit 1
-	if (CheckRFSyncBucket(duration, pulses[BUCKET_NR(bit1[BIT1_GET(status[i])])]))
-	{
-		// decode only if high/low does match
-		if (BUCKET_STATE(bit1[BIT1_GET(status[i])]) == high_low)
-		{
-			if (BIT1_GET(status[i]) == 0)
-				BIT_HIGH = duration;
+    // bit 1
+    if (CheckRFSyncBucket(duration, pulses[BUCKET_NR(bit1[BIT1_GET(status[i])])]))
+    {
+        // decode only if high/low does match
+        if (BUCKET_STATE(bit1[BIT1_GET(status[i])]) == high_low)
+        {
+            if (BIT1_GET(status[i]) == 0)
+                BIT_HIGH = duration;
 
-			BIT1_INC(status[i]);
-		}
-	}
-	// bucket does not match bit, reset status
-	else
-	{
-		BIT1_CLEAR(status[i]);
-	}
+            BIT1_INC(status[i]);
+        }
+    }
+    // bucket does not match bit, reset status
+    else
+    {
+        BIT1_CLEAR(status[i]);
+    }
 
-	// check if any bucket got decoded, if not restart
-	if ((BIT0_GET(status[i]) == 0) && (BIT1_GET(status[i]) == 0))
-	{
-		led_off();
-		START_CLEAR(status[i]);
-		return false;
-	}
+    // check if any bucket got decoded, if not restart
+    if ((BIT0_GET(status[i]) == 0) && (BIT1_GET(status[i]) == 0))
+    {
+        led_off();
+        START_CLEAR(status[i]);
+        return false;
+    }
 
-	// on the last bit do not check the last bucket
-	// because maybe this is not correct because a
-	// repeat delay
-	if (BITS_GET(status[i]) == bit_count - 1)
-		last_bit = 1;
+    // on the last bit do not check the last bucket
+    // because maybe this is not correct because a
+    // repeat delay
+    if (BITS_GET(status[i]) == bit_count - 1)
+        last_bit = 1;
 
-	// check if bit 0 is finished
-	if (BIT0_GET(status[i]) == bit0_size - last_bit)
-	{
-		led_on();
-		BITS_CLEAR(status[i]);
-		BITS_INC(status[i]);
-		ABP_DEC(status[i]);
-	}
-	// check if bit 1 is finished
-	else if (BIT1_GET(status[i]) == bit1_size - last_bit)
-	{
-		led_on();
-		BITS_CLEAR(status[i]);
-		BITS_INC(status[i]);
-		ABP_DEC(status[i]);
-		RF_DATA[(BITS_GET(status[i]) - 1) >> 3] |= (1 << ABP_GET(status[i]));
-	}
+    // check if bit 0 is finished
+    if (BIT0_GET(status[i]) == bit0_size - last_bit)
+    {
+        led_on();
+        BITS_CLEAR(status[i]);
+        BITS_INC(status[i]);
+        ABP_DEC(status[i]);
+    }
+    // check if bit 1 is finished
+    else if (BIT1_GET(status[i]) == bit1_size - last_bit)
+    {
+        led_on();
+        BITS_CLEAR(status[i]);
+        BITS_INC(status[i]);
+        ABP_DEC(status[i]);
+        RF_DATA[(BITS_GET(status[i]) - 1) >> 3] |= (1 << ABP_GET(status[i]));
+    }
 
-	// 8 bits are done, compute crc of data
-	if (ABP_GET(status[i]) == 0)
-	{
-		crc = Compute_CRC8_Simple_OneByte(crc ^ RF_DATA[(BITS_GET(status[i]) - 1) >> 3]);
-		ABP_RESET(status[i]);
-	}
+    // 8 bits are done, compute crc of data
+    if (ABP_GET(status[i]) == 0)
+    {
+        crc = Compute_CRC8_Simple_OneByte(crc ^ RF_DATA[(BITS_GET(status[i]) - 1) >> 3]);
+        ABP_RESET(status[i]);
+    }
 
-	// check if all bit got collected
-	if (BITS_GET(status[i]) >= bit_count)
-	{
-		// check if timeout timer for crc is finished
-		if (IsTimer2Finished())
-		{
-			old_crc = 0;
-		}
+    // check if all bit got collected
+    if (BITS_GET(status[i]) >= bit_count)
+    {
+        // check if timeout timer for crc is finished
+        if (IsTimer2Finished())
+        {
+            old_crc = 0;
+        }
 
-		// check new crc on last received data for debounce
-		if (crc != old_crc)
-		{
-			// new data, restart crc timeout
-			StopTimer2();
-			InitTimer2_ms(1, 800);
-			old_crc = crc;
+        // check new crc on last received data for debounce
+        if (crc != old_crc)
+        {
+            // new data, restart crc timeout
+            StopTimer2();
+            InitTimer2_ms(1, 800);
+            old_crc = crc;
 
-			// FIXME: it can be confusing to bury things like this in functions
-			// disable interrupt for RF receiving while uart transfer
-			//PCA0CPM0 &= ~PCA0CPM0_ECCF__ENABLED;
+            // FIXME: it can be confusing to bury things like this in functions
+            // disable interrupt for RF receiving while uart transfer
+            //PCA0CPM0 &= ~PCA0CPM0_ECCF__ENABLED;
 
-			// set status
-			RF_DATA_STATUS = i;
-			RF_DATA_STATUS |= RF_DATA_RECEIVED_MASK;
-		}
+            // set status
+            RF_DATA_STATUS = i;
+            RF_DATA_STATUS |= RF_DATA_RECEIVED_MASK;
+        }
 
-		led_off();
-		START_CLEAR(status[i]);
-		return true;
-	}
+        led_off();
+        START_CLEAR(status[i]);
+        return true;
+    }
 
-	return false;
+    return false;
 }
 
 void HandleRFBucket(uint16_t duration, bool high_low)
 {
-	uint8_t i = 0;
+    uint8_t i = 0;
 
-	// if noise got received stop all running decodings
-	if (duration < MIN_BUCKET_LENGTH)
-	{
-		// compiler will optimize this out if NUM_OF_PROTOCOLS = 1
-		for (i = 0; i < NUM_OF_PROTOCOLS; i++)
-		{
-			START_CLEAR(status[i]);
-		}
+    // if noise got received stop all running decodings
+    if (duration < MIN_BUCKET_LENGTH)
+    {
+        // compiler will optimize this out if NUM_OF_PROTOCOLS = 1
+        for (i = 0; i < NUM_OF_PROTOCOLS; i++)
+        {
+            START_CLEAR(status[i]);
+        }
 
-		led_off();
-		return;
-	}
+        led_off();
+        return;
+    }
 
-	// handle the buckets by standard or advanced decoding
-	switch(sniffing_mode)
-	{
-		case STANDARD:
-			// check if protocol was not started
-			if (START_GET(status[0]) == 0)
-			{
-				// if PT226x standard sniffing calculate the pulse time by the longer sync bucket
-				// this will enable receive PT226x in a range of PT226x_SYNC_MIN <-> 32767µs
-				if (duration > PT226x_SYNC_MIN && !high_low) // && (duration < PT226x_SYNC_MAX))
-				{
-					// increment start because of the skipped first high bucket
-					START_INC(status[0]);
-					START_INC(status[0]);
-					SYNC_LOW = duration;
+    // handle the buckets by standard or advanced decoding
+    switch(sniffing_mode)
+    {
+        case STANDARD:
+            // check if protocol was not started
+            if (START_GET(status[0]) == 0)
+            {
+                // if PT226x standard sniffing calculate the pulse time by the longer sync bucket
+                // this will enable receive PT226x in a range of PT226x_SYNC_MIN <-> 32767µs
+                if (duration > PT226x_SYNC_MIN && !high_low) // && (duration < PT226x_SYNC_MAX))
+                {
+                    // increment start because of the skipped first high bucket
+                    START_INC(status[0]);
+                    START_INC(status[0]);
+                    SYNC_LOW = duration;
 
                     //FIXME: change to eliminate divide and multiply
-					buckets[0] = duration / 31;
-					buckets[1] = buckets[0] * 3;
-					buckets[2] = duration;
-				}
-			}
-			// if sync is finished check if bit0 or bit1 is starting
-			else if (START_GET(status[0]) == 2)
-			{
-				DecodeBucket(0, high_low, duration,
-						buckets,
-						PROTOCOL_DATA[0].bit0.dat, PROTOCOL_DATA[0].bit0.size,
-						PROTOCOL_DATA[0].bit1.dat, PROTOCOL_DATA[0].bit1.size,
-						PROTOCOL_DATA[0].bit_count);
-			}
-			break;
+                    buckets[0] = duration / 31;
+                    buckets[1] = buckets[0] * 3;
+                    buckets[2] = duration;
+                }
+            }
+            // if sync is finished check if bit0 or bit1 is starting
+            else if (START_GET(status[0]) == 2)
+            {
+                DecodeBucket(0, high_low, duration,
+                        buckets,
+                        PROTOCOL_DATA[0].bit0.dat, PROTOCOL_DATA[0].bit0.size,
+                        PROTOCOL_DATA[0].bit1.dat, PROTOCOL_DATA[0].bit1.size,
+                        PROTOCOL_DATA[0].bit_count);
+            }
+            break;
 
-		case ADVANCED:
-			// check each protocol for each bucket
-			for (i = 0; i < NUM_OF_PROTOCOLS; i++)
-			{
-				// protocol started, check if sync is finished
-				if (START_GET(status[i]) < PROTOCOL_DATA[i].start.size)
-				{
-					// check if sync bucket high/low is matching
-					if (BUCKET_STATE(PROTOCOL_DATA[i].start.dat[START_GET(status[i])]) != high_low)
-						continue;
+        case ADVANCED:
+            // check each protocol for each bucket
+            for (i = 0; i < NUM_OF_PROTOCOLS; i++)
+            {
+                // protocol started, check if sync is finished
+                if (START_GET(status[i]) < PROTOCOL_DATA[i].start.size)
+                {
+                    // check if sync bucket high/low is matching
+                    if (BUCKET_STATE(PROTOCOL_DATA[i].start.dat[START_GET(status[i])]) != high_low)
+                        continue;
 
-					if (CheckRFSyncBucket(duration, PROTOCOL_DATA[i].buckets.dat[BUCKET_NR(PROTOCOL_DATA[i].start.dat[START_GET(status[i])])]))
-					{
-						START_INC(status[i]);
-						continue;
-					}
-					else
-					{
-						START_CLEAR(status[i]);
-						continue;
-					}
-				}
-				// if sync is finished check if bit0 or bit1 is starting
-				else if (START_GET(status[i]) == PROTOCOL_DATA[i].start.size)
-				{
-					if (DecodeBucket(i, high_low, duration,
-							PROTOCOL_DATA[i].buckets.dat,
-							PROTOCOL_DATA[i].bit0.dat, PROTOCOL_DATA[i].bit0.size,
-							PROTOCOL_DATA[i].bit1.dat, PROTOCOL_DATA[i].bit1.size,
-							PROTOCOL_DATA[i].bit_count))
-						return;
-				}
-			}
-			break;
-	}	// switch(sniffing_mode)
+                    if (CheckRFSyncBucket(duration, PROTOCOL_DATA[i].buckets.dat[BUCKET_NR(PROTOCOL_DATA[i].start.dat[START_GET(status[i])])]))
+                    {
+                        START_INC(status[i]);
+                        continue;
+                    }
+                    else
+                    {
+                        START_CLEAR(status[i]);
+                        continue;
+                    }
+                }
+                // if sync is finished check if bit0 or bit1 is starting
+                else if (START_GET(status[i]) == PROTOCOL_DATA[i].start.size)
+                {
+                    if (DecodeBucket(i, high_low, duration,
+                            PROTOCOL_DATA[i].buckets.dat,
+                            PROTOCOL_DATA[i].bit0.dat, PROTOCOL_DATA[i].bit0.size,
+                            PROTOCOL_DATA[i].bit1.dat, PROTOCOL_DATA[i].bit1.size,
+                            PROTOCOL_DATA[i].bit_count))
+                        return;
+                }
+            }
+            break;
+    }   // switch(sniffing_mode)
 }
 
 void buffer_in(uint16_t bucket)
 {
-	// check if writing next byte into circular buffer will catch up to read position, and if so bail out
-	if ((buffer_buckets_write + 1 == buffer_buckets_read) || (buffer_buckets_read == 0 && buffer_buckets_write + 1 == BUFFER_BUCKETS_SIZE))
-	{
-		return;
-	}
+    // check if writing next byte into circular buffer will catch up to read position, and if so bail out
+    if ((buffer_buckets_write + 1 == buffer_buckets_read) || (buffer_buckets_read == 0 && buffer_buckets_write + 1 == BUFFER_BUCKETS_SIZE))
+    {
+        return;
+    }
 
-	buffer_buckets[buffer_buckets_write] = bucket;
+    buffer_buckets[buffer_buckets_write] = bucket;
 
-	buffer_buckets_write++;
+    buffer_buckets_write++;
 
 
-	if (buffer_buckets_write >= BUFFER_BUCKETS_SIZE)
-	{
-		buffer_buckets_write = 0;
-	}
+    if (buffer_buckets_write >= BUFFER_BUCKETS_SIZE)
+    {
+        buffer_buckets_write = 0;
+    }
 }
 
 bool buffer_out(uint16_t* bucket)
 {
-	//FIXME: may need to do this type of save outside of function call
-	//uint8_t backup_PCA0CPM0 = PCA0CPM0;
+    //FIXME: may need to do this type of save outside of function call
+    //uint8_t backup_PCA0CPM0 = PCA0CPM0;
 
-	// check if buffer is empty
-	if (buffer_buckets_write == buffer_buckets_read)
-	{
-		return false;
-	}
+    // check if buffer is empty
+    if (buffer_buckets_write == buffer_buckets_read)
+    {
+        return false;
+    }
 
-	// disable interrupt for RF receiving while reading buffer
-	//PCA0CPM0 &= ~PCA0CPM0_ECCF__ENABLED;
-
-
-	*bucket = buffer_buckets[buffer_buckets_read];
-	buffer_buckets_read++;
+    // disable interrupt for RF receiving while reading buffer
+    //PCA0CPM0 &= ~PCA0CPM0_ECCF__ENABLED;
 
 
-	if (buffer_buckets_read >= BUFFER_BUCKETS_SIZE)
-	{
-		buffer_buckets_read = 0;
-	}
+    *bucket = buffer_buckets[buffer_buckets_read];
+    buffer_buckets_read++;
 
-	// reset register
-	//PCA0CPM0 = backup_PCA0CPM0;
 
-	return true;
+    if (buffer_buckets_read >= BUFFER_BUCKETS_SIZE)
+    {
+        buffer_buckets_read = 0;
+    }
+
+    // reset register
+    //PCA0CPM0 = backup_PCA0CPM0;
+
+    return true;
 }
 
 void capture_handler(const uint16_t currentCapture)
 {
-	// FIXME: additional comments; if bucket is not noise add it to buffer
-	if (currentCapture < 0x8000)
-	{
-		// FIXME: add comment
-		buffer_in(currentCapture | ((uint16_t)(!rdata_level()) << 15));
-	}
-	else
-	{
-		// received noise, so clear all received buckets
-		buffer_buckets_read = 0;
-		buffer_buckets_write = 0;
-	}
+    // FIXME: additional comments; if bucket is not noise add it to buffer
+    if (currentCapture < 0x8000)
+    {
+        // FIXME: add comment
+        buffer_in(currentCapture | ((uint16_t)(!rdata_level()) << 15));
+    }
+    else
+    {
+        // received noise, so clear all received buckets
+        buffer_buckets_read = 0;
+        buffer_buckets_write = 0;
+    }
 }
 
 //void SetTimer0Overflow(uint8_t T0_Overflow)
 //{
-//	// FIXME: add comment
-//	// timer 0 high byte - overflow
-//	 // shift was 0x00 anyway...
-//	//TH0 = (T0_Overflow << TH0_TH0__SHIFT);
-//	TH0 = T0_Overflow;
+//  // FIXME: add comment
+//  // timer 0 high byte - overflow
+//   // shift was 0x00 anyway...
+//  //TH0 = (T0_Overflow << TH0_TH0__SHIFT);
+//  TH0 = T0_Overflow;
 //}
 
 uint8_t PCA0_DoSniffing(void)
 {
-	// FIXME:
-	uint8_t ret = 0;
+    // FIXME:
+    uint8_t ret = 0;
 
     // FIXME: possible to remove to save code size?
-	memset(status, 0, sizeof(PROTOCOL_STATUS) * NUM_OF_PROTOCOLS);
+    memset(status, 0, sizeof(PROTOCOL_STATUS) * NUM_OF_PROTOCOLS);
 
     // FIXME: timer 0 was used as PCA clock source in Portisch
     // it is convenient to free it up for possible use with software uart
     // so use system clock divided by prescaler as clock source instead
-	// restore timer to 100000Hz, 10 microsecond interval
-	//SetTimer0Overflow(0x0B);
+    // restore timer to 100000Hz, 10 microsecond interval
+    //SetTimer0Overflow(0x0B);
     pca0_init();
 
-	// enable interrupt for RF receiving
-	//PCA0CPM0 |= ECCF__ENABLED;
+    // enable interrupt for RF receiving
+    //PCA0CPM0 |= ECCF__ENABLED;
     enable_capture_interrupt();
 
-	// start PCA
-	pca0_run();
+    // start PCA
+    pca0_run();
 
-	// FIXME: trying to remove use of Timer3 resource to save code size
-	//InitTimer3_ms(1, 10);
-	// wait until timer has finished
-	//WaitTimer3Finished();
-	delay1ms(10);
+    // FIXME: trying to remove use of Timer3 resource to save code size
+    //InitTimer3_ms(1, 10);
+    // wait until timer has finished
+    //WaitTimer3Finished();
+    delay1ms(10);
 
-	// FIXME: add comment
-	RF_DATA_STATUS = 0;
+    // FIXME: add comment
+    RF_DATA_STATUS = 0;
 
 
-	return ret;
+    return ret;
 }
 
 void PCA0_StopSniffing(void)
 {
-	// stop PCA
-	pca0_halt();
+    // stop PCA
+    pca0_halt();
 
     // FIXME: replace with HAL function call
-	// clear all interrupt flags of PCA0
-	//PCA0CN0 &= ~(CF__BMASK | CCF0__BMASK | CCF1__BMASK | CCF2__BMASK);
+    // clear all interrupt flags of PCA0
+    //PCA0CN0 &= ~(CF__BMASK | CCF0__BMASK | CCF1__BMASK | CCF2__BMASK);
 
-	// disable interrupt for RF receiving
-	//PCA0CPM0 &= ~ECCF__ENABLED;
+    // disable interrupt for RF receiving
+    //PCA0CPM0 &= ~ECCF__ENABLED;
     disable_capture_interrupt();
 
     // FIXME: replace with HAL function call
-	// be sure the timeout timer is stopped
-	//StopTimer2();
+    // be sure the timeout timer is stopped
+    //StopTimer2();
 }
 
 bool SendSingleBucket(bool high_low, uint16_t bucket_time)
 {
-	// switch to high_low
+    // switch to high_low
     if (high_low)
     {
         led_on();
@@ -476,16 +476,16 @@ bool SendSingleBucket(bool high_low, uint16_t bucket_time)
         tdata_off();
     }
     
-	//LED = high_low;
-	//T_DATA = high_low;
-	
-	// FIXME: remove need for Timer3 resource
+    //LED = high_low;
+    //T_DATA = high_low;
+    
+    // FIXME: remove need for Timer3 resource
     //InitTimer3_us(10, bucket_time);
-	// wait until timer has finished
-	//WaitTimer3Finished();
-	delay_us(bucket_time);
+    // wait until timer has finished
+    //WaitTimer3Finished();
+    delay_us(bucket_time);
 
-	return !high_low;
+    return !high_low;
 }
 
 //-----------------------------------------------------------------------------
@@ -495,280 +495,280 @@ bool SendSingleBucket(bool high_low, uint16_t bucket_time)
 
 void SendRFBuckets(uint16_t* buckets, uint8_t* rfdata, uint8_t data_len)
 {
-	// start transmit of the buckets with a high bucket
-	bool high_low = true;
-	bool high_low_mark = false;
-	uint8_t i;
+    // start transmit of the buckets with a high bucket
+    bool high_low = true;
+    bool high_low_mark = false;
+    uint8_t i;
 
-	// check first two buckets if high/low marking is included
-	high_low_mark = (rfdata[0] & 0x88) > 0;
+    // check first two buckets if high/low marking is included
+    high_low_mark = (rfdata[0] & 0x88) > 0;
 
-	// transmit data
-	for (i = 0; i < data_len; i++)
-	{
-		high_low = SendSingleBucket(high_low_mark ? (bool)(rfdata[i] >> 7) : high_low, buckets[(rfdata[i] >> 4) & 0x07]);
-		high_low = SendSingleBucket(high_low_mark ? (bool)((rfdata[i] >> 3) & 0x01) : high_low, buckets[rfdata[i] & 0x07]);
-	}
+    // transmit data
+    for (i = 0; i < data_len; i++)
+    {
+        high_low = SendSingleBucket(high_low_mark ? (bool)(rfdata[i] >> 7) : high_low, buckets[(rfdata[i] >> 4) & 0x07]);
+        high_low = SendSingleBucket(high_low_mark ? (bool)((rfdata[i] >> 3) & 0x01) : high_low, buckets[rfdata[i] & 0x07]);
+    }
 
-	led_off();
+    led_off();
 }
 
 #endif
 
 void SendBuckets(uint16_t *pulses,
-		uint8_t* start, uint8_t start_size,
-		uint8_t* bit0, uint8_t bit0_size,
-		uint8_t* bit1, uint8_t bit1_size,
-		uint8_t* end, uint8_t end_size,
-		uint8_t bit_count,
-		uint8_t* rfdata)
+        uint8_t* start, uint8_t start_size,
+        uint8_t* bit0, uint8_t bit0_size,
+        uint8_t* bit1, uint8_t bit1_size,
+        uint8_t* end, uint8_t end_size,
+        uint8_t bit_count,
+        uint8_t* rfdata)
 {
-	uint8_t i, a;
-	uint8_t actual_byte = 0;
-	uint8_t actual_bit = 0x80;
+    uint8_t i, a;
+    uint8_t actual_byte = 0;
+    uint8_t actual_bit = 0x80;
 
-	// transmit sync bucket(s)
-	for (i = 0; i < start_size; i++)
-		SendSingleBucket(BUCKET_STATE(start[i]), pulses[BUCKET_NR(start[i])]);
+    // transmit sync bucket(s)
+    for (i = 0; i < start_size; i++)
+        SendSingleBucket(BUCKET_STATE(start[i]), pulses[BUCKET_NR(start[i])]);
 
-	// transmit bit bucket(s)
-	for (i = 0; i < bit_count; i++)
-	{
-		// send bit 0
-		if ((rfdata[actual_byte] & actual_bit) == 0)
-		{
-			for (a = 0; a < bit0_size; a++)
-			{
-				SendSingleBucket(BUCKET_STATE(bit0[a]), pulses[BUCKET_NR(bit0[a])]);
-			}
-		}
-		else
-		{	// send bit 1
-			for (a = 0; a < bit1_size; a++)
-			{
-				SendSingleBucket(BUCKET_STATE(bit1[a]), pulses[BUCKET_NR(bit1[a])]);
-			}
-		}
+    // transmit bit bucket(s)
+    for (i = 0; i < bit_count; i++)
+    {
+        // send bit 0
+        if ((rfdata[actual_byte] & actual_bit) == 0)
+        {
+            for (a = 0; a < bit0_size; a++)
+            {
+                SendSingleBucket(BUCKET_STATE(bit0[a]), pulses[BUCKET_NR(bit0[a])]);
+            }
+        }
+        else
+        {   // send bit 1
+            for (a = 0; a < bit1_size; a++)
+            {
+                SendSingleBucket(BUCKET_STATE(bit1[a]), pulses[BUCKET_NR(bit1[a])]);
+            }
+        }
 
-		actual_bit >>= 1;
+        actual_bit >>= 1;
 
-		if (actual_bit == 0)
-		{
-			actual_byte++;
-			actual_bit = 0x80;
-		}
-	}
+        if (actual_bit == 0)
+        {
+            actual_byte++;
+            actual_bit = 0x80;
+        }
+    }
 
-	// transmit end bucket(s)
-	for (i = 0; i < end_size; i++)
-	{
-		SendSingleBucket(BUCKET_STATE(end[i]), pulses[BUCKET_NR(end[i])]);
-	}
+    // transmit end bucket(s)
+    for (i = 0; i < end_size; i++)
+    {
+        SendSingleBucket(BUCKET_STATE(end[i]), pulses[BUCKET_NR(end[i])]);
+    }
 
-	led_off();
+    led_off();
 }
 
 void SendBucketsByIndex(uint8_t index, uint8_t* rfdata)
 {
-	SendBuckets(
-			PROTOCOL_DATA[index].buckets.dat,
-			PROTOCOL_DATA[index].start.dat, PROTOCOL_DATA[index].start.size,
-			PROTOCOL_DATA[index].bit0.dat, PROTOCOL_DATA[index].bit0.size,
-			PROTOCOL_DATA[index].bit1.dat, PROTOCOL_DATA[index].bit1.size,
-			PROTOCOL_DATA[index].end.dat, PROTOCOL_DATA[index].end.size,
-			PROTOCOL_DATA[index].bit_count,
-			rfdata
-			);
+    SendBuckets(
+            PROTOCOL_DATA[index].buckets.dat,
+            PROTOCOL_DATA[index].start.dat, PROTOCOL_DATA[index].start.size,
+            PROTOCOL_DATA[index].bit0.dat, PROTOCOL_DATA[index].bit0.size,
+            PROTOCOL_DATA[index].bit1.dat, PROTOCOL_DATA[index].bit1.size,
+            PROTOCOL_DATA[index].end.dat, PROTOCOL_DATA[index].end.size,
+            PROTOCOL_DATA[index].bit_count,
+            rfdata
+            );
 }
 
 #if defined(INCLUDE_BUCKET_SNIFFING)
 
 bool probablyFooter(uint16_t duration)
 {
-	return duration >= MIN_FOOTER_LENGTH;
+    return duration >= MIN_FOOTER_LENGTH;
 }
 
 bool matchesFooter(uint16_t duration, bool high_low)
 {
-	if (!((bucket_sync & 0x8000) >> 15) && high_low)
-		return false;
+    if (!((bucket_sync & 0x8000) >> 15) && high_low)
+        return false;
 
-	return CheckRFSyncBucket(duration, bucket_sync & 0x7FFF);
+    return CheckRFSyncBucket(duration, bucket_sync & 0x7FFF);
 }
 
 bool findBucket(uint16_t duration, uint8_t *index)
 {
-	uint8_t i;
-	uint16_t delta;
+    uint8_t i;
+    uint16_t delta;
 
-	for (i = 0; i < bucket_count; i++)
-	{
-		// calculate delta by the current duration and check if the new duration fits into
-		delta = ((duration >> 2) + (duration >> 3));
-		delta = delta > buckets[i] ? buckets[i] : delta;
+    for (i = 0; i < bucket_count; i++)
+    {
+        // calculate delta by the current duration and check if the new duration fits into
+        delta = ((duration >> 2) + (duration >> 3));
+        delta = delta > buckets[i] ? buckets[i] : delta;
 
-		if (CheckRFBucket(duration, buckets[i], delta))
-		{
-			*index = i;
-			return true;
-		}
-	}
+        if (CheckRFBucket(duration, buckets[i], delta))
+        {
+            *index = i;
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 
 void Bucket_Received(uint16_t duration, bool high_low, rf_state_t* rf_state)
 {
-	uint8_t bucket_index;
+    uint8_t bucket_index;
 
-	// if pulse is too short reset status
-	if (duration < MIN_BUCKET_LENGTH)
-	{
-		*rf_state = RF_IDLE;
-		return;
-	}
+    // if pulse is too short reset status
+    if (duration < MIN_BUCKET_LENGTH)
+    {
+        *rf_state = RF_IDLE;
+        return;
+    }
 
-	switch (*rf_state)
-	{
-		// check if we maybe receive a sync
-		case RF_IDLE:
-			led_off();
+    switch (*rf_state)
+    {
+        // check if we maybe receive a sync
+        case RF_IDLE:
+            led_off();
 
-			if (probablyFooter(duration))
-			{
-				bucket_sync = duration | ((uint16_t)high_low << 15);
-				bucket_count_sync_1 = 0;
-				*rf_state = RF_BUCKET_REPEAT;
-			}
-			break;
+            if (probablyFooter(duration))
+            {
+                bucket_sync = duration | ((uint16_t)high_low << 15);
+                bucket_count_sync_1 = 0;
+                *rf_state = RF_BUCKET_REPEAT;
+            }
+            break;
 
-		// check if the same bucket gets received
-		case RF_BUCKET_REPEAT:
-			if (matchesFooter(duration, high_low))
-			{
-				// check if a minimum of buckets where between two sync pulses
-				if (bucket_count_sync_1 > 4)
-				{
-					led_on();
-					bucket_count = 0;
-					actual_byte = 0;
-					actual_byte_high_nibble = false;
-					bucket_count_sync_2 = 0;
-					crc = 0x00;
-					RF_DATA[0] = 0;
-					*rf_state = RF_BUCKET_IN_SYNC;
-				}
-				else
-				{
-					*rf_state = RF_IDLE;
-				}
-			}
-			// check if duration is longer than sync bucket restart
-			else if (duration > (bucket_sync & 0x7FFF))
-			{
-				// this bucket looks like the sync bucket
-				bucket_sync = duration | ((uint16_t)high_low << 15);
-				bucket_count_sync_1 = 0;
-			}
-			else
-			{
-				bucket_count_sync_1++;
-			}
+        // check if the same bucket gets received
+        case RF_BUCKET_REPEAT:
+            if (matchesFooter(duration, high_low))
+            {
+                // check if a minimum of buckets where between two sync pulses
+                if (bucket_count_sync_1 > 4)
+                {
+                    led_on();
+                    bucket_count = 0;
+                    actual_byte = 0;
+                    actual_byte_high_nibble = false;
+                    bucket_count_sync_2 = 0;
+                    crc = 0x00;
+                    RF_DATA[0] = 0;
+                    *rf_state = RF_BUCKET_IN_SYNC;
+                }
+                else
+                {
+                    *rf_state = RF_IDLE;
+                }
+            }
+            // check if duration is longer than sync bucket restart
+            else if (duration > (bucket_sync & 0x7FFF))
+            {
+                // this bucket looks like the sync bucket
+                bucket_sync = duration | ((uint16_t)high_low << 15);
+                bucket_count_sync_1 = 0;
+            }
+            else
+            {
+                bucket_count_sync_1++;
+            }
 
-			// no more buckets are possible, reset
-			if (bucket_count_sync_1 >= RF_DATA_BUFFERSIZE << 1)
-			{
-				*rf_state = RF_IDLE;
-			}
+            // no more buckets are possible, reset
+            if (bucket_count_sync_1 >= RF_DATA_BUFFERSIZE << 1)
+            {
+                *rf_state = RF_IDLE;
+            }
 
-			break;
+            break;
 
-		// same sync bucket got received, filter buckets
-		case RF_BUCKET_IN_SYNC:
-			bucket_count_sync_2++;
+        // same sync bucket got received, filter buckets
+        case RF_BUCKET_IN_SYNC:
+            bucket_count_sync_2++;
 
-			// check if all buckets got received
-			if (bucket_count_sync_2 <= bucket_count_sync_1)
-			{
-				// check if bucket was already received
-				if (!findBucket(duration, &bucket_index))
-				{
-					// new bucket received, add to array
-					buckets[bucket_count] = duration;
-					bucket_index = bucket_count;
-					bucket_count++;
+            // check if all buckets got received
+            if (bucket_count_sync_2 <= bucket_count_sync_1)
+            {
+                // check if bucket was already received
+                if (!findBucket(duration, &bucket_index))
+                {
+                    // new bucket received, add to array
+                    buckets[bucket_count] = duration;
+                    bucket_index = bucket_count;
+                    bucket_count++;
 
-					// check if maximum of array got reached
-					if (bucket_count > ARRAY_LENGTH(buckets))
+                    // check if maximum of array got reached
+                    if (bucket_count > ARRAY_LENGTH(buckets))
                     //if (bucket_count > NUM_OF_BUCKETS)
-					{
-						// restart sync
-						*rf_state = RF_IDLE;
-					}
-				}
+                    {
+                        // restart sync
+                        *rf_state = RF_IDLE;
+                    }
+                }
 
-				// fill rf data with the current bucket number
-				if (actual_byte_high_nibble)
-				{
-					RF_DATA[actual_byte] = (bucket_index << 4) | ((uint8_t)high_low << 7);
-				}
-				else
-				{
-					RF_DATA[actual_byte] |= (bucket_index | ((uint8_t)high_low << 3));
+                // fill rf data with the current bucket number
+                if (actual_byte_high_nibble)
+                {
+                    RF_DATA[actual_byte] = (bucket_index << 4) | ((uint8_t)high_low << 7);
+                }
+                else
+                {
+                    RF_DATA[actual_byte] |= (bucket_index | ((uint8_t)high_low << 3));
 
-					crc = Compute_CRC8_Simple_OneByte(crc ^ RF_DATA[actual_byte]);
+                    crc = Compute_CRC8_Simple_OneByte(crc ^ RF_DATA[actual_byte]);
 
-					actual_byte++;
+                    actual_byte++;
 
-					// check if maximum of array got reached
-					if (actual_byte > RF_DATA_BUFFERSIZE)
-					{
-						// restart sync
-						*rf_state = RF_IDLE;
-					}
-				}
+                    // check if maximum of array got reached
+                    if (actual_byte > RF_DATA_BUFFERSIZE)
+                    {
+                        // restart sync
+                        *rf_state = RF_IDLE;
+                    }
+                }
 
-				actual_byte_high_nibble = !actual_byte_high_nibble;
-			}
-			// next bucket after data have to be a sync bucket
-			else if (matchesFooter(duration, high_low))
-			{
-				// check if timeout timer for crc is finished
-				if (IsTimer2Finished())
-					old_crc = 0;
+                actual_byte_high_nibble = !actual_byte_high_nibble;
+            }
+            // next bucket after data have to be a sync bucket
+            else if (matchesFooter(duration, high_low))
+            {
+                // check if timeout timer for crc is finished
+                if (IsTimer2Finished())
+                    old_crc = 0;
 
-				// check new crc on last received data for debounce
-				if (crc != old_crc)
-				{
-					// new data, restart crc timeout
-					StopTimer2();
-					InitTimer2_ms(1, 800);
-					old_crc = crc;
+                // check new crc on last received data for debounce
+                if (crc != old_crc)
+                {
+                    // new data, restart crc timeout
+                    StopTimer2();
+                    InitTimer2_ms(1, 800);
+                    old_crc = crc;
 
-					// disable interrupt for RF receiving while uart transfer
-					//FIXME: want to move outside of buried function
-					//PCA0CPM0 &= ~PCA0CPM0_ECCF__ENABLED;
+                    // disable interrupt for RF receiving while uart transfer
+                    //FIXME: want to move outside of buried function
+                    //PCA0CPM0 &= ~PCA0CPM0_ECCF__ENABLED;
 
-					// add sync bucket number to data
-					RF_DATA[0] |= ((bucket_count << 4) | ((bucket_sync & 0x8000) >> 8));
+                    // add sync bucket number to data
+                    RF_DATA[0] |= ((bucket_count << 4) | ((bucket_sync & 0x8000) >> 8));
 
-					// clear high/low flag
-					bucket_sync &= 0x7FFF;
+                    // clear high/low flag
+                    bucket_sync &= 0x7FFF;
 
-					RF_DATA_STATUS |= RF_DATA_RECEIVED_MASK;
-				}
+                    RF_DATA_STATUS |= RF_DATA_RECEIVED_MASK;
+                }
 
-				led_off();
-				*rf_state = RF_IDLE;
-			}
-			// next bucket after receiving all data buckets was not a sync bucket, restart
-			else
-			{
-				// restart sync
-				*rf_state = RF_IDLE;
-			}
-			break;
-	}
+                led_off();
+                *rf_state = RF_IDLE;
+            }
+            // next bucket after receiving all data buckets was not a sync bucket, restart
+            else
+            {
+                // restart sync
+                *rf_state = RF_IDLE;
+            }
+            break;
+    }
 }
 
 #endif

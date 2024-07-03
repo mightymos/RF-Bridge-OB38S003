@@ -14,7 +14,7 @@ void set_clock_mode(void)
 {
     // default is 2T mode
     // ITS = 000 or 1T mode
-	// ITS = 101 or 6T mode
+    // ITS = 101 or 6T mode
     CKCON &= ~0x70;
 }
 
@@ -28,9 +28,9 @@ void enable_watchdog(void)
     
     // sets WDTE bit
     //WDTC |= 0x20;
-	
-	// enable WDT and select time-out reset period is 3.2768s
-	WDTC = 0x28;
+    
+    // enable WDT and select time-out reset period is 3.2768s
+    WDTC = 0x28;
 }
 
 void disable_watchdog(void)
@@ -55,10 +55,10 @@ void init_port_pins(void)
     // buzzer push pull
     P0M1 &= ~0x01;
     P0M0 |=  0x01;
-	
-	// radio transmit push pull
-	P0M1 &= ~0x80;
-	P0M0 |=  0x80;
+    
+    // radio transmit push pull
+    P0M1 &= ~0x80;
+    P0M0 |=  0x80;
     
     // uart tx push pull
     //P1M1 &= ~0x01;
@@ -67,11 +67,11 @@ void init_port_pins(void)
     // radio incoming input only
     //P1M1 |=  0x40;
     //P1M0 &= ~0x40;
-	
-	// software uart (transmit by reset pin)
-	// default should be quasi output
-	//P1M1 &= ~0x20;
-	//P1M0 &= ~0x20;
+    
+    // software uart (transmit by reset pin)
+    // default should be quasi output
+    //P1M1 &= ~0x20;
+    //P1M0 &= ~0x20;
     
     // rf sleep/wake push pull
     // see sonoffr22_pins.h - pin attached to upper leg of resistor divider
@@ -165,8 +165,8 @@ void init_timer1(void)
 {
     // 16-bit mode
     //TMOD |= 0x10;
-	//  8-bit auto reload mode
-	TMOD |= 0x20;
+    //  8-bit auto reload mode
+    TMOD |= 0x20;
     
     // T1PS prescaler Fosc
     // b01 = FOCS
@@ -227,7 +227,7 @@ unsigned char get_stack_pointer(void)
 unsigned long countsToTime(const unsigned long duration)
 {
     unsigned long converted;
-	
+    
     converted = (duration * 3) / 2;
     
     return converted;

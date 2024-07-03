@@ -32,7 +32,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #if !defined(TARGET_BOARD_EFM8BB1) && !defined(TARGET_BOARD_OB38S003) && !defined(TARGET_BOARD_EFM8BB1LCB)
-	#error Please define TARGET_BOARD in makefile
+    #error Please define TARGET_BOARD in makefile
 #endif
 
 // printf() requires a decent amount of code space and ram which we would like to avoid
@@ -78,45 +78,45 @@
 // it is probably more proper to achieve this through include files but also easy to omit
 // and then things just will not work with no clear reason why, even though compilation is succcessful
 #if defined(TARGET_BOARD_OB38S003)
-	// for software uart
-	// FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
-	extern void tm0(void)        __interrupt (d_T0_Vector);
-	// supports timeout
-	extern void timer1_isr(void) __interrupt (d_T1_Vector);
-	// pca like capture mode for radio decoding
-	extern void timer2_isr(void) __interrupt (d_T2_Vector);
-	// hardware uart
-	extern void uart_isr(void)   __interrupt (d_UART0_Vector);
+    // for software uart
+    // FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
+    extern void tm0(void)        __interrupt (d_T0_Vector);
+    // supports timeout
+    extern void timer1_isr(void) __interrupt (d_T1_Vector);
+    // pca like capture mode for radio decoding
+    extern void timer2_isr(void) __interrupt (d_T2_Vector);
+    // hardware uart
+    extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
 
-	// software uart
-	extern void tm0(void)        __interrupt (TIMER0_VECTOR);
-	// supports timeout
-	extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
-	// hardware uart (uses timer 1)
-	extern void uart_isr(void)   __interrupt (UART0_VECTOR);
-	// radio decoding
-	extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
+    // software uart
+    extern void tm0(void)        __interrupt (TIMER0_VECTOR);
+    // supports timeout
+    extern void timer2_isr(void) __interrupt (TIMER2_VECTOR);
+    // hardware uart (uses timer 1)
+    extern void uart_isr(void)   __interrupt (UART0_VECTOR);
+    // radio decoding
+    extern void pca0_isr(void)   __interrupt (PCA0_VECTOR);
 
-	// unique ID is stored in xram (MSB at address 0xFF)
-	//#define ID0_ADDR_RAM 0xFF
-	//#define ID1_ADDR_RAM 0xFE
-	//#define ID2_ADDR_RAM 0xFD
-	//#define ID3_ADDR_RAM 0xFC
+    // unique ID is stored in xram (MSB at address 0xFF)
+    //#define ID0_ADDR_RAM 0xFF
+    //#define ID1_ADDR_RAM 0xFE
+    //#define ID2_ADDR_RAM 0xFD
+    //#define ID3_ADDR_RAM 0xFC
 
-	// this will fail if we assign external ram to values which are initialized
-	// and we really do not need the feature anyway
-	//void startup_uid(void)
-	//{
-	//	puthex2(*((__xdata unsigned char*) ID0_ADDR_RAM));
-	//	puthex2(*((__xdata unsigned char*) ID1_ADDR_RAM));
-	//	puthex2(*((__xdata unsigned char*) ID2_ADDR_RAM));
-	//	puthex2(*((__xdata unsigned char*) ID3_ADDR_RAM));
-	//}
+    // this will fail if we assign external ram to values which are initialized
+    // and we really do not need the feature anyway
+    //void startup_uid(void)
+    //{
+    //  puthex2(*((__xdata unsigned char*) ID0_ADDR_RAM));
+    //  puthex2(*((__xdata unsigned char*) ID1_ADDR_RAM));
+    //  puthex2(*((__xdata unsigned char*) ID2_ADDR_RAM));
+    //  puthex2(*((__xdata unsigned char*) ID3_ADDR_RAM));
+    //}
 
 #else
-	#error Please define TARGET_BOARD in makefile
+    #error Please define TARGET_BOARD in makefile
 #endif
 
 //-----------------------------------------------------------------------------
@@ -173,108 +173,108 @@ void startup_blink(void)
 // ----------------------------------------------------------------------------
 int main (void)
 {
-	// just track how many loops have transpired as a rough way of tracking time
+    // just track how many loops have transpired as a rough way of tracking time
     __xdata uint32_t ticks = HEARTBEAT_THRESHOLD;
-	
+    
     
     // upper eight bits hold error or no data flags
     __xdata unsigned int rxdataWithFlags = UART_NO_DATA;
-	
-	// allows communication between uart state machine and radio state machine
-	__xdata RF_COMMAND_T rfCommand = NONE;
+    
+    // allows communication between uart state machine and radio state machine
+    __xdata RF_COMMAND_T rfCommand = NONE;
     
 
     // hardware initialization
-	set_clock_mode();
-	
+    set_clock_mode();
+    
 #if defined(TARGET_BOARD_OB38S003)
-	init_port_pins();
+    init_port_pins();
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
-	// the crossbar on this microcontroller makes initialization more complicated
+    // the crossbar on this microcontroller makes initialization more complicated
     init_port_pins_for_serial();
 #else
-	#error Please define TARGET_BOARD in makefile
+    #error Please define TARGET_BOARD in makefile
 #endif
     
     // set default pin levels
     led_off();
     buzzer_off();
     tdata_off();
-	
-	// DEBUG:
-	// on some boards, "debug pin" is actually buzzer
-	// so we do not want to use it for debugging unless buzzer has been removed
-	//debug_pin01_off();
-	
+    
+    // DEBUG:
+    // on some boards, "debug pin" is actually buzzer
+    // so we do not want to use it for debugging unless buzzer has been removed
+    //debug_pin01_off();
+    
     //
-	startup_blink();
-	delay1ms(500);
+    startup_blink();
+    delay1ms(500);
     
     // setup hardware serial
-	// timer 1 is clock source for uart0 on efm8bb1
-	// should call these after initializing port pins
+    // timer 1 is clock source for uart0 on efm8bb1
+    // should call these after initializing port pins
     init_uart();
     uart_rx_enabled();
     
     // hardware serial interrupt
     init_serial_interrupt();
-	enable_serial_interrupt();
+    enable_serial_interrupt();
     
    
     // software serial
     // default state is reset/pin1 high if using software uart as transmit pin
     soft_tx_pin_on();
 
-	// allows use of a gpio to output text characters because hardware uart is assigned for communicating with esp8285
+    // allows use of a gpio to output text characters because hardware uart is assigned for communicating with esp8285
     init_software_uart();
 
-	
+    
 #if defined(TARGET_BOARD_OB38S003)
     // timer 0 provides one millisecond tick or supports software uart
     // timer 1 provides ten microsecond tick
-	// for ob38s003 0xFFFF - (10*10^-6)/(1/16000000)
+    // for ob38s003 0xFFFF - (10*10^-6)/(1/16000000)
     init_timer0(SOFT_BAUD);
     //init_timer1(TH1_RELOAD_10MICROS, TL1_RELOAD_10MICROS);
-	// 0x5F for 10 microsecs
-	// 0xEF for  1 microsec
-	init_timer1();
-	// timer 2 supports compare and capture module
-	// for determining pulse lengths of received radio signals
+    // 0x5F for 10 microsecs
+    // 0xEF for  1 microsec
+    init_timer1();
+    // timer 2 supports compare and capture module
+    // for determining pulse lengths of received radio signals
     init_timer2_as_capture();
-	
-	//
-	enable_timer0_interrupt();
+    
+    //
+    enable_timer0_interrupt();
     enable_timer1_interrupt();
-	//enable_timer2_interrupt();
+    //enable_timer2_interrupt();
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
-	// pca used timer0 in portisch (why?), rcswitch can use dedicated pca counters
-	//init_timer0(TIMER0_PCA0);
-	init_timer0(SOFT_BAUD);
-	// uart must use timer1 on this controller
-	init_timer1(TIMER1_UART0);
-	//init_timer2(TIMER2_RELOAD_10MICROS);
-	// timer 3 is unused for now
-	
-	enable_timer0_interrupt();
+    // pca used timer0 in portisch (why?), rcswitch can use dedicated pca counters
+    //init_timer0(TIMER0_PCA0);
+    init_timer0(SOFT_BAUD);
+    // uart must use timer1 on this controller
+    init_timer1(TIMER1_UART0);
+    //init_timer2(TIMER2_RELOAD_10MICROS);
+    // timer 3 is unused for now
+    
+    enable_timer0_interrupt();
     //enable_timer1_interrupt();
-	// timer 2 is used on demand to produce delays (i.e., time enabled at start, wait, then timer stopped at overflow)
-	enable_timer2_interrupt();
-	
-	// pca0 clock source was timer 0 on portisch
-	// however we use system clock divided by 12 as source here
+    // timer 2 is used on demand to produce delays (i.e., time enabled at start, wait, then timer stopped at overflow)
+    enable_timer2_interrupt();
+    
+    // pca0 clock source was timer 0 on portisch
+    // however we use system clock divided by 12 as source here
     pca0_init();
-	pca0_run();
+    pca0_run();
 #endif
     
 
     // radio receiver edge detection
     enable_capture_interrupt();
-	
+    
     // enable interrupts
     enable_global_interrupts();
  
     
-	// FIXME: function empty on efm8bb1, because unknown if receiver has enable pin
+    // FIXME: function empty on efm8bb1, because unknown if receiver has enable pin
     radio_receiver_on();
     
     //startup_beep();
@@ -290,15 +290,15 @@ int main (void)
     enable_watchdog();
 
 #if 1
-	// demonstrate software uart is working
-	putstring("boot\r\n");
+    // demonstrate software uart is working
+    putstring("boot\r\n");
 #endif
 
 
 //#if defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
-//	putstring("uid:");
-//	startup_uid();
-//	putstring("\r\n");
+//  putstring("uid:");
+//  startup_uid();
+//  putstring("\r\n");
 //#endif
 
     while (true)
@@ -309,7 +309,7 @@ int main (void)
     
 
         // try to get one byte from uart rx buffer
-		// otherwise, the flags will indicate no data
+        // otherwise, the flags will indicate no data
         rxdataWithFlags = uart_getc();
 
      
@@ -326,10 +326,10 @@ int main (void)
 
         // process serial receive data
         rfCommand = uart_state_machine(rxdataWithFlags);
-		
-		
-		// it seems better to separate the state machine for the radio and uart
-		rf_state_machine(rfCommand);
+        
+        
+        // it seems better to separate the state machine for the radio and uart
+        rf_state_machine(rfCommand);
             
 
         if (available())
@@ -341,43 +341,43 @@ int main (void)
             // formatted for tasmota for output to web interface
             radio_rfin();
             
-			// causes the led to strobe for visual feedback as packet is being received
+            // causes the led to strobe for visual feedback as packet is being received
             led_toggle();
-			
-			puthex2('H');
+            
+            puthex2('H');
             
 #if 0
             // DEBUG: using software uart
             // this is slow because of low baud rate, so prefer to exclude in normal operation
-			radio_decode_debug();
+            radio_decode_debug();
 #endif
 
-			// clears received data
+            // clears received data
             reset_available();
-			
-			// FIXME: if we use software uart to send debug output, this will be slow to be re-enabled
+            
+            // FIXME: if we use software uart to send debug output, this will be slow to be re-enabled
             enable_capture_interrupt();
         }
         
         
 #if 1
-		// it would be nice to increment ticks instead and then track current minus previous
+        // it would be nice to increment ticks instead and then track current minus previous
         // so that ticks may be used with multiple thresholds for various rough timing needs
         // or the alternative would be to repurpose or dual purpose a timer, however software uart has been very helpful for debugging
         // finally, it is probably not necessary to use multiple ticks
-		ticks--;
-		
-		// compare to threshold
-		if (ticks == 0)
-		{
-			// DEBUG
-			//debug_pin01_toggle();
-			
-			led_toggle();
-			
-			// reset count
-			ticks = HEARTBEAT_THRESHOLD;
-		}
+        ticks--;
+        
+        // compare to threshold
+        if (ticks == 0)
+        {
+            // DEBUG
+            //debug_pin01_toggle();
+            
+            led_toggle();
+            
+            // reset count
+            ticks = HEARTBEAT_THRESHOLD;
+        }
         
 #endif
         

@@ -31,84 +31,84 @@ void tm0(void) __interrupt (TIMER0_VECTOR)
 {    
 
     // for timer 0/1 no autoreload is available in 16 bit mode
-	// however, timer 2/3 would have autoreload available
-	load_timer0(SOFT_BAUD);
+    // however, timer 2/3 would have autoreload available
+    load_timer0(SOFT_BAUD);
 
     
-	if (RING)
-	{
-		if (--RCNT == 0)
-		{
-			//reset send baudrate counter
-			RCNT = 3;
-			if (--RBIT == 0)
-			{
-				//save the data to RBUF
-				RBUF = RDAT;
-				//stop receive
-				RING = 0;
-				//set receive completed flag
-				REND = 1;
-			} else {
-				RDAT >>= 1;
-				
-				//shift RX data to RX buffer
-				// on some microcontrollers we do not have an extra receive pin available
-				// so the hal will always return false and this will get optimized out by compiler
-				if (get_soft_rx_pin())
-				{
-					RDAT |= 0x80;
-				}
-			}
-		}
-	} else if (!get_soft_rx_pin()) {
-		//set start receive flag
-		RING = 1;
-		//initial receive baudrate counter
-		RCNT = 4;
-		//initial receive bit number (8 data bits + 1 stop bit)
-		RBIT = 9;
-	}
+    if (RING)
+    {
+        if (--RCNT == 0)
+        {
+            //reset send baudrate counter
+            RCNT = 3;
+            if (--RBIT == 0)
+            {
+                //save the data to RBUF
+                RBUF = RDAT;
+                //stop receive
+                RING = 0;
+                //set receive completed flag
+                REND = 1;
+            } else {
+                RDAT >>= 1;
+                
+                //shift RX data to RX buffer
+                // on some microcontrollers we do not have an extra receive pin available
+                // so the hal will always return false and this will get optimized out by compiler
+                if (get_soft_rx_pin())
+                {
+                    RDAT |= 0x80;
+                }
+            }
+        }
+    } else if (!get_soft_rx_pin()) {
+        //set start receive flag
+        RING = 1;
+        //initial receive baudrate counter
+        RCNT = 4;
+        //initial receive bit number (8 data bits + 1 stop bit)
+        RBIT = 9;
+    }
 
-	if (--TCNT == 0)
-	{
-		//reset send baudrate counter
-		TCNT = TCNT_RELOAD;
-		if (TING)
-		{  //judge whether sending
-			if (TBIT == 0)
-			{
-				// send start bit
-				//i.e., TXB = 0;
-				soft_tx_pin_off();
-				// load data from TBUF to TDAT
-				TDAT = TBUF;
-				// initial send bit number (8 data bits + 1 stop bit)
-				TBIT = 9;
-			} else {
-				// shift data to CY
-				TDAT >>= 1;
+    if (--TCNT == 0)
+    {
+        //reset send baudrate counter
+        TCNT = TCNT_RELOAD;
+        if (TING)
+        {  //judge whether sending
+            if (TBIT == 0)
+            {
+                // send start bit
+                //i.e., TXB = 0;
+                soft_tx_pin_off();
+                // load data from TBUF to TDAT
+                TDAT = TBUF;
+                // initial send bit number (8 data bits + 1 stop bit)
+                TBIT = 9;
+            } else {
+                // shift data to CY
+                TDAT >>= 1;
 
-				if (--TBIT == 0)
-				{
-					// i.e., TXB = 1;
-					soft_tx_pin_on();
-					// stop send
-					TING = 0;
-					// set send completed flag
-					TEND = 1;
-				} else {
-					// write CY to TX port
-					// i.e., TXB = CY;
-					set_soft_tx_pin(CY);
-				}
-			}
-		}
-	}
+                if (--TBIT == 0)
+                {
+                    // i.e., TXB = 1;
+                    soft_tx_pin_on();
+                    // stop send
+                    TING = 0;
+                    // set send completed flag
+                    TEND = 1;
+                } else {
+                    // write CY to TX port
+                    // i.e., TXB = CY;
+                    set_soft_tx_pin(CY);
+                }
+            }
+        }
+    }
 
-	// timer 0/1 flags are automatically cleared on both controllers
-	// if using timer 3 high overflow flag must be cleared
-	//TMR3CN0 &= ~TF3H__SET;
+    // timer 0/1 flags are automatically cleared on both controllers
+    // if using timer 3 high overflow flag must be cleared
+    //TMR3CN0 &= ~TF3H__SET;
 }
 
 //-----------------------------------------

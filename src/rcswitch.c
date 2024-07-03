@@ -128,22 +128,22 @@ bool receive_protocol(const int p, unsigned int changeCount)
         if (abs(timings[i] - delay * pro.zero.high) < delayTolerance &&
             abs(timings[i + 1] - delay * pro.zero.low) < delayTolerance) {
             // zero
-			
-			// DEBUG:
-			//debug_pin01_off();
+            
+            // DEBUG:
+            //debug_pin01_off();
         } else if (abs(timings[i] - delay * pro.one.high) < delayTolerance &&
             abs(timings[i + 1] - delay * pro.one.low) < delayTolerance) {
             // one
             code |= 1;
-			
-			// DEBUG:
-			//debug_pin01_on();
+            
+            // DEBUG:
+            //debug_pin01_on();
         } else {
             // failed
             return false;
         }
     }
-    	
+        
     // ignore very short transmissions: no device sends them, so this must be noise
     if (changeCount > 7)
     {
@@ -168,17 +168,17 @@ void capture_handler(const uint16_t currentCapture)
     static uint16_t current = 0;
     
     // this eventually represents the level duration in microseconds (difference between edge transitions)
-	// FIXME: we should probably comment on why this is long type once I remember
+    // FIXME: we should probably comment on why this is long type once I remember
     unsigned long duration;
     
 
     // rc-switch variables
-	// changed from int to uint8_t to save memory
+    // changed from int to uint8_t to save memory
     static uint8_t repeatCount = 0;
     static uint8_t changeCount = 0;
 
 
-	const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
+    const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
 
     // update
     previous = current;
@@ -196,10 +196,10 @@ void capture_handler(const uint16_t currentCapture)
     }
     
     // e.g., EFM8BB1
-	// e.g. (1/(24500000))*(49/2) = 1      microsec
-	// e.g. (1/(24500000/12))*2   = 0.9796 microsec
-	// so need to do the inverse to go from counts to time (i.e., counts * 1/2 = time)
-	// (1/(24500000/12))*dec(0xFFFF) = 32.0987755 millisecs max
+    // e.g. (1/(24500000))*(49/2) = 1      microsec
+    // e.g. (1/(24500000/12))*2   = 0.9796 microsec
+    // so need to do the inverse to go from counts to time (i.e., counts * 1/2 = time)
+    // (1/(24500000/12))*dec(0xFFFF) = 32.0987755 millisecs max
     
     // e.g., OBS38S003
     // e.g. prescale at (1/4) at 16 MHz, four counts are needed to get one microsecond
@@ -250,9 +250,9 @@ void capture_handler(const uint16_t currentCapture)
     }
 
     timings[changeCount++] = duration;
-	
-	// DEBUG: this is a decent way of seeing the actual timing on an oscilloscope
-	//debug_pin01_toggle();
+    
+    // DEBUG: this is a decent way of seeing the actual timing on an oscilloscope
+    //debug_pin01_toggle();
 }
 
 /**
@@ -260,7 +260,7 @@ void capture_handler(const uint16_t currentCapture)
  */
 //void setRepeatTransmit(const int repeat)
 //{
-//	nRepeatTransmit = repeat;
+//  nRepeatTransmit = repeat;
 //}
 
 /**
@@ -268,7 +268,7 @@ void capture_handler(const uint16_t currentCapture)
   */
 //void setProtocol(const struct Protocol pro)
 //{
-//	protocol = pro;
+//  protocol = pro;
 //}
 
 /**
@@ -282,7 +282,7 @@ void capture_handler(const uint16_t currentCapture)
 //        nProtocol = 1;
 //    }
 //
-//	memcpy(&protocol, &protocols[nProtocol-1], sizeof(struct Protocol));
+//  memcpy(&protocol, &protocols[nProtocol-1], sizeof(struct Protocol));
 //}
 
 /**
@@ -290,25 +290,25 @@ void capture_handler(const uint16_t currentCapture)
  */
 void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
 {
-	__xdata uint8_t firstLogicLevel  = invertedSignal ? 0 : 1;
-	__xdata uint8_t secondLogicLevel = invertedSignal ? 1 : 0;
+    __xdata uint8_t firstLogicLevel  = invertedSignal ? 0 : 1;
+    __xdata uint8_t secondLogicLevel = invertedSignal ? 1 : 0;
 
   
     set_tdata(firstLogicLevel);
-	// DEBUG: mirror transmitted pulses to another pin for easier probing by oscilloscope
-	//set_debug_pin01(firstLogicLevel);
+    // DEBUG: mirror transmitted pulses to another pin for easier probing by oscilloscope
+    //set_debug_pin01(firstLogicLevel);
 
-	init_delay_timer_us(1, delayHigh);
-	wait_delay_timer_finished();
+    init_delay_timer_us(1, delayHigh);
+    wait_delay_timer_finished();
 
 
 
     set_tdata(secondLogicLevel);
-	// DEBUG:
+    // DEBUG:
     //set_debug_pin01(secondLogicLevel);
 
-	init_delay_timer_us(1, delayLow);
-	wait_delay_timer_finished();
+    init_delay_timer_us(1, delayLow);
+    wait_delay_timer_finished();
 }
 
 
@@ -326,74 +326,74 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
 //void sendByProtocol(const int nProtocol, const unsigned int length)
 void send(struct Pulse* pulses, unsigned char* packetStart, const unsigned char bitsInPacket)
 {
-	// this allows us to send an abitrary amount of bits from a byte array
+    // this allows us to send an abitrary amount of bits from a byte array
     uint8_t bitIndex;
     uint8_t currentBit;
-	uint8_t currentByte;
-	
-	// track packet repeat count
-	uint8_t nRepeat;
-	
-	// pointer to byte intended to be sent currently
-	unsigned char* packetPtr;
+    uint8_t currentByte;
+    
+    // track packet repeat count
+    uint8_t nRepeat;
+    
+    // pointer to byte intended to be sent currently
+    unsigned char* packetPtr;
 
 
 
-	// must repeat sent packet so that receiver interprets it as valid
-	for (nRepeat = 0; nRepeat < nRepeatTransmit; nRepeat++)
+    // must repeat sent packet so that receiver interprets it as valid
+    for (nRepeat = 0; nRepeat < nRepeatTransmit; nRepeat++)
     {
-		currentBit = 0;
-		
-		// reset to first byte of data
-		packetPtr = packetStart;
-		
-		// make a copy of current byte in order to shift that copy
-		currentByte = *packetPtr;
-		
-		// moved sync pulse sending here to match manchester encoding style shown in application notes
-		transmit(pulses->invertedSignal, pulses->syncHigh, pulses->syncLow);
-		
-		// we must send repeat transmission for decoder to accept radio packet
-		for (bitIndex = 0; bitIndex < bitsInPacket; bitIndex++)
-		{
-			
-			if (currentBit == 8)
-			{
-				// FIXME:
-				packetPtr++;
-				
-				// FIXME: why is this done, looking for wrap around?
-				//if(packetPtr == &packet[0]){bitIndex = bitsInPacket + 1;}
-				
-				currentBit = 0;
-				currentByte = *packetPtr;
-			}
-			
-			// mask out all but left most bit value, and if byte is not equal to zero (i.e. left most bit must be one) then send one level
-			if ((currentByte & 0x80) == 0x80)
-			{
-				transmit(pulses->invertedSignal, pulses->oneHigh, pulses->oneLow);
-			}
-			else
-			{
-				transmit(pulses->invertedSignal, pulses->zeroHigh, pulses->zeroLow);
-			}
-			
-			//
-			currentByte = currentByte << 1;
-			
-			//
-			currentBit++;
-		}
-		
-		// FIXME: sync is actually supposed to be transmitted before data
-		//        even if rcswitch ignores the first sync pulse and just looks for gaps (the sync) between repeat transmissions
-		//transmit(pulses->invertedSignal, pulses->syncHigh, pulses->syncLow);
-	}
+        currentBit = 0;
+        
+        // reset to first byte of data
+        packetPtr = packetStart;
+        
+        // make a copy of current byte in order to shift that copy
+        currentByte = *packetPtr;
+        
+        // moved sync pulse sending here to match manchester encoding style shown in application notes
+        transmit(pulses->invertedSignal, pulses->syncHigh, pulses->syncLow);
+        
+        // we must send repeat transmission for decoder to accept radio packet
+        for (bitIndex = 0; bitIndex < bitsInPacket; bitIndex++)
+        {
+            
+            if (currentBit == 8)
+            {
+                // FIXME:
+                packetPtr++;
+                
+                // FIXME: why is this done, looking for wrap around?
+                //if(packetPtr == &packet[0]){bitIndex = bitsInPacket + 1;}
+                
+                currentBit = 0;
+                currentByte = *packetPtr;
+            }
+            
+            // mask out all but left most bit value, and if byte is not equal to zero (i.e. left most bit must be one) then send one level
+            if ((currentByte & 0x80) == 0x80)
+            {
+                transmit(pulses->invertedSignal, pulses->oneHigh, pulses->oneLow);
+            }
+            else
+            {
+                transmit(pulses->invertedSignal, pulses->zeroHigh, pulses->zeroLow);
+            }
+            
+            //
+            currentByte = currentByte << 1;
+            
+            //
+            currentBit++;
+        }
+        
+        // FIXME: sync is actually supposed to be transmitted before data
+        //        even if rcswitch ignores the first sync pulse and just looks for gaps (the sync) between repeat transmissions
+        //transmit(pulses->invertedSignal, pulses->syncHigh, pulses->syncLow);
+    }
 
-	// disable transmit after sending (i.e., for inverted protocols)
-	tdata_off();
+    // disable transmit after sending (i.e., for inverted protocols)
+    tdata_off();
 
-	// we do this outside of the function
-	//radio_receiver_on();
+    // we do this outside of the function
+    //radio_receiver_on();
 }

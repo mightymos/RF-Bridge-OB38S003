@@ -9,9 +9,9 @@
 #define INC_HAL_H_
 
 #if defined(TARGET_BOARD_EFM8BB1LCB)
-	#include "efm8bb1lck_pins.h"
+    #include "efm8bb1lck_pins.h"
 #elif defined(TARGET_BOARD_EFM8BB1)
-	#include "sonoffr20_pins.h"
+    #include "sonoffr20_pins.h"
 #endif
 
 #include <stdbool.h>
@@ -37,18 +37,18 @@ inline bool rdata_level(void)
 // setter prototypes
 inline void led_on(void)
 {
-	// sonoff bridge
+    // sonoff bridge
     //LED = 1;
-	// EFM8BB1LCK board
-	LED = 0;
+    // EFM8BB1LCK board
+    LED = 0;
 }
 
 inline void led_off(void)
 {
-	// sonoff bridge
+    // sonoff bridge
     //LED = 0;
-	// EFM8BB1LCK board
-	LED = 1;
+    // EFM8BB1LCK board
+    LED = 1;
 }
 
 inline void led_toggle(void)
@@ -80,7 +80,7 @@ inline void tdata_off(void)
 
 inline void set_tdata(const bool state)
 {
-	TDATA = state;
+    TDATA = state;
 }
 
 inline void uart_tx_pin_off(void)
@@ -106,7 +106,7 @@ inline bool uart_rx_pin_level(void)
 
 inline void uart_rx_enabled(void)
 {
-	// uart reception enabled
+    // uart reception enabled
     SCON0 |= REN__RECEIVE_ENABLED;
 }
 
@@ -117,50 +117,50 @@ inline void uart_rx_disabled(void)
 
 inline void soft_tx_pin_on(void)
 {
-	SOFT_TX_PIN = 1;
+    SOFT_TX_PIN = 1;
 }
 
 inline void soft_tx_pin_off(void)
 {
-	SOFT_TX_PIN = 0;
+    SOFT_TX_PIN = 0;
 }
 
 inline void set_soft_tx_pin(const bool state)
 {
-	SOFT_TX_PIN = state;
+    SOFT_TX_PIN = state;
 }
 
 inline void soft_tx_pin_toggle(void)
 {
-	SOFT_TX_PIN = !SOFT_TX_PIN;
+    SOFT_TX_PIN = !SOFT_TX_PIN;
 }
 
 inline bool get_soft_rx_pin(void)
 {
-	// FIXME: undefined for now because no pins available
-	//        so force default of nothing received
-	//return BUZZER;
-	return true;
+    // FIXME: undefined for now because no pins available
+    //        so force default of nothing received
+    //return BUZZER;
+    return true;
 }
 
 inline void debug_pin01_on(void)
 {
-	DEBUG_PIN01 = 1;
+    DEBUG_PIN01 = 1;
 }
 
 inline void debug_pin01_off(void)
 {
-	DEBUG_PIN01 = 0;
+    DEBUG_PIN01 = 0;
 }
 
 inline void set_debug_pin01(const bool state)
 {
-	DEBUG_PIN01 = state;
+    DEBUG_PIN01 = state;
 }
 
 inline void debug_pin01_toggle(void)
 {
-	DEBUG_PIN01 = !DEBUG_PIN01;
+    DEBUG_PIN01 = !DEBUG_PIN01;
 }
 
 inline void enable_global_interrupts(void)
@@ -195,22 +195,22 @@ inline void disable_timer1_interrupt(void)
 
 inline void enable_timer2_interrupt(void)
 {
-	ET2 = 1;
+    ET2 = 1;
 }
 
 inline void disable_timer2_interrupt(void)
 {
-	ET2 = 0;
+    ET2 = 0;
 }
 
 inline void enable_timer3_interrupt(void)
 {
-	EIE1 |= ET3__ENABLED;
+    EIE1 |= ET3__ENABLED;
 }
 
 inline void disable_timer3_interrupt(void)
 {
-	EIE1 |= ET3__DISABLED;
+    EIE1 |= ET3__DISABLED;
 }
 
 extern void set_clock_mode(void);

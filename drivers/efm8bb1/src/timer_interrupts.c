@@ -17,27 +17,27 @@ static __xdata uint16_t gTimer2Interval;
 
 //unsigned long get_time_milliseconds(void)
 //{
-//	return gTimeMilliseconds;
-//	return 0;
+//  return gTimeMilliseconds;
+//  return 0;
 //}
 
 //unsigned long get_time_ten_microseconds(void)
 //{
-//	return gTimeTenMicroseconds;
-//	return 0;
+//  return gTimeTenMicroseconds;
+//  return 0;
 //}
 
 // Portisch favored this approach to timer delay
 void set_timer2_reload(const uint16_t reload)
 {
-	/***********************************************************************
-	 - Timer 2 Reload High Byte
-	 ***********************************************************************/
-	TMR2RLH = ((reload >> 8) & 0xFF);
-	/***********************************************************************
-	 - Timer 2 Reload Low Byte = 0x86
-	 ***********************************************************************/
-	TMR2RLL = (reload & 0xFF);
+    /***********************************************************************
+     - Timer 2 Reload High Byte
+     ***********************************************************************/
+    TMR2RLH = ((reload >> 8) & 0xFF);
+    /***********************************************************************
+     - Timer 2 Reload Low Byte = 0x86
+     ***********************************************************************/
+    TMR2RLL = (reload & 0xFF);
 }
 
 
@@ -47,16 +47,16 @@ void set_timer2_reload(const uint16_t reload)
 void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
 {
     //
-	set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
-	//TH1 = 0x60;
-	//TL1 = 0x60;
+    set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
+    //TH1 = 0x60;
+    //TL1 = 0x60;
 
-	// remove 65micros because of startup delay
-	gTimer2Timeout  = timeout;
-	gTimer2Interval = interval;
+    // remove 65micros because of startup delay
+    gTimer2Timeout  = timeout;
+    gTimer2Interval = interval;
 
-	// start timer
-	TR2 = true;
+    // start timer
+    TR2 = true;
 }
 
 
@@ -65,51 +65,51 @@ void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
  */
 void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout)
 {    
-	set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000 / (uint32_t)interval))));
+    set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000 / (uint32_t)interval))));
 
-	gTimer2Timeout  = timeout;
-	gTimer2Interval = interval;
+    gTimer2Timeout  = timeout;
+    gTimer2Interval = interval;
 
-	// start timer
-	TR2 = true;
+    // start timer
+    TR2 = true;
 }
 
 
 void wait_delay_timer_finished(void)
 {
-	// wait until timer has finished
-	while(TR2);
+    // wait until timer has finished
+    while(TR2);
 }
 
 
 void stop_delay_timer(void)
 {
-	// stop timer
-	TR2 = false;
-	
-	// clear overflow flag (why, to avoid triggering interrupt next enable?)
-	TF2 = false;
+    // stop timer
+    TR2 = false;
+    
+    // clear overflow flag (why, to avoid triggering interrupt next enable?)
+    TF2 = false;
 }
 
 bool is_delay_timer_finished(void)
 {
-	return !TR2;
+    return !TR2;
 }
 
 // timer 2 interrupt
 void timer2_isr(void) __interrupt (TIMER2_VECTOR)
 {
-	// FIXME: clear at start or end of interrupt?
-	TF2 = 0;
-	
-	gTimer2Timeout--;
-		
-	// check if pulse time is over
-	if(gTimer2Timeout == 0)
-	{
-		// stop timer
-		TR2 = false;
-	}	
+    // FIXME: clear at start or end of interrupt?
+    TF2 = 0;
+    
+    gTimer2Timeout--;
+        
+    // check if pulse time is over
+    if(gTimer2Timeout == 0)
+    {
+        // stop timer
+        TR2 = false;
+    }   
 }
 
 
@@ -118,55 +118,55 @@ void pca0_isr(void) __interrupt (PCA0_VECTOR)
     //FIXME: we need to record the actual time step this represents so it is clear to human readers
     //FIXME: should be PCA0CP0 * 10 for Portisch?
     //       probably not, because we are using dedicated PCA counter instead of timer 0 as portisch did originally
-	uint16_t currentCapture = PCA0CP0;
-	
-	// save and clear flags
-	uint8_t flags = PCA0CN0 & (CF__BMASK | CCF0__BMASK | CCF1__BMASK | CCF2__BMASK);
+    uint16_t currentCapture = PCA0CP0;
+    
+    // save and clear flags
+    uint8_t flags = PCA0CN0 & (CF__BMASK | CCF0__BMASK | CCF1__BMASK | CCF2__BMASK);
 
-	PCA0CN0 &= ~flags;
+    PCA0CN0 &= ~flags;
 
 
-	//if( (PCA0PWM & COVF__BMASK) && (PCA0PWM & ECOV__BMASK))
-	//{
-	//  PCA0_intermediateOverflowCb();
-	//}
+    //if( (PCA0PWM & COVF__BMASK) && (PCA0PWM & ECOV__BMASK))
+    //{
+    //  PCA0_intermediateOverflowCb();
+    //}
 
-	PCA0PWM &= ~COVF__BMASK;
+    PCA0PWM &= ~COVF__BMASK;
 
-	//if((flags & CF__BMASK) && (PCA0MD & ECF__BMASK))
-	//{
-	//  PCA0_overflowCb();
-	//}
+    //if((flags & CF__BMASK) && (PCA0MD & ECF__BMASK))
+    //{
+    //  PCA0_overflowCb();
+    //}
 
-	// FIXME: we might eventually want to use CF flag to detect counter wrap around
-	if((flags & CCF0__BMASK) && (PCA0CPM0 & ECCF__BMASK))
-	{
-	    // apparently our radio input
-	    //pca0_channel0EventCb();
-		capture_handler(currentCapture);
-		
-		// DEBUG:
-		//if (rdata_level())
-		//{
-		//	debug_pin01_on();
-		//} else {
-		//	debug_pin01_off();
-		//}
-	}
-	
+    // FIXME: we might eventually want to use CF flag to detect counter wrap around
+    if((flags & CCF0__BMASK) && (PCA0CPM0 & ECCF__BMASK))
+    {
+        // apparently our radio input
+        //pca0_channel0EventCb();
+        capture_handler(currentCapture);
+        
+        // DEBUG:
+        //if (rdata_level())
+        //{
+        //  debug_pin01_on();
+        //} else {
+        //  debug_pin01_off();
+        //}
+    }
+    
     // done in the interrupt already on efm8bb1
     // but must be explicitly cleared on ob38s003
     // so just always clear it
     //clear pca0 interrupt flag
     clear_capture_flag();
 
-	//if((flags & CCF1__BMASK) && (PCA0CPM1 & ECCF__BMASK))
-	//{
-	//  PCA0_channel1EventCb();
-	//}
+    //if((flags & CCF1__BMASK) && (PCA0CPM1 & ECCF__BMASK))
+    //{
+    //  PCA0_channel1EventCb();
+    //}
 
-	//if((flags & CCF2__BMASK) && (PCA0CPM2 & ECCF__BMASK))
-	//{
-	//  PCA0_channel2EventCb();
-	//}
+    //if((flags & CCF2__BMASK) && (PCA0CPM2 & ECCF__BMASK))
+    //{
+    //  PCA0_channel2EventCb();
+    //}
 }

@@ -34,30 +34,30 @@
 
 // if we use delay style of efm8bb1
 //#if !defined(F_CPU)
-//	#error Please define F_CPU
+//  #error Please define F_CPU
 //#endif
 
 void delay_us(uint8_t us)
 {
-	// these assume 1T mode @ 16 MHz on OB38S003 microcontroller
-	// in other words, they were tuned by observing oscilloscope traces
-	// and are therefore useless with other clock modes or with another microcontroller
-	
-	// tuned with oscilloscope for 10 microseconds
+    // these assume 1T mode @ 16 MHz on OB38S003 microcontroller
+    // in other words, they were tuned by observing oscilloscope traces
+    // and are therefore useless with other clock modes or with another microcontroller
+    
+    // tuned with oscilloscope for 10 microseconds
     //unsigned int i,j;
     //for(i = 0; i < us; i++)
     //{
     //    for(j = 0; j < 11; j++);
     //}
-	
-	//   1us (observed  10us)
-	//  10us (observed  15us)
-	//  50us (observed  70us)
-	// 100us (observed 150us)
+    
+    //   1us (observed  10us)
+    //  10us (observed  15us)
+    //  50us (observed  70us)
+    // 100us (observed 150us)
     while (us--) {
-		//__asm
-		//	nop
-		//__endasm;
+        //__asm
+        //  nop
+        //__endasm;
     }
 }
 

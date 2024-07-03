@@ -85,15 +85,15 @@ inline void soft_tx_pin_toggle(void)
 
 inline void set_soft_tx_pin(const bool state)
 {
-	RESET_PIN = state;
+    RESET_PIN = state;
 }
 
 inline bool get_soft_rx_pin(void)
 {
-	// FIXME: undefined for now because no pins available
-	//        so force default of nothing received
-	//return BUZZER;
-	return true;
+    // FIXME: undefined for now because no pins available
+    //        so force default of nothing received
+    //return BUZZER;
+    return true;
 }
 
 inline void tdata_on(void)
@@ -109,34 +109,34 @@ inline void tdata_off(void)
 
 inline void set_tdata(const bool state)
 {
-	TDATA = state;
+    TDATA = state;
 }
 
 inline void debug_pin01_on(void)
 {
-	// blank function until pin is assigned
-	//__asm
-	//	nop
-	//__endasm;
-	// buzzer pin is inverted
-	BUZZER = 0;
+    // blank function until pin is assigned
+    //__asm
+    //  nop
+    //__endasm;
+    // buzzer pin is inverted
+    BUZZER = 0;
 }
 
 inline void debug_pin01_off(void)
 {
-	// buzzer has an external transistor which inverts output
-	BUZZER = 1;
+    // buzzer has an external transistor which inverts output
+    BUZZER = 1;
 }
 
 inline void set_debug_pin01(const bool state)
 {
-	BUZZER = !state;
+    BUZZER = !state;
 }
 
 inline void debug_pin01_toggle(void)
 {
-	// blank function until pin is assigned
-	BUZZER = !BUZZER;
+    // blank function until pin is assigned
+    BUZZER = !BUZZER;
 }
 
 inline void uart_tx_pin_off(void)
@@ -162,7 +162,7 @@ inline bool uart_rx_pin_level(void)
 
 inline void uart_rx_enabled(void)
 {
-	// uart reception enabled
+    // uart reception enabled
     REN = 1;
 }
 
@@ -204,12 +204,12 @@ inline void disable_timer1_interrupt(void)
 
 inline void enable_timer2_interrupt(void)
 {
-	ET2 = 1;
+    ET2 = 1;
 }
 
 inline void disable_timer2_interrupt(void)
 {
-	ET2 = 0;
+    ET2 = 0;
 }
 
 extern bool get_radio_wake(void);
