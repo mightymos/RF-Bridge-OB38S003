@@ -12,6 +12,8 @@
     #include "efm8bb1lck_pins.h"
 #elif defined(TARGET_BOARD_EFM8BB1)
     #include "sonoffr20_pins.h"
+#else
+    #error Please define TARGET_BOARD in makefile
 #endif
 
 #include <stdbool.h>

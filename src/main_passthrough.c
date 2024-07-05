@@ -36,16 +36,19 @@
     #error Please define TARGET_BOARD in makefile
 #endif
 
+
+// e.g. Tasmota, see here:
+// https://tasmota.github.io/docs/RF-Protocol/
+// RfSend 0x7028DC, 24, 1, 10, 350
+// RfSend {"Data":"0x7028DC","Bits":24,"Protocol":1,"Pulse":350}
+
+
 // nop style delays
 #include "delay.h"
 
 // basically just function wrappers for setting pins (i.e., not a full hardware abstraction layer)
 #include "hal.h"
 
-//#if TARGET_BOARD_OB38S003
-// sdcc does not have sfrs defined for this microcontroller, so must include them
-//#include "OB38S003.h"
-//#endif
 
 #include <stdint.h>
 

@@ -41,30 +41,31 @@
 # Clean project (remove all build files):
 #   make clean
 
+
 # Target MCU settings --------------------------------------------------
 # uncomment only one target board
 # FIXME: build all targets without need to modify makefile
 # sonoff black box
-#TARGET_BOARD = EFM8BB1
+TARGET_BOARD = EFM8BB1
 # low cost development board
 #TARGET_BOARD = EFM8BB1LCB
 # sonoff white box
-TARGET_BOARD = OB38S003
+#TARGET_BOARD = OB38S003
 
 # catches undefined
 ifndef TARGET_BOARD
-$(error Please define TARGET_BOARD in makefile)
+ $(error Please define TARGET_BOARD in makefile)
 endif
 
 # these are the maximum clock speeds
 ifeq ($(TARGET_BOARD), EFM8BB1)
-# for EFM8BB1 in Sonoff v2.0 receivers (black color box)
-MCU_FREQ_KHZ = 24500
+ # for EFM8BB1 in Sonoff v2.0 receivers (black color box)
+ MCU_FREQ_KHZ = 24500
 else ifeq ($(TARGET_BOARD), EFM8BB1LCB)
-MCU_FREQ_KHZ = 24500
+ MCU_FREQ_KHZ = 24500
 else ifeq ($(TARGET_BOARD), OB38S003)
 # for OB38S003 used in Sonoff v2.2 receivers (white color box)
-MCU_FREQ_KHZ = 16000
+ MCU_FREQ_KHZ = 16000
 endif
 
 #
@@ -77,11 +78,11 @@ SOURCE_DIR = src
 
 # target specific sources
 ifeq ($(TARGET_BOARD), EFM8BB1)
-DRIVER_SRC_DIR = drivers/efm8bb1/src
+ DRIVER_SRC_DIR = drivers/efm8bb1/src
 else ifeq ($(TARGET_BOARD), EFM8BB1LCB)
-DRIVER_SRC_DIR = drivers/efm8bb1/src
+ DRIVER_SRC_DIR = drivers/efm8bb1/src
 else ifeq ($(TARGET_BOARD), OB38S003)
-DRIVER_SRC_DIR = drivers/ob38s003/src
+ DRIVER_SRC_DIR = drivers/ob38s003/src
 endif
 
 # generic includes
@@ -89,11 +90,11 @@ INCLUDE_DIR = inc/
 
 # target specific includes
 ifeq ($(TARGET_BOARD), EFM8BB1)
-DRIVER_DIR = drivers/efm8bb1/inc
+ DRIVER_DIR = drivers/efm8bb1/inc
 else ifeq ($(TARGET_BOARD), EFM8BB1LCB)
-DRIVER_DIR = drivers/efm8bb1/inc
+ DRIVER_DIR = drivers/efm8bb1/inc
 else ifeq ($(TARGET_BOARD), OB38S003)
-DRIVER_DIR = drivers/ob38s003/inc
+ DRIVER_DIR = drivers/ob38s003/inc
 endif
 
 # place intermediate build files here so other directories are not cluttered
@@ -102,48 +103,46 @@ OBJECT_DIR = object
 BUILD_DIR  = build
 
 # list of source files
-SOURCES = $(SOURCE_DIR)/main_passthrough.c     \
-          $(SOURCE_DIR)/main_portisch.c        \
-          $(SOURCE_DIR)/main_rcswitch.c        \
-          $(SOURCE_DIR)/portisch.c             \
-          $(SOURCE_DIR)/portisch_serial.c      \
-          $(SOURCE_DIR)/rcswitch.c             \
-          $(SOURCE_DIR)/state_machine.c        \
-          $(SOURCE_DIR)/uart.c                 \
-          $(SOURCE_DIR)/uart_software.c        \
-          $(DRIVER_SRC_DIR)/delay.c            \
-          $(DRIVER_SRC_DIR)/hal.c              \
-          $(DRIVER_SRC_DIR)/timer_interrupts.c
-OBJECT_NAMES = $(notdir $(SOURCES:.c=.rel))
-OBJECTS = $(patsubst %,$(OBJECT_DIR)/%,$(OBJECT_NAMES))
+SOURCES = \
+ $(SOURCE_DIR)/main_passthrough.c     \
+ $(SOURCE_DIR)/main_portisch.c        \
+ $(SOURCE_DIR)/main_rcswitch.c        \
+ $(SOURCE_DIR)/portisch.c             \
+ $(SOURCE_DIR)/portisch_serial.c      \
+ $(SOURCE_DIR)/rcswitch.c             \
+ $(SOURCE_DIR)/state_machine.c        \
+ $(SOURCE_DIR)/uart.c                 \
+ $(SOURCE_DIR)/uart_software.c        \
+ $(DRIVER_SRC_DIR)/delay.c            \
+ $(DRIVER_SRC_DIR)/hal.c              \
+ $(DRIVER_SRC_DIR)/timer_interrupts.c
+
+OBJECT_NAMES = \
+ $(notdir $(SOURCES:.c=.rel))
+OBJECTS = \
+ $(patsubst %,$(OBJECT_DIR)/%,$(OBJECT_NAMES))
 
 # intermediate object files
-OBJECTS_PASSTHROUGH =   $(OBJECT_DIR)/main_passthrough.rel \
-                        $(OBJECT_DIR)/delay.rel            \
-                        $(OBJECT_DIR)/hal.rel
+OBJECTS_PASSTHROUGH = \
+ $(OBJECT_DIR)/main_passthrough.rel \
+ $(OBJECT_DIR)/delay.rel            \
+ $(OBJECT_DIR)/hal.rel
                         
-OBJECTS_RCSWITCH =      $(OBJECT_DIR)/main_rcswitch.rel    \
-                        $(OBJECT_DIR)/rcswitch.rel         \
-                        $(OBJECT_DIR)/state_machine.rel    \
-                        $(OBJECT_DIR)/uart.rel             \
-                        $(OBJECT_DIR)/delay.rel            \
-                        $(OBJECT_DIR)/hal.rel              \
-                        $(OBJECT_DIR)/timer_interrupts.rel \
-                        $(OBJECT_DIR)/uart_software.rel
+OBJECTS_RCSWITCH = \
+ $(OBJECT_DIR)/main_rcswitch.rel    \
+ $(OBJECT_DIR)/rcswitch.rel         \
+ $(OBJECT_DIR)/state_machine.rel    \
+ $(OBJECT_DIR)/uart.rel             \
+ $(OBJECT_DIR)/delay.rel            \
+ $(OBJECT_DIR)/hal.rel              \
+ $(OBJECT_DIR)/timer_interrupts.rel \
+ $(OBJECT_DIR)/uart_software.rel
                         
-#OBJECTS_PORTISCH =         $(OBJECT_DIR)/main_portisch.rel    \
-#                       $(OBJECT_DIR)/portisch.rel         \
-#                       $(OBJECT_DIR)/portisch_serial.rel  \
-#                       $(OBJECT_DIR)/uart.rel             \
-#                       $(OBJECT_DIR)/delay.rel            \
-#                       $(OBJECT_DIR)/hal.rel              \
-#                       $(OBJECT_DIR)/ticks.rel            \
-#                       $(OBJECT_DIR)/timer_interrupts.rel
+
 
 # firmware names
 TARGET_PASSTHROUGH  = $(BUILD_DIR)/main_passthrough_$(TARGET_BOARD).ihx
 TARGET_RCSWITCH     = $(BUILD_DIR)/main_rcswitch_$(TARGET_BOARD).ihx
-#TARGET_PORTISCH     = $(BUILD_DIR)/main_portisch_$(TARGET_BOARD).ihx
 
 
 ###########################################################
@@ -165,21 +164,21 @@ LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 
 .PHONY: all clean
 
-all: $(TARGET_RCSWITCH) $(TARGET_PASSTHROUGH) $(TARGET_PORTISCH)
+all: $(TARGET_RCSWITCH) $(TARGET_PASSTHROUGH)
 
 clean:
-    # it is safer to remove wildcard with file extension instead of the entire directory
-    # but can revisit this issue in the future (I think other projects just remove directory)
-    rm -f $(BUILD_DIR)/*.hex
-    rm -f $(BUILD_DIR)/*.ihx
-    rm -f $(BUILD_DIR)/*.lk
-    rm -f $(BUILD_DIR)/*.map
-    rm -f $(BUILD_DIR)/*.mem
-    rm -f $(OBJECT_DIR)/*.asm
-    rm -f $(OBJECT_DIR)/*.lst
-    rm -f $(OBJECT_DIR)/*.rel
-    rm -f $(OBJECT_DIR)/*.rst
-    rm -f $(OBJECT_DIR)/*.sym
+	# it is safer to remove wildcard with file extension instead of the entire directory
+	# but can revisit this issue in the future (I think other projects just remove directory)
+	rm -f $(BUILD_DIR)/*.hex
+	rm -f $(BUILD_DIR)/*.ihx
+	rm -f $(BUILD_DIR)/*.lk
+	rm -f $(BUILD_DIR)/*.map
+	rm -f $(BUILD_DIR)/*.mem
+	rm -f $(OBJECT_DIR)/*.asm
+	rm -f $(OBJECT_DIR)/*.lst
+	rm -f $(OBJECT_DIR)/*.rel
+	rm -f $(OBJECT_DIR)/*.rst
+	rm -f $(OBJECT_DIR)/*.sym
     
 ###########################################################
 # Build
@@ -189,38 +188,32 @@ clean:
 
 # basically the linking step
 $(TARGET_PASSTHROUGH): $(OBJECTS_PASSTHROUGH)
-    @echo "Linking $^"
-    mkdir -p $(dir $@)
-    $(CC) $(LDFLAGS) -o $@ $^
-    
-    # hex lines are a short, fixed length (compared with ihx) and therefore works with upload tools
-    packihx $@ > $(basename $@).hex
-    # unix style line endings (LF instead of LFCR) work with upload tools
-    dos2unix $(basename $@).hex
-    
+	@echo "Linking $^"
+	mkdir -p $(dir $@)
+	$(CC) $(LDFLAGS) -o $@ $^
+	
+	# hex lines are a short, fixed length (compared with ihx) and therefore works with upload tools
+	packihx $@ > $(basename $@).hex
+	# unix style line endings (LF instead of LFCR) work with upload tools
+	dos2unix $(basename $@).hex
+	
 $(TARGET_RCSWITCH): $(OBJECTS_RCSWITCH)
-    @echo "Linking $^"
-    mkdir -p $(dir $@)
-    $(CC) $(LDFLAGS) -o $@ $^
-    
-    packihx $@ > $(basename $@).hex
-    dos2unix $(basename $@).hex
-    
-#$(TARGET_PORTISCH): $(OBJECTS_PORTISCH)
-#   @echo "Linking $^"
-#   mkdir -p $(dir $@)
-#   $(CC) $(LDFLAGS) -o $@ $^
-#   
-#   packihx $@ > $(basename $@).hex
-#   dos2unix $(basename $@).hex
+	@echo "Linking $^"
+	mkdir -p $(dir $@)
+	$(CC) $(LDFLAGS) -o $@ $^
+	
+	packihx $@ > $(basename $@).hex
+	dos2unix $(basename $@).hex
+	
+	
 
 # basically the compilation step
 $(OBJECT_DIR)/%.rel: $(SOURCE_DIR)/%.c
-    @echo "Compiling $^"
-    mkdir -p $(dir $@)
-    $(CC) $(CFLAGS) -c -o $@ $^
-    
+	@echo "Compiling $^"
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $^
+	
 $(OBJECT_DIR)/%.rel: $(DRIVER_SRC_DIR)/%.c
-    @echo "Compiling $^"
-    mkdir -p $(dir $@)
-    $(CC) $(CFLAGS) -c -o $@ $^
+	@echo "Compiling $^"
+	mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $^

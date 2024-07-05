@@ -50,20 +50,26 @@ See Flasher section below.
 # Tasmota/ESPHome
 Using passthrough hex file.
 
-The following pins can be used in ESPHome / Tasmota (flash **tasmota-sensors.bin** to ESP on RF Bridge and configure as e.g. **Generic(0)**)  
+The following pins can be used in ESPHome / Tasmota:  
+-flash **tasmota-sensors.bin** to ESP on RFbridge  
+-configure module as e.g. **Generic(0)**)  
+-save  
 
-TX pin to GPIO1 (RFSend)  
-RX pin to GPIO3 (RFRecv)  
+now set pins to:  
+TX pin to GPIO1        (RFSend)  
+RX pin to GPIO3        (RFRecv)  
+WIFI LED pin to GPIO13 (LedLink)  
 
 # Flasher (official)
 OB38S003 reprogamming requires erasing the chip because the stock firmware is protected.  
 The stock firmware cannot be recovered because it has not been read out.  
-
 An official MSM9066 programmer or open source flasher (see below) can be used.  
 
+
 EFM8BB1 reprogramming can be done with Tasmota.  
-I have not tested this myself.  
-If someone does it would be helpful to report results:  
+The module must be set as Sonoff Bridge (25) to allow flashing:  
+https://tasmota.github.io/docs/Modules/
+Follow the instructions for flashing Portisch but using this firmware:  
 https://tasmota.github.io/docs/devices/Sonoff-RF-Bridge-433/
 
 
@@ -82,7 +88,7 @@ While cumbersome to use, several people have successfully flashed hex files.
 A successful attempt was made to compile "Portisch" with the open source SDCC compiler.  
 I personally found the source code to be difficult to read.  
 It is additionally difficult to fit all features and protocols in code and ram spaces.  
-I hope to be able to use this work to use Portisch on the newer Sonoff boxes.  
+I hope to be able to use this port to use Portisch on the newer Sonoff boxes.  
 https://github.com/mightymos/SonOfPortisch
 
 There are at least three versions of rcswitch.  
