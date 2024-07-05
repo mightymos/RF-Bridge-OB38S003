@@ -4,8 +4,8 @@ An alternative firmware for 433 MHz radio to wifi bridges, targetting these boar
 
 | Board | Microcontroller | Passthrough |  RCSwitch | Portisch | Notes |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| Sonoff Bridge R2 v1.0 (black box) | EFM8BB1 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | No | Untested, should work similar to Busy Bee board |
-| Sonoff Bridge R2 v2.2 (white box) | OB38S003 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | No | Requires reprogramming with official/open source flasher |
+| Sonoff Bridge R2 v1.0 (black box) | EFM8BB1 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | No | Flashing works, see instructions below for Tasmota firmware upgrade |
+| Sonoff Bridge R2 v2.2 (white box) | OB38S003 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | No | Requires reprogramming with official or open source flasher |
 | EFM8BB1 Busy Bee Low Cost Kit Board | EFM8BB1 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | No | Requires external receiver and/or transmitter |
 
 These microcontrollers were originally intended for radio decoding but lacked support for additional protocols.  
