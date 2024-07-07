@@ -68,9 +68,9 @@ An official MSM9066 programmer or open source flasher (see below) can be used.
 
 EFM8BB1 reprogramming can be done with Tasmota.  
 The module must be set as Sonoff Bridge (25) to allow flashing:  
-https://tasmota.github.io/docs/Modules/
+https://tasmota.github.io/docs/Modules/  
 Follow the instructions for flashing Portisch but using this firmware:  
-https://tasmota.github.io/docs/devices/Sonoff-RF-Bridge-433/
+https://tasmota.github.io/docs/devices/Sonoff-RF-Bridge-433/  
 
 
 # Flasher (open source)

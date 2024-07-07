@@ -20,7 +20,7 @@ GPIO0 (pin 15) to push button
 GPIO12 (pin 10) to pad on back of board
 GPIO13 (pin 12) to R22 to LED2 (wifi led)
 GPIO14 (pin 9) goes to pad on back of board (and pulled (up?) to power through R15
-GPIO15 (pin 13) is pulled to pulled to ground through R18
+GPIO15 (pin 13) is pulled to ground through R18
 
 
 OB38S003
