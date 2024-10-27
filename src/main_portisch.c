@@ -387,14 +387,21 @@ void main (void)
 
 
 	// call hardware initialization routine
-	enter_DefaultMode_from_RESET();
-    // pca overflow with timer0
-    // uart with 19200 baud
-    //init_timer0(0x0B);
-    //init_timer1(0xCB);
-    //pca0_init();
-    //enable_capture_interrupt();
-    //enable_serial_interrupt();
+	//enter_DefaultMode_from_RESET();
+    init_port_pins_for_serial();
+    set_clock_mode();
+    
+    // pca used timer0 on portisch, we just use the pca counter itself now
+    // uart with 19200 baud, uart must use timer1 on efm8bb1
+    init_timer1(0xCB);
+    pca0_init();
+    // FIXME: we are not using timer3 right now because ob38s003 does not have it
+    enable_timer3_interrupt();
+    enable_timer2_interrupt();
+    enable_capture_interrupt();
+    enable_serial_interrupt();
+    
+    // better to let the startup blink happen, then enable global interrupts later
     //enable_global_interrupts();
 
 
@@ -413,7 +420,7 @@ void main (void)
 	// polled version basically sets TI flag so putchar() does not get stuck in an infinite loop
 	//UART0_initStdio();
 
-	// enable uart
+	// enable uart (with interrupts)
 	//UART0_init(UART0_RX_ENABLE, UART0_WIDTH_8, UART0_MULTIPROC_DISABLE);
     init_uart();
     
@@ -449,7 +456,8 @@ void main (void)
 	led_off();
 #endif
 
-    
+    // FIXME: we already enable this previously where portisch did
+    // so can do it here or above, does it matter?
 	// enable global interrupts
 	enable_global_interrupts();
     
