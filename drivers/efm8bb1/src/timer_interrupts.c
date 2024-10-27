@@ -56,20 +56,6 @@ void clear_pca_counter(void)
     PCA0CN0 = flags;
 }
 
-uint16_t get_capture_value(void)
-{
-    return PCA0CP0 * 10;
-}
-
-void SetTimer0Overflow(uint8_t T0_Overflow)
-{
-	// FIXME: add comment
-	// timer 0 high byte - overflow
-	 // shift was 0x00 anyway...
-	//TH0 = (T0_Overflow << TH0_TH0__SHIFT);
-	TH0 = T0_Overflow;
-}
-
 // Portisch favored this approach to timer delay
 void set_timer2_reload(const uint16_t reload)
 {

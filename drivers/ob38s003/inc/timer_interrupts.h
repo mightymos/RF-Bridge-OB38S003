@@ -24,4 +24,7 @@ void wait_delay_timer_finished(void);
 void stop_delay_timer(void);
 bool is_delay_timer_finished(void);
 
+void clear_interrupt_flags_pca(void);
+void clear_pca_counter(void);
+
 #endif

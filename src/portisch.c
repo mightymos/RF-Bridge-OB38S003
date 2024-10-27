@@ -442,7 +442,7 @@ uint8_t PCA0_DoSniffing(void)
 	memset(status, 0, sizeof(PROTOCOL_STATUS) * NUM_OF_PROTOCOLS);
 
 	// restore timer to 100000Hz, 10µs interval
-	SetTimer0Overflow(0x0B);
+	//SetTimer0Overflow(0x0B);
 
 	// enable interrupt for RF receiving
 	enable_capture_interrupt();
