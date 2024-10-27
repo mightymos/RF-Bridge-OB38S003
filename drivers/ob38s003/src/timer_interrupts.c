@@ -26,6 +26,29 @@ static __xdata uint16_t gTimer1Interval;
 //  return gTimeTenMicroseconds;
 //}
 
+// FIXME: this is actually timer2 on ob38s003 but use pca naming convention for now
+void clear_interrupt_flags_pca(void)
+{
+    // clear all interrupt flags of PCA0
+	//PCA0CN0 &= ~(CF__BMASK | CCF0__BMASK | CCF1__BMASK | CCF2__BMASK);
+    CCCON &= ~0x0F;
+}
+
+void clear_pca_counter(void)
+{
+	//uint8_t flags = PCA0MD;
+    
+    // timer 2 stop
+    T2CON &= ~0x03;
+    
+    // comment
+    CCH1 = 0x00;
+    CCL1 = 0x00;
+	
+    // start timer2, input frequency from prescaler
+    T2CON |= 0x01;
+}
+
 // appears that a tick implementation that increments a counter
 // is difficult to obtain accurate timings for on this processor
 // we think because accessing the count atomically requires disabling interrupts

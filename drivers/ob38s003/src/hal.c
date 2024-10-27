@@ -202,6 +202,20 @@ void init_timer2_as_capture(void)
     T2CON = 0xD1;
 }
 
+// FIXME: this is not really called the PCA on this microcontroller
+//        but for now we use the same naming convention
+void pca0_run(void)
+{
+    // change from timer2 stop to input frequency from prescaler
+    T2CON |= 0x01;
+}
+
+void pca0_halt(void)
+{
+    // clears T2I bits
+    T2CON &= ~0x03;
+}
+
 bool is_global_interrupt_enabled(void)
 {
     return EA;

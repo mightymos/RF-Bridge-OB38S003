@@ -231,6 +231,9 @@ extern void disable_capture_interrupt(void);
 extern void enable_serial_interrupt(void);
 extern void disable_serial_interrupt(void);
 
+void pca0_run(void);
+void pca0_halt(void);
+
 extern bool is_global_interrupt_enabled(void);
 
 void load_timer0(const uint16_t load);
