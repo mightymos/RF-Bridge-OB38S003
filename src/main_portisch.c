@@ -387,17 +387,33 @@ void main (void)
 
 
 	// call hardware initialization routine
-	//enter_DefaultMode_from_RESET();
+#if defined(TARGET_BOARD_OB38S003)
+    init_port_pins();
+#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+    // the crossbar on this microcontroller makes initialization more complicated
     init_port_pins_for_serial();
+#else
+    #error Please define TARGET_BOARD in makefile
+#endif
+
     set_clock_mode();
     
+    
+#if defined(TARGET_BOARD_OB38S003)
+    init_timer1();
+    init_timer2_as_capture();
+    enable_timer1_interrupt();
+#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
     // pca used timer0 on portisch, we just use the pca counter itself now
     // uart with 19200 baud, uart must use timer1 on efm8bb1
     init_timer1(0xCB);
     pca0_init();
     // FIXME: we are not using timer3 right now because ob38s003 does not have it
     enable_timer3_interrupt();
-    enable_timer2_interrupt();
+    //enable_timer2_interrupt();
+#endif
+
+
     enable_capture_interrupt();
     enable_serial_interrupt();
     
