@@ -6,6 +6,13 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
+#if !defined(TARGET_BOARD_EFM8BB1) && !defined(TARGET_BOARD_OB38S003) && !defined(TARGET_BOARD_EFM8BB1LCB)
+    #error Please define TARGET_BOARD in makefile
+#endif
+
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
 // SFR declarations
 #include <stdint.h>
 
@@ -39,10 +46,26 @@ __xdata uint8_t tr_repeats = 0;
 
 // sdcc manual section 3.8.1 general information
 // requires interrupt definition to appear or be included in main
-void uart_isr(void) __interrupt (UART0_VECTOR);
-void timer2_isr(void) __interrupt (TIMER2_VECTOR);
-void pca0_isr(void) __interrupt (PCA0_VECTOR);
-//void TIMER3_ISR(void) __interrupt (TIMER3_VECTOR);
+// sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
+// it is probably more proper to achieve this through include files but also easy to omit
+// and then things just will not work with no clear reason why, even though compilation is succcessful
+#if defined(TARGET_BOARD_OB38S003)
+    // supports timeout
+    void timer1_isr(void) __interrupt (d_T1_Vector);
+    // pca like capture mode for radio decoding
+    void timer2_isr(void) __interrupt (d_T2_Vector);
+    // hardware uart
+    void uart_isr(void)   __interrupt (d_UART0_Vector);
+
+#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+
+    void uart_isr(void) __interrupt (UART0_VECTOR);
+    void timer2_isr(void) __interrupt (TIMER2_VECTOR);
+    void pca0_isr(void) __interrupt (PCA0_VECTOR);
+    //void TIMER3_ISR(void) __interrupt (TIMER3_VECTOR);
+#else
+    #error Please define TARGET_BOARD in makefile
+#endif
 
 //-----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
@@ -54,9 +77,11 @@ void pca0_isr(void) __interrupt (PCA0_VECTOR);
 unsigned char __sdcc_external_startup(void)
 {
     // pg. 218, sec. 20.3 disable watchdog timer
-    EA = 0;
-    WDTCN = 0xDE;
-    WDTCN = 0xAD;
+    disable_global_interrupts();
+    
+    // FIXME: use hardware abstraction
+    //WDTCN = 0xDE;
+    //WDTCN = 0xAD;
     
     // re-enable interrupts
     //IE_EA = 1

@@ -66,7 +66,7 @@
 
 // since the uart pins are used for communication with ESP8265
 // it is helpful to have serial output on another pin (e.g., reset pin)
-#include "uart_software.h"
+//#include "uart_software.h"
 
 // a rough way of setting a blink period
 // set a threshold

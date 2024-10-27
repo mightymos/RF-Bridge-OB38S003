@@ -14,7 +14,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "portisch_hal.h"
+#include "portisch_macros.h"
 #include "portisch_config.h"
 
 /*

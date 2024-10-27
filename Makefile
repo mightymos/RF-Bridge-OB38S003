@@ -110,12 +110,10 @@ SOURCES = \
  $(SOURCE_DIR)/main_portisch.c        \
  $(SOURCE_DIR)/main_rcswitch.c        \
  $(SOURCE_DIR)/portisch.c             \
- $(SOURCE_DIR)/portisch_hal.c         \
  $(SOURCE_DIR)/portisch_serial.c      \
  $(SOURCE_DIR)/rcswitch.c             \
  $(SOURCE_DIR)/state_machine.c        \
  $(SOURCE_DIR)/uart.c                 \
- $(SOURCE_DIR)/wdt_0.c                \
  $(DRIVER_SRC_DIR)/delay.c            \
  $(DRIVER_SRC_DIR)/hal.c              \
  $(DRIVER_SRC_DIR)/timer_interrupts.c
@@ -144,13 +142,11 @@ OBJECTS_PORTISCH = \
  $(OBJECT_DIR)/delay.rel            \
  $(OBJECT_DIR)/main_portisch.rel    \
  $(OBJECT_DIR)/portisch.rel         \
- $(OBJECT_DIR)/portisch_hal.rel     \
  $(OBJECT_DIR)/portisch_serial.rel  \
  $(OBJECT_DIR)/timer_interrupts.rel \
  $(OBJECT_DIR)/uart.rel             \
  $(OBJECT_DIR)/delay.rel            \
- $(OBJECT_DIR)/hal.rel              \
- $(OBJECT_DIR)/wdt_0.rel
+ $(OBJECT_DIR)/hal.rel
 
 # firmware names
 TARGET_PASSTHROUGH  = $(BUILD_DIR)/main_passthrough_$(TARGET_BOARD).ihx

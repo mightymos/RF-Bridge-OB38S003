@@ -250,4 +250,7 @@ extern void clear_capture_flag(void);
 
 extern unsigned long countsToTime(const unsigned long duration);
 
+// function prototypes
+void enter_DefaultMode_from_RESET(void);
+
 #endif // INC_HAL_H_
