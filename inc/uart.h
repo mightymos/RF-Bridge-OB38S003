@@ -14,11 +14,11 @@
 //-----------------------------------------------------------------------------
 // Global Constants
 //-----------------------------------------------------------------------------
-// FIXME: these are repeated in portisch so may consolidate in the future
+// FIXME: these are duplicated in portisch so may consolidate in the future
 #define RF_CODE_START		0xAA
 #define RF_CODE_STOP		0x55
 
-// FIXME: explain choice of size
+// FIXME: explain choice of size, I think TX=64 is needed for portisch sniffing mode output
 #define UART_RX_BUFFER_SIZE 32
 #define UART_TX_BUFFER_SIZE	32
 

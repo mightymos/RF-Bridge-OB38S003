@@ -13,7 +13,7 @@
 #include <stdint.h>
 //#include <stdio.h>
 
-// FIXME: how much can we save ?
+// FIXME: how much do we need to or can we save ?
 #define RCSWITCH_MAX_CHANGES 64
 
 // bucket sniffing constants

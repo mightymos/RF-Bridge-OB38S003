@@ -58,10 +58,13 @@ __xdata uint8_t tr_repeats = 0;
     void uart_isr(void)   __interrupt (d_UART0_Vector);
 
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
-
+    // timer0 is used now for PCA
+    // timer1 must be used for uart on this controller
     void uart_isr(void) __interrupt (UART0_VECTOR);
+    // timer2 is used on demand to provide delays
     void timer2_isr(void) __interrupt (TIMER2_VECTOR);
     void pca0_isr(void) __interrupt (PCA0_VECTOR);
+    // timer3 was previously used on demand to provide delays
     //void TIMER3_ISR(void) __interrupt (TIMER3_VECTOR);
 #else
     #error Please define TARGET_BOARD in makefile
@@ -385,6 +388,15 @@ void main (void)
 
 	// call hardware initialization routine
 	enter_DefaultMode_from_RESET();
+    // pca overflow with timer0
+    // uart with 19200 baud
+    //init_timer0(0x0B);
+    //init_timer1(0xCB);
+    //pca0_init();
+    //enable_capture_interrupt();
+    //enable_serial_interrupt();
+    //enable_global_interrupts();
+
 
 	// set default pin states
 	led_on();
