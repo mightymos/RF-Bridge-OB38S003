@@ -35,15 +35,25 @@ void clear_interrupt_flags_pca(void)
 
 void clear_pca_counter(void)
 {
-	uint8_t flags = PCA0MD;
+    // FIXME: I think this was a bug in portisch
+	//uint8_t flags = PCA0MD;
+    uint8_t flags = PCA0CN0;
     
 	// FIXME: replace or move function to be abstracted from hardware
+    // FIXME: I think this was a bug in portisch
+    // and with 0xBF effectively clears bit6 of PCA0MD which is a reserved bit6
+    // however, if we clear bit6 of PCA0CN0 that clears CR bit which stops PCA timer
+    // and it makes more sense to do that prior to clearing counter values
 	// clear counter
-	PCA0MD &= 0xBF;
+	//PCA0MD &= 0xBF;
+    PCA0CN0 &= 0xBF;
+    
 	PCA0H = 0x00;
 	PCA0L = 0x00;
 	
-    PCA0MD = flags;
+    // FIXME: I think this was a bug in portisch
+    //PCA0MD = flags;
+    PCA0CN0 = flags;
 }
 
 uint16_t get_capture_value(void)
