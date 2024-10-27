@@ -13,7 +13,9 @@
 //#define TIMER0_RELOAD_1MILLIS   0xA04B
 //#define TIMER1_RELOAD_10MICROS  0xFF0A
 
+// FIXME: double check portisch, I think this is wrong
 #define TIMER0_PCA0  0xA0
+// 19200 baud, same on portisch
 #define TIMER1_UART0 0xCB
 #define TIMER2_RELOAD_10MICROS  0xFFEA
 
