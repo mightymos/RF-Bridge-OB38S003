@@ -469,7 +469,7 @@ void pca0_halt(void)
 }
 
 
-bool global_interrupts_are_enabled(void)
+bool is_global_interrupt_enabled(void)
 {
     return EA;
 }

@@ -202,7 +202,7 @@ void init_timer2_as_capture(void)
     T2CON = 0xD1;
 }
 
-bool global_interrupts_are_enabled(void)
+bool is_global_interrupt_enabled(void)
 {
     return EA;
 }
