@@ -132,7 +132,7 @@ void init_uart(void)
 }
 
 // this is necessary so that uart ring buffer logic operates correctly the first time it is used
-// i.e., appears that last character sent was completed, even though no previous character was actually sent
+// i.e., flag is set as though the last character sent was completed, even though no previous character was actually sent
 void init_serial_interrupt(void)
 {
     TI = 1;

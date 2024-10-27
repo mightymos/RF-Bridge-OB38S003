@@ -14,9 +14,11 @@
 //-----------------------------------------------------------------------------
 // Global Constants
 //-----------------------------------------------------------------------------
+// FIXME: these are repeated in portisch so may consolidate in the future
 #define RF_CODE_START		0xAA
 #define RF_CODE_STOP		0x55
 
+// FIXME: explain choice of size
 #define UART_RX_BUFFER_SIZE 32
 #define UART_TX_BUFFER_SIZE	32
 

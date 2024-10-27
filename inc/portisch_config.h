@@ -7,13 +7,8 @@
  *  Enable/Disable the protocols you want to include when compiling
  *  The memory of the used EFM8BB1 is limited to 8KB
  *
- *  Also a option is not including the 0xB1 bucket sniffing as this is only needed to define new protocols
  */
 
-#ifndef PORTISCH_CONFIG_H
-#define PORTISCH_CONFIG_H
-
-#define INCLUDE_BUCKET_SNIFFING
 
 // typical protocols, disable here!             Enable	Remarks
 #define EFM8BB1_SUPPORT_PT226X_PROTOCOL			1		// PT2260, EV1527,... original RF bridge protocol
@@ -38,5 +33,3 @@
 #define EFM8BB1_SUPPORT_BY302_PROTOCOL			0		// Byron BY302 Doorbell, Issue #102
 #define EFM8BB1_SUPPORT_DT_5514_PROTOCOL		0		// 5514 SILENT Dual Tech, Issue #104
 #define EFM8BB1_SUPPORT_H13726_PROTOCOL			0		// Auriol H13726 Weather Station, Issue #106
-
-#endif

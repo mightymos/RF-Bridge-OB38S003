@@ -140,23 +140,6 @@ void putstring(const char *s)
 }
 
 //-----------------------------------------
-void puthex(unsigned char v)
-{
-   unsigned char c;
-   v &= 0x0f;
-   if (v<10) c = '0'+v;
-   else c = 'A'-10+v;
-   putc(c);
-}
-
-//-----------------------------------------
-void puthex2(const unsigned char x)
-{
-   puthex(x >> 4);
-   puthex(x);
-}
-
-//-----------------------------------------
 unsigned char uart_rx(bool* result)
 {
     volatile unsigned char rxByte = 0;

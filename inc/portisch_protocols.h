@@ -5,8 +5,8 @@
  *      Author:
  */
 
-#ifndef PORTISCH_PROTOCOLS_H
-#define PORTISCH_PROTOCOLS_H
+#ifndef INC_RF_PROTOCOLS_H_
+#define INC_RF_PROTOCOLS_H_
 
 //-----------------------------------------------------------------------------
 // Includes
@@ -14,9 +14,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "portisch_hal.h"
 #include "portisch_config.h"
-#include "portisch_macros.h"
-
 
 /*
  * bucket sniffing constants
@@ -39,7 +38,11 @@
 
 typedef struct PROTOCOL_STATUS
 {
-	uint16_t status;
+	//uint16_t status;
+	uint8_t sync_status;
+	uint8_t bit0_status;
+	uint8_t bit1_status;
+	uint8_t end_status;
 	uint8_t bit_count;
 	uint8_t actual_bit_of_byte;
 } PROTOCOL_STATUS;
@@ -600,6 +603,4 @@ __code static struct BUCKET_PROTOCOL_DATA PROTOCOL_DATA[] =
 
 // https://www.ashn.dev/blog/2020-01-06-c-array-length.html
 #define NUM_OF_PROTOCOLS (sizeof(PROTOCOL_DATA) / sizeof(PROTOCOL_DATA[0]))
-
-
 #endif // INC_RF_PROTOCOLS_H_

@@ -21,7 +21,14 @@
 //unsigned long get_time_ten_microseconds(void);
 
 void init_delay_timer_us(const uint16_t interval, const uint16_t timeout);
+void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout);
 void wait_delay_timer_finished(void);
+void stop_delay_timer(void);
+bool is_delay_timer_finished(void);
 
+void clear_interrupt_flags_pca(void);
+void clear_pca_counter(void);
+uint16_t get_capture_value(void);
+void SetTimer0Overflow(uint8_t T0_Overflow);
 
 #endif

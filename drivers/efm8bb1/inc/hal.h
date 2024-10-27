@@ -250,17 +250,4 @@ extern void clear_capture_flag(void);
 
 extern unsigned long countsToTime(const unsigned long duration);
 
-
-extern void InitTimer2_us(const uint16_t interval, const uint16_t timeout);
-extern void InitTimer3_us(const uint16_t interval, const uint16_t timeout);
-extern void InitTimer2_ms(const uint16_t interval, const uint16_t timeout);
-extern void InitTimer3_ms(const uint16_t interval, const uint16_t timeout);
-extern void WaitTimer2Finished(void);
-extern void WaitTimer3Finished(void);
-extern void StopTimer2(void);
-extern void StopTimer3(void);
-extern bool IsTimer2Finished(void);
-extern bool IsTimer3Finished(void);
-
-
 #endif // INC_HAL_H_

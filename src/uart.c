@@ -87,6 +87,8 @@ void uart_write(uint8_t value)
     SBUF = value;
 }
 
+// FIXME: this could probably be replaced with call to
+// void init_serial_interrupt(void) which sets the same flag
 void uart_init_tx_polling(void)
 {
   TI = 1;

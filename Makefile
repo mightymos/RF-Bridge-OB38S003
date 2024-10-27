@@ -46,9 +46,9 @@
 # uncomment only one target board
 # FIXME: build all targets without need to modify makefile
 # sonoff black box
-TARGET_BOARD = EFM8BB1
+#TARGET_BOARD = EFM8BB1
 # low cost development board
-#TARGET_BOARD = EFM8BB1LCB
+TARGET_BOARD = EFM8BB1LCB
 # sonoff white box
 #TARGET_BOARD = OB38S003
 
@@ -102,17 +102,20 @@ OBJECT_DIR = object
 # final location of built firmware
 BUILD_DIR  = build
 
+# FIXME: pca_0 and wdt_0 are exclusively for portisch EFM8BB1
+# so hardware abstraction from other hardware needs to be used eventually
 # list of source files
 SOURCES = \
  $(SOURCE_DIR)/main_passthrough.c     \
  $(SOURCE_DIR)/main_portisch.c        \
  $(SOURCE_DIR)/main_rcswitch.c        \
  $(SOURCE_DIR)/portisch.c             \
+ $(SOURCE_DIR)/portisch_hal.c         \
  $(SOURCE_DIR)/portisch_serial.c      \
  $(SOURCE_DIR)/rcswitch.c             \
  $(SOURCE_DIR)/state_machine.c        \
  $(SOURCE_DIR)/uart.c                 \
- $(SOURCE_DIR)/uart_software.c        \
+ $(SOURCE_DIR)/wdt_0.c                \
  $(DRIVER_SRC_DIR)/delay.c            \
  $(DRIVER_SRC_DIR)/hal.c              \
  $(DRIVER_SRC_DIR)/timer_interrupts.c
@@ -135,14 +138,24 @@ OBJECTS_RCSWITCH = \
  $(OBJECT_DIR)/uart.rel             \
  $(OBJECT_DIR)/delay.rel            \
  $(OBJECT_DIR)/hal.rel              \
- $(OBJECT_DIR)/timer_interrupts.rel \
- $(OBJECT_DIR)/uart_software.rel
+ $(OBJECT_DIR)/timer_interrupts.rel
                         
-
+OBJECTS_PORTISCH = \
+ $(OBJECT_DIR)/delay.rel            \
+ $(OBJECT_DIR)/main_portisch.rel    \
+ $(OBJECT_DIR)/portisch.rel         \
+ $(OBJECT_DIR)/portisch_hal.rel     \
+ $(OBJECT_DIR)/portisch_serial.rel  \
+ $(OBJECT_DIR)/timer_interrupts.rel \
+ $(OBJECT_DIR)/uart.rel             \
+ $(OBJECT_DIR)/delay.rel            \
+ $(OBJECT_DIR)/hal.rel              \
+ $(OBJECT_DIR)/wdt_0.rel
 
 # firmware names
 TARGET_PASSTHROUGH  = $(BUILD_DIR)/main_passthrough_$(TARGET_BOARD).ihx
 TARGET_RCSWITCH     = $(BUILD_DIR)/main_rcswitch_$(TARGET_BOARD).ihx
+TARGET_PORTISCH     = $(BUILD_DIR)/main_portisch_$(TARGET_BOARD).ihx
 
 
 ###########################################################
@@ -164,7 +177,7 @@ LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 
 .PHONY: all clean
 
-all: $(TARGET_RCSWITCH) $(TARGET_PASSTHROUGH)
+all: $(TARGET_RCSWITCH) $(TARGET_PASSTHROUGH) $(TARGET_PORTISCH)
 
 clean:
 	# it is safer to remove wildcard with file extension instead of the entire directory
@@ -205,7 +218,13 @@ $(TARGET_RCSWITCH): $(OBJECTS_RCSWITCH)
 	packihx $@ > $(basename $@).hex
 	dos2unix $(basename $@).hex
 	
+$(TARGET_PORTISCH): $(OBJECTS_PORTISCH)
+	@echo "Linking $^"
+	mkdir -p $(dir $@)
+	$(CC) $(LDFLAGS) -o $@ $^
 	
+	packihx $@ > $(basename $@).hex
+	dos2unix $(basename $@).hex
 
 # basically the compilation step
 $(OBJECT_DIR)/%.rel: $(SOURCE_DIR)/%.c

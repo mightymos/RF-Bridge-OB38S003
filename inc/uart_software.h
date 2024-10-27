@@ -40,9 +40,6 @@ void init_software_uart(void);
 void putc(const char c);
 void putstring(const char *s);
 
-void puthex(unsigned char v);
-void puthex2(const unsigned char x);
-
 unsigned char uart_rx(bool* result);
 
 
