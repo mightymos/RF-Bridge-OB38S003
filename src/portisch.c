@@ -403,14 +403,15 @@ bool buffer_out(uint16_t* bucket)
 
 void capture_handler(uint16_t current_capture_value)
 {
+    // makes code more readable
+	bool pin;
+    
     //FIXME: possible to eliminate multiplication to save code size?
     //FIXME: make hardware abstraction
 	//uint16_t current_capture_value = get_capture_value();
     //current_capture_value = current_capture_value / 2;
     // FIXME: this function expects a long type, so need to see if that matters or not
     current_capture_value = countsToTime(current_capture_value);
-
-	bool pin;
 
     clear_pca_counter();
 

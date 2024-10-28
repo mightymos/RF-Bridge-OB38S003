@@ -161,6 +161,7 @@ void pca0_isr(void) __interrupt (PCA0_VECTOR)
     //  PCA0_intermediateOverflowCb();
     //}
 
+    // FIXME: add comment
     PCA0PWM &= ~COVF__BMASK;
 
     //if((flags & CF__BMASK) && (PCA0MD & ECF__BMASK))
