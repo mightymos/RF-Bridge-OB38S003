@@ -442,33 +442,28 @@ void main (void)
     init_timer1(0xCB);
     pca0_init();
     // FIXME: we are not using timer3 right now because ob38s003 does not have it
-    //enable_timer2_interrupt();
-    enable_timer3_interrupt();
+    enable_timer2_interrupt();
+    //enable_timer3_interrupt();
+    
+    //FIXME: in rcswitch we did pca0_run() here, but it happens in DoSniffing() for portisch
 #endif
 
-
+    // FIXME: this is slightly different to rcswitch initialization, need to decide what makes the most sense
     enable_capture_interrupt();
     enable_serial_interrupt();
-    
-    // better to let the startup blink happen, then enable global interrupts later
-    //enable_global_interrupts();
-
-
-
-	// DEBUG:
-	//debug_pin0_off();
-
-    
 
 
 	// start sniffing be default
 	// set desired sniffing type to PT2260
 	sniffing_mode = STANDARD;
+    
+    // FIXME: as best I can tell on development board, advanced sniffing does not even work with portisch hex
 	//sniffing_mode = ADVANCED;
 	PCA0_DoSniffing();
 	rf_state = RF_IDLE;
 
-	// FIXME: add comment
+    // FIXME: double check if this comment is accurate
+	// basically chooses between standard (i.e., three buckets) and advanced output (i.e. up to seven buckets)
 	last_sniffing_command = RF_CODE_RFIN;
 	uart_command          = RF_CODE_RFIN;
 	//last_sniffing_command = RF_CODE_SNIFFING_ON;
@@ -485,7 +480,8 @@ void main (void)
 	// enable global interrupts
 	enable_global_interrupts();
     
-
+    // FIXME: function empty on efm8bb1, because unknown if receiver has enable pin
+    radio_receiver_on();
     
     // startup
     //requires code and memory space, which is in short supply
