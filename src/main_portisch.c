@@ -362,6 +362,18 @@ bool radio_state_machine(void)
 	return completed;
 }
 
+void startup_blink(void)
+{
+    // double blink
+    led_on();
+    delay1ms(1000);
+    led_off();
+    
+    led_on();
+    delay1ms(1000);
+    led_off();
+}
+
 //-----------------------------------------------------------------------------
 // main() Routine
 // ----------------------------------------------------------------------------
@@ -385,6 +397,8 @@ void main (void)
 	// prefer bool type in internel ram to take advantage of bit addressable locations
 	bool result;
 
+    // add comment?
+    set_clock_mode();
 
 	// call hardware initialization routine
 #if defined(TARGET_BOARD_OB38S003)
@@ -396,8 +410,19 @@ void main (void)
     #error Please define TARGET_BOARD in makefile
 #endif
 
-    set_clock_mode();
+	// set default pin states
+	led_on();
+	buzzer_off();
+	tdata_off();
     
+    // DEBUG:
+    // on some boards, "debug pin" is actually buzzer
+    // so we do not want to use it for debugging unless buzzer has been removed
+    //debug_pin01_off();
+    
+    //
+    startup_blink();
+    delay1ms(500);
     
 #if defined(TARGET_BOARD_OB38S003)
     init_timer1();
@@ -420,11 +445,6 @@ void main (void)
     // better to let the startup blink happen, then enable global interrupts later
     //enable_global_interrupts();
 
-
-	// set default pin states
-	led_on();
-	buzzer_off();
-	tdata_off();
 
 
 	// DEBUG:
@@ -460,17 +480,6 @@ void main (void)
 	//PCA0_StopSniffing();
 	//rf_state = RF_IDLE;
 
-
-#if 1
-    // startup buzzer (can be annoying during development)
-	// use LED instead (for development)
-	//buzzer_on();
-	led_on();
-	delay1ms(startupDelay);
-
-	//buzzer_off();
-	led_off();
-#endif
 
     // FIXME: we already enable this previously where portisch did
     // so can do it here or above, does it matter?
