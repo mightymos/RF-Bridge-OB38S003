@@ -428,6 +428,12 @@ void main (void)
     init_uart();
     uart_rx_enabled();
     
+    // FIXME: despite rcswitch doing it this way, it seems like we only want to enable after setting uart timer baud rate
+    // sets TI=1 so ring buffer logic works
+    init_serial_interrupt();
+    // enable actual interrupt
+    enable_serial_interrupt();
+    
 #if defined(TARGET_BOARD_OB38S003)
     init_timer1();
     init_timer2_as_capture();
@@ -446,7 +452,6 @@ void main (void)
 
     // FIXME: this is slightly different to rcswitch initialization, need to decide what makes the most sense
     enable_capture_interrupt();
-    enable_serial_interrupt();
 
 
 	// start sniffing be default
