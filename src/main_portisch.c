@@ -82,12 +82,8 @@ unsigned char __sdcc_external_startup(void)
     // pg. 218, sec. 20.3 disable watchdog timer
     disable_global_interrupts();
     
-    // FIXME: use hardware abstraction
-    //WDTCN = 0xDE;
-    //WDTCN = 0xAD;
-    
-    // re-enable interrupts
-    //IE_EA = 1
+    // using hardware abstraction
+    disable_watchdog();
     
     return 0;
 }
@@ -483,11 +479,15 @@ void main (void)
     // FIXME: function empty on efm8bb1, because unknown if receiver has enable pin
     radio_receiver_on();
     
+    //
+    enable_watchdog();
+    
+    // DEBUG:
     // startup
     //requires code and memory space, which is in short supply
     //but good to check that polled uart is working
     //printf_tiny("startup...\r\n");
-    //uart_put_command(RF_CODE_ACK);
+    uart_put_command(RF_CODE_ACK);
 
 	// FIXME: this is essentially our watchdog timer initialization
 	//        but it needs to be done with the abstraction layer
@@ -504,7 +504,7 @@ void main (void)
 	while (true)
 	{
 		// reset Watch Dog Timer
-		//WDT0_feed();
+		refresh_watchdog();
 
 
 #if 0
