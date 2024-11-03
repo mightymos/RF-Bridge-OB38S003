@@ -424,6 +424,14 @@ void main (void)
     startup_blink();
     delay1ms(500);
     
+	// baud rate is 19200, 8 data bits, 1 stop bit, no parity
+	// polled version basically sets TI flag so putchar() does not get stuck in an infinite loop
+	//UART0_initStdio();
+	// enable uart (with interrupts)
+	//UART0_init(UART0_RX_ENABLE, UART0_WIDTH_8, UART0_MULTIPROC_DISABLE);
+    init_uart();
+    uart_rx_enabled();
+    
 #if defined(TARGET_BOARD_OB38S003)
     init_timer1();
     init_timer2_as_capture();
@@ -434,8 +442,8 @@ void main (void)
     init_timer1(0xCB);
     pca0_init();
     // FIXME: we are not using timer3 right now because ob38s003 does not have it
-    enable_timer3_interrupt();
     //enable_timer2_interrupt();
+    enable_timer3_interrupt();
 #endif
 
 
@@ -450,15 +458,6 @@ void main (void)
 	// DEBUG:
 	//debug_pin0_off();
 
-
-
-	// baud rate is 19200, 8 data bits, 1 stop bit, no parity
-	// polled version basically sets TI flag so putchar() does not get stuck in an infinite loop
-	//UART0_initStdio();
-
-	// enable uart (with interrupts)
-	//UART0_init(UART0_RX_ENABLE, UART0_WIDTH_8, UART0_MULTIPROC_DISABLE);
-    init_uart();
     
 
 
