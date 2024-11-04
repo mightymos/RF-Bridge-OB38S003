@@ -430,10 +430,6 @@ void capture_handler(uint16_t current_capture_value)
 	}
 }
 
-void PCA0_channel1EventCb(void) { }
-
-void PCA0_channel2EventCb(void) { }
-
 uint8_t PCA0_DoSniffing(void)
 {
 	// FIXME:

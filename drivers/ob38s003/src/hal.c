@@ -206,7 +206,9 @@ void init_timer2_as_capture(void)
 //        but for now we use the same naming convention
 void pca0_run(void)
 {
-    // change from timer2 stop to input frequency from prescaler
+    // change to timer2 stop
+    T2CON &= ~0x03;
+    // then to input frequency from prescaler
     T2CON |= 0x01;
 }
 
