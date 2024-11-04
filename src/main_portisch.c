@@ -27,9 +27,6 @@
 #include "uart.h"
 #include "util.h"
 
-//#include "pca_0.h"
-//#include "uart_0.h"
-//#include "wdt_0.h"
 
 // uart state machine
 __xdata uart_state_t uart_state = IDLE;
@@ -58,7 +55,7 @@ __xdata uint8_t tr_repeats = 0;
     void uart_isr(void)   __interrupt (d_UART0_Vector);
 
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
-    // timer0 is used now for PCA
+    // timer0 was used for PCA in portisch, instead just use system clock
     // timer1 must be used for uart on this controller
     void uart_isr(void) __interrupt (UART0_VECTOR);
     // timer2 is used on demand to provide delays
