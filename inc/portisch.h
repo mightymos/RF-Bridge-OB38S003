@@ -73,4 +73,6 @@ extern void SendBuckets(uint16_t *pulses,uint8_t* start, uint8_t start_size,uint
 extern void SendBucketsByIndex(uint8_t index, uint8_t* rfdata);
 extern void Bucket_Received(uint16_t duration, bool high_low);
 
+void capture_handler(uint16_t current_capture_value);
+
 #endif // PORTISCH_H_

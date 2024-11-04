@@ -4,9 +4,17 @@
 // OB38S003 uses timer 2 capture mode for similar functionality to PCA on EFM8BB1
 #include "OB38S003.h"
 
-#include "delay.h"
 #include "hal.h"
-#include "rcswitch.h"
+
+// FIXME: is there a way to avoid this?
+//#if defined(TARGET_RCSWITCH)
+//    #include "rcswitch.h"
+//#elif defined(TARGET_PORTISCH)
+    #include "portisch.h"
+//#else
+//    #error Please define TARGET_BOARD in makefile
+//#endif
+
 #include "timer_interrupts.h"
 
 // track time since startup in one millisecond increments
@@ -185,10 +193,10 @@ void timer2_isr(void) __interrupt (d_T2_Vector)
     clear_capture_flag();
     
     // DEBUG:
-    //if (rdata_level())
-    //{
-    //  debug_pin01_on();
-    //} else {
-    //  debug_pin01_off();
-    //}
+    if (rdata_level())
+    {
+      debug_pin01_on();
+    } else {
+      debug_pin01_off();
+    }
 }
