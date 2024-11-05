@@ -48,9 +48,9 @@
 # sonoff black box
 #TARGET_BOARD = EFM8BB1
 # low cost development board
-TARGET_BOARD = EFM8BB1LCB
+#TARGET_BOARD = EFM8BB1LCB
 # sonoff white box
-#TARGET_BOARD = OB38S003
+TARGET_BOARD = OB38S003
 
 # catches undefined
 ifndef TARGET_BOARD
@@ -145,7 +145,6 @@ OBJECTS_PORTISCH = \
  $(OBJECT_DIR)/portisch_serial.rel  \
  $(OBJECT_DIR)/timer_interrupts.rel \
  $(OBJECT_DIR)/uart.rel             \
- $(OBJECT_DIR)/delay.rel            \
  $(OBJECT_DIR)/hal.rel
 
 # firmware names
