@@ -4,9 +4,9 @@ An alternative firmware for 433 MHz radio to wifi bridges, targetting these boar
 
 | Board | Microcontroller | Passthrough |  RCSwitch | Portisch | Notes |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
-| Sonoff Bridge R2 v1.0 (black box) | EFM8BB1 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | No | Flashing works, see instructions below for Tasmota firmware upgrade |
+| Sonoff Bridge R2 v1.0 (black box) | EFM8BB1 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | Supported | Flashing works, see instructions below for Tasmota firmware upgrade |
 | Sonoff Bridge R2 v2.2 (white box) | OB38S003 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | No | Requires reprogramming with official or open source flasher |
-| EFM8BB1 Busy Bee Low Cost Kit Board | EFM8BB1 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | No | Requires external receiver and/or transmitter |
+| EFM8BB1 Busy Bee Low Cost Kit Board | EFM8BB1 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | Supported | Requires external receiver and/or transmitter |
 
 These microcontrollers were originally intended for radio decoding but lacked support for additional protocols.  
 As a consequence many people just bypass the microcontroller with a hardware modification:  
@@ -30,13 +30,10 @@ The downside is the effort required to develop firmware and flash by the end use
 The firmware radio decoding is inspired by 1) RF-Bridge-EFM8BB1 (Portisch) and 2) rc-switch projects.  
 
 # Status
-THIS IS A WORK IN PROGRESS and should not be used by typical users.  
+THIS IS A WORK IN PROGRESS and requires multiple flashing steps.   
 
-Erasing and reprogramming the OB38S003 is cumbersome without the official programmer.  
-However, an open source and inexpensive programmer is discussed under Flasher section.  
-
-It is probably easiest to flash the passthrough mode.  
-Then perform any actual decoding/encoding on the ESP8265 itself.  
+For many users it is probably easiest to flash the passthrough mode.  
+Then perform any actual decoding/encoding on the ESP8265 using Tasmota/ESPHome.
 
 # Installation
 Install SDCC compiler for your platform:  

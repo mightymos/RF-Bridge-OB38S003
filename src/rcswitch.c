@@ -129,15 +129,11 @@ bool receive_protocol(const int p, unsigned int changeCount)
             abs(timings[i + 1] - delay * pro.zero.low) < delayTolerance) {
             // zero
             
-            // DEBUG:
-            //debug_pin01_off();
         } else if (abs(timings[i] - delay * pro.one.high) < delayTolerance &&
             abs(timings[i + 1] - delay * pro.one.low) < delayTolerance) {
             // one
             code |= 1;
             
-            // DEBUG:
-            //debug_pin01_on();
         } else {
             // failed
             return false;
@@ -293,19 +289,17 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     __xdata uint8_t firstLogicLevel  = invertedSignal ? 0 : 1;
     __xdata uint8_t secondLogicLevel = invertedSignal ? 1 : 0;
 
-  
+    //
     set_tdata(firstLogicLevel);
-    // DEBUG: mirror transmitted pulses to another pin for easier probing by oscilloscope
-    //set_debug_pin01(firstLogicLevel);
+
 
     init_delay_timer_us(1, delayHigh);
     wait_delay_timer_finished();
 
 
-
+    //
     set_tdata(secondLogicLevel);
-    // DEBUG:
-    //set_debug_pin01(secondLogicLevel);
+
 
     init_delay_timer_us(1, delayLow);
     wait_delay_timer_finished();
