@@ -61,6 +61,7 @@ void clear_pca_counter(void)
 	PCA0L = 0x00;
 	
     // FIXME: I think this was a bug in portisch
+    // FIXME: why not just explicitly set CR bit if that was the intent?
     //PCA0MD = flags;
     PCA0CN0 = flags;
 }
@@ -162,21 +163,8 @@ void pca0_isr(void) __interrupt (PCA0_VECTOR)
     // save and clear flags
     uint8_t flags = PCA0CN0 & (CF__BMASK | CCF0__BMASK | CCF1__BMASK | CCF2__BMASK);
 
+    // clear
     PCA0CN0 &= ~flags;
-
-
-    //if( (PCA0PWM & COVF__BMASK) && (PCA0PWM & ECOV__BMASK))
-    //{
-    //  PCA0_intermediateOverflowCb();
-    //}
-
-    // FIXME: add comment
-    PCA0PWM &= ~COVF__BMASK;
-
-    //if((flags & CF__BMASK) && (PCA0MD & ECF__BMASK))
-    //{
-    //  PCA0_overflowCb();
-    //}
 
     // FIXME: we might eventually want to use CF flag to detect counter wrap around
     if((flags & CCF0__BMASK) && (PCA0CPM0 & ECCF__BMASK))
@@ -200,13 +188,4 @@ void pca0_isr(void) __interrupt (PCA0_VECTOR)
     //clear pca0 interrupt flag
     clear_capture_flag();
 
-    //if((flags & CCF1__BMASK) && (PCA0CPM1 & ECCF__BMASK))
-    //{
-    //  PCA0_channel1EventCb();
-    //}
-
-    //if((flags & CCF2__BMASK) && (PCA0CPM2 & ECCF__BMASK))
-    //{
-    //  PCA0_channel2EventCb();
-    //}
 }

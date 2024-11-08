@@ -155,7 +155,9 @@ void disable_serial_interrupt(void)
 
 void enable_capture_interrupt(void)
 {
+    // channel 0 capture flag interrupt enable
     PCA0CPM0 |= ECCF__ENABLED;
+    // PCA0 interrupt enable
     EIE1     |= EPCA0__ENABLED;
 }
 
