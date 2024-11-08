@@ -231,6 +231,7 @@ uint16_t get_capture_mode(void)
 
 void clear_capture_flag(void)
 {
+    // clear CCF1 bit
     CCCON &= ~0x02;
 }
 
