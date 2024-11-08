@@ -84,11 +84,11 @@ void set_timer1_reload(const uint16_t reload)
  */
 void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
 {
-    //
-    //set_timer1_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
+    // FIXME: why were we explicitly setting to 10 microseconds previously?
+    set_timer1_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
     // 10 microseconds
-    TH1 = T1_AUTORELOAD_10MICROS;
-    TL1 = T1_AUTORELOAD_10MICROS;
+    //TH1 = T1_AUTORELOAD_10MICROS;
+    //TL1 = T1_AUTORELOAD_10MICROS;
 
     // 1 microsecond
     //TH1 = 0xF0;
