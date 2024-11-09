@@ -5,7 +5,7 @@ An alternative firmware for 433 MHz radio to wifi bridges, targetting these boar
 | Board | Microcontroller | Passthrough |  RCSwitch | Portisch | Notes |
 | ------------- | ------------- | ------------- | ------------- | ------------- | ------------- |
 | Sonoff Bridge R2 v1.0 (black box) | EFM8BB1 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | Supported | Flashing works, see instructions below for Tasmota firmware upgrade |
-| Sonoff Bridge R2 v2.2 (white box) | OB38S003 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | No | Requires reprogramming with official or open source flasher |
+| Sonoff Bridge R2 v2.2 (white box) | OB38S003 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | Supported | Requires reprogramming with official or open source flasher |
 | EFM8BB1 Busy Bee Low Cost Kit Board | EFM8BB1 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | Supported | Requires external receiver and/or transmitter |
 
 These microcontrollers were originally intended for radio decoding but lacked support for additional protocols.  
@@ -30,8 +30,9 @@ The downside is the effort required to develop firmware and flash by the end use
 The firmware radio decoding is inspired by 1) RF-Bridge-EFM8BB1 (Portisch) and 2) rc-switch projects.  
 
 # Status
-THIS IS A WORK IN PROGRESS and requires multiple flashing steps.   
-
+THIS IS A WORK IN PROGRESS and requires multiple flashing steps.  
+Decoding has only been tested with a single door sensor using standard 24 bit protocol.  
+ 
 For many users it is probably easiest to flash the passthrough mode.  
 Then perform any actual decoding/encoding on the ESP8265 using Tasmota/ESPHome.
 
@@ -83,9 +84,8 @@ While cumbersome to use, several people have successfully flashed hex files.
 # Previous Work
 
 A successful attempt was made to compile "Portisch" with the open source SDCC compiler.  
-I personally found the source code to be difficult to read.  
-It is additionally difficult to fit all features and protocols in code and ram spaces.  
-I hope to be able to use this port to use Portisch on the newer Sonoff boxes.  
+It is difficult to fit all decoding protocols and sniffing features in code and ram spaces.  
+This effort allowed porting to the R2 V2.2 Sonoff (white box).  
 https://github.com/mightymos/SonOfPortisch
 
 There are at least three versions of rcswitch.  

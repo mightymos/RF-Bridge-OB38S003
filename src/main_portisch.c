@@ -480,16 +480,14 @@ void main (void)
     
     // FIXME: function empty on efm8bb1, because unknown if receiver has enable pin
     radio_receiver_on();
-    
-    //
-    enable_watchdog();
+
     
     // DEBUG:
     // startup
     //requires code and memory space, which is in short supply
     //but good to check that polled uart is working
     //printf_tiny("startup...\r\n");
-    uart_put_command(RF_CODE_ACK);
+    //uart_put_command(RF_CODE_ACK);
 
 	// FIXME: this is essentially our watchdog timer initialization
 	//        but it needs to be done with the abstraction layer
@@ -500,8 +498,9 @@ void main (void)
 	//LFO0CN |= OSCLD__DIVIDE_BY_1;
 
 	// we disabled watchdog at startup in case external ram needs to be cleared etc.
-	// now we re-enable
+	// now we enable
 	//WDT0_start();
+    enable_watchdog();
 	
 	while (true)
 	{

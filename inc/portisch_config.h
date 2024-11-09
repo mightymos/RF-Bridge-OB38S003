@@ -12,8 +12,8 @@
 
 // typical protocols, disable here!             Enable	Remarks
 #define EFM8BB1_SUPPORT_PT226X_PROTOCOL			1		// PT2260, EV1527,... original RF bridge protocol
-#define EFM8BB1_SUPPORT_HT6P20X_PROTOCOL		0		// HT6P20X chips
-#define EFM8BB1_SUPPORT_HT12_PROTOCOL			0		// HT12A/HT12E chips
+#define EFM8BB1_SUPPORT_HT6P20X_PROTOCOL		1		// HT6P20X chips
+#define EFM8BB1_SUPPORT_HT12_PROTOCOL			1		// HT12A/HT12E chips
 
 // more protocols, enable here!                 Enable  Remarks
 #define EFM8BB1_SUPPORT_Rohrmotor24_PROTOCOL	0		// Rohrmotor24

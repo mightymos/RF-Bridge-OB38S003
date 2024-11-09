@@ -172,14 +172,6 @@ void pca0_isr(void) __interrupt (PCA0_VECTOR)
         // apparently our radio input
         //pca0_channel0EventCb();
         capture_handler(currentCapture);
-        
-        // DEBUG:
-        //if (rdata_level())
-        //{
-        //  debug_pin01_on();
-        //} else {
-        //  debug_pin01_off();
-        //}
     }
     
     // done in the interrupt already on efm8bb1

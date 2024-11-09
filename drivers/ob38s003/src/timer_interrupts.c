@@ -194,11 +194,4 @@ void timer2_isr(void) __interrupt (d_T2_Vector)
     //clear pca0 interrupt flag
     clear_capture_flag();
     
-    // DEBUG:
-    if (rdata_level())
-    {
-      debug_pin01_on();
-    } else {
-      debug_pin01_off();
-    }
 }
