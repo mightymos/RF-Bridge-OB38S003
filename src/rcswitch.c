@@ -176,20 +176,12 @@ void capture_handler(const uint16_t currentCapture)
 
     const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
 
-    // update
-    previous = current;
-    current = currentCapture;
-    
-    // check for overflow condition
-    if (current < previous)
-    {
-        // FIXME: no magic numbers
-        // FIXME: seems like a bad idea to make wrap around calculation depend on variable type, what if it changes
-        // if overflow, we must compute difference by taking into account wrap around at maximum variable size
-        duration = UINT_MAX  - previous + current;
-    } else {
-        duration = current - previous;
-    }
+    // FIXME: rcswitch library originally relied on computing time difference
+    //        but I do not think they handled the cause when timer overflowed
+    //        an alternative is to just reset counter to zero each edge detection
+    //previous = current;
+    //current = currentCapture;
+    //duration = current - previous;
     
     // e.g., EFM8BB1
     // e.g. (1/(24500000))*(49/2) = 1      microsec
@@ -202,7 +194,12 @@ void capture_handler(const uint16_t currentCapture)
     // e.g. prescale at (1/24) at 16 MHz, 2/3 counts are need to get one microsecond
     // so inverse is counts * 3/2 = time
     // e.g., (1/(16000000/24)) * dec(0xFFFF) = 98.30 milliseconds maximum can be counted
-    duration = countsToTime(duration);
+    //duration = countsToTime(duration);
+    duration = countsToTime(currentCapture);
+    
+    // reset counter on each edge detection so we avoid need to computer time difference
+    // and hopefully avoid situation where counter overflows and wraps around
+    clear_pca_counter();
     
     // from oscillscope readings it appears that first sync pulse of first radio packet is frequently not output properly by receiver
     // this could be because radio receiver needs to "warm up" (despite already being enabled?)

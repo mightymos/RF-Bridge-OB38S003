@@ -49,9 +49,11 @@ void clear_pca_counter(void)
     // timer 2 stop
     T2CON &= ~0x03;
     
-    // comment
-    CCH1 = 0x00;
-    CCL1 = 0x00;
+    // FIXME: do we also need to clear capture registers?
+    //CCH1 = 0x00;
+    //CCL1 = 0x00;
+    TH2 = 0x00;
+    TL2 = 0x00;
 	
     // start timer2, input frequency from prescaler
     T2CON |= 0x01;
