@@ -334,7 +334,7 @@ void rf_state_machine(RF_COMMAND_T command)
             // bytes 2..3:  Tlow
             // bytes 4..5:  Thigh
             // bytes 6..8:  24bit Data
-            protocolPtr = &protocols[uartPacket[0]];
+            protocolPtr = &protocols[uartPacket[0] - 1];
             
             // calculate timing pulses in microseconds
             pulses.oneHigh  = protocolPtr->pulseLength * protocolPtr->one.high;
