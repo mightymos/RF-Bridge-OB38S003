@@ -656,7 +656,55 @@ void main (void)
 				}
 				break;
 			// FIXME: need to add back in 0xA8 and 0xB0 command
-			// case RF_CODE_RFOUT_NEW:
+			case RF_CODE_RFOUT_NEW:
+				// only do the job if all data got received by UART
+				if (uart_state != IDLE)
+					break;
+
+				// do transmit of the data
+				switch(rf_state)
+				{
+					// init and start RF transmit
+					case RF_IDLE:
+						tr_repeats--;
+						PCA0_StopSniffing();
+
+						// byte 0:		PROTOCOL_DATA index
+						// byte 1..:	Data
+                        // FIXME: rcswitch treats "protocol 1" as index 0, so might need to make consistent with portisch
+						SendBucketsByIndex(uartPacket[0], &uartPacket[1]);
+                        
+                        // ping pong between idle and finished state until we reach zero repeat index
+                        rf_state = RF_FINISHED;
+            
+						break;
+
+					// wait until data got transfered
+					case RF_FINISHED:
+						if (tr_repeats == 0)
+						{
+							// disable RF transmit
+							//T_DATA = TDATA_OFF;
+                            tdata_off();
+
+                            // indicate completed all transmissions
+                            uart_put_command(RF_CODE_ACK);
+
+                            // FIXME: need to examine this logic
+                            // restart sniffing in its previous mode
+                            PCA0_DoSniffing();
+
+                            // change back to previous command (i.e., not rfout)
+                            uart_command = last_sniffing_command;
+						}
+						else
+						{
+							rf_state = RF_IDLE;
+						}
+						break;
+				}
+				break;
+                
 			// case RF_CODE_RFOUT_BUCKET:
 			case RF_CODE_SNIFFING_ON_BUCKET:
 

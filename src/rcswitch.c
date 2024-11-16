@@ -317,6 +317,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
  * (timings identical to protocol 1)
  * RfRaw AA A5 2A 62 01 5E 04 1A A5 5A A5 55
  * by protocol (protocol 1)
+ * FIXME: should be 0x00 for protocol 1 as in portisch?
  * RfRaw AA A8 04 01 A5 5A A5 55
  */
 //void sendByProtocol(const int nProtocol, const unsigned int length)

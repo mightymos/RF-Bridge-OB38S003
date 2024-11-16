@@ -571,7 +571,14 @@ void SendBuckets(uint16_t *pulses, uint8_t* start, uint8_t start_size, uint8_t* 
 
 void SendBucketsByIndex(uint8_t index, uint8_t* rfdata)
 {
-	SendBuckets(PROTOCOL_DATA[index].buckets.dat,PROTOCOL_DATA[index].start.dat, PROTOCOL_DATA[index].start.size,PROTOCOL_DATA[index].bit0.dat, PROTOCOL_DATA[index].bit0.size, PROTOCOL_DATA[index].bit1.dat, PROTOCOL_DATA[index].bit1.size, PROTOCOL_DATA[index].end.dat, PROTOCOL_DATA[index].end.size,PROTOCOL_DATA[index].bit_count,rfdata);
+	// helps allow sendbuckets call to be more readable
+	uint8_t start_size = PROTOCOL_DATA[index].start.size;
+	uint8_t bit0_size  = PROTOCOL_DATA[index].bit0.size;
+	uint8_t bit1_size  = PROTOCOL_DATA[index].bit1.size;
+	uint8_t end_size   = PROTOCOL_DATA[index].end.size;
+	uint8_t bitcount   = PROTOCOL_DATA[index].bit_count;
+    
+	SendBuckets(PROTOCOL_DATA[index].buckets.dat, PROTOCOL_DATA[index].start.dat, start_size, PROTOCOL_DATA[index].bit0.dat, bit0_size, PROTOCOL_DATA[index].bit1.dat, bit1_size, PROTOCOL_DATA[index].end.dat, end_size, bitcount, rfdata);
 }
 
 
