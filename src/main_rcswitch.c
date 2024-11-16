@@ -224,7 +224,7 @@ int main (void)
     // default state is reset/pin1 high if using software uart as transmit pin
     soft_tx_pin_on();
 
-    // allows use of a gpio to output text characters because hardware uart is assigned for communicating with esp8285
+    // allows use of a gpio to output text characters for debugging hardware uart is assigned for communicating with esp8285
     init_software_uart();
 #endif
 

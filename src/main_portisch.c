@@ -35,9 +35,6 @@ __xdata uart_command_t uart_command = NONE;
 __xdata uart_command_t last_sniffing_command;
 __xdata uint8_t uartPacket[10];
 
-// for transmission
-__xdata uint16_t pulsewidths[3];
-__xdata uint8_t  tr_packet[3];
 
 // used for count down radio transmissions
 __xdata uint8_t tr_repeats = 0;
@@ -242,30 +239,14 @@ void uart_state_machine(const unsigned int rxdata)
 			
 			position++;
 
-			// FIXME: should look for buffer overflow as Portisch did
+			// FIXME: uartPacket[] versus RF_DATA[] array length
 			if (position == packetLength)
 			{
 				uart_state = SYNC_FINISH;
-
-				// FIXME: kind of a hack maybe, but only want to do conversion once, so do it here
-                // low
-				pulsewidths[0] = (uartPacket[2] << 8) | uartPacket[3];
-                // high
-				pulsewidths[1] = (uartPacket[4] << 8) | uartPacket[5];
-                // sync
-				pulsewidths[2] = (uartPacket[0] << 8) | uartPacket[1];
-                
-                // DEBUG:
-                //uart_putc((pulsewidths[0] >> 8) & 0xff);
-                //uart_putc(pulsewidths[0] & 0xff);
-                
-                // DEBUG:
-                //uart_putc((pulsewidths[1] >> 8) & 0xff);
-                //uart_putc(pulsewidths[1] & 0xff);
-
-				tr_packet[0] = uartPacket[6];
-				tr_packet[1] = uartPacket[7];
-				tr_packet[2] = uartPacket[8];
+			} else if (position >= RF_DATA_BUFFERSIZE)
+			{
+                packetLength = RF_DATA_BUFFERSIZE;
+                uart_state = SYNC_FINISH;
 			}
 			break;
 
@@ -305,7 +286,9 @@ bool radio_state_machine(void)
 	//const uint16_t pulsewidths_dummy[3] = {350, 1050, 10850};
 	//const uint8_t  packet_dummy[3]  = {0xA5, 0x5A, 0xA5};
 
-	//
+    // for transmission
+    uint16_t pulsewidths[3];
+    uint8_t  tr_packet[3];
 
 	// helps allow sendbuckets call to be more readable
 	uint8_t start_size;
@@ -328,10 +311,20 @@ bool radio_state_machine(void)
 			// byte 2..3:	Tlow
 			// byte 4..5:	Thigh
 			// byte 6..8:	24bit Data
-			// FIXME: based on putc(), I think this results in MSB first
+			// FIXME: based on putc(), I think this results in MSB last so bytes are swapped incorrectly
 			//pulsewidths[0] = *(uint16_t *)&uartPacket[2];
 			//pulsewidths[1] = *(uint16_t *)&uartPacket[4];
 			//pulsewidths[2] = *(uint16_t *)&uartPacket[0];
+            
+            // low, high, sync order in array (from uart order is sync, low, high)
+            pulsewidths[0] = (uartPacket[2] << 8) | uartPacket[3];
+            pulsewidths[1] = (uartPacket[4] << 8) | uartPacket[5];
+            pulsewidths[2] = (uartPacket[0] << 8) | uartPacket[1];
+            
+            // data
+            tr_packet[0] = uartPacket[6];
+            tr_packet[1] = uartPacket[7];
+            tr_packet[2] = uartPacket[8];
 
 			
 			// help make function call more readable
