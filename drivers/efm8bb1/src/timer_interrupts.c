@@ -69,13 +69,12 @@ void clear_pca_counter(void)
 // Portisch favored this approach to timer delay
 void set_timer2_reload(const uint16_t reload)
 {
-    /***********************************************************************
-     - Timer 2 Reload High Byte
-     ***********************************************************************/
+    // we need to initialize timer registers and setup reload values next
+    TMR2H = ((reload >> 8) & 0xFF);
+    TMR2L = (reload & 0xFF);
+    
+    // these are the reload values (placed into actual timer registers on overflow)
     TMR2RLH = ((reload >> 8) & 0xFF);
-    /***********************************************************************
-     - Timer 2 Reload Low Byte = 0x86
-     ***********************************************************************/
     TMR2RLL = (reload & 0xFF);
 }
 
