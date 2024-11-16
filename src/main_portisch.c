@@ -332,7 +332,7 @@ bool radio_state_machine(void)
 			bitcount   = PROTOCOL_DATA[0].bit_count;
 
 
-			SendBuckets(pulsewidths, PROTOCOL_DATA[0].start.dat, start_size, PROTOCOL_DATA[0].bit0.dat, bit0_size, PROTOCOL_DATA[0].bit1.dat, bit1_size,PROTOCOL_DATA[0].end.dat, end_size, bitcount, tr_packet);
+			SendBuckets(pulsewidths, PROTOCOL_DATA[0].start.dat, start_size, PROTOCOL_DATA[0].bit0.dat, bit0_size, PROTOCOL_DATA[0].bit1.dat, bit1_size, PROTOCOL_DATA[0].end.dat, end_size, bitcount, tr_packet);
 			
 			// ping pong between idle and finished state until we reach zero repeat index
 			rf_state = RF_FINISHED;
