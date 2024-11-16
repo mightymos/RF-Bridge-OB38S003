@@ -4,13 +4,12 @@
  *  Created on: 07.12.2017
  *      Author:
  */
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <EFM8BB1.h>
 
-// pg. 3 of OB38S003 datasheet
-// high speed architecture of 1 clock/machine cycle runs up to 16MHz.
+
 void set_clock_mode(void)
 {
     //*****************************************
@@ -29,13 +28,17 @@ void set_clock_mode(void)
     // - Timer 1 uses the clock defined by the prescale field, SCA
     //***********************************************************************/
     //CKCON0 = SCA__SYSCLK_DIV_12 | T0M__SYSCLK | T2MH__EXTERNAL_CLOCK | T2ML__SYSCLK | T3MH__EXTERNAL_CLOCK | T3ML__SYSCLK | T1M__PRESCALE;
-    CKCON0 |= SCA__SYSCLK_DIV_12;
+    // controls the timer 0/1 prescale, deefaults is system clocked divided by 12
+    //CKCON0 |= SCA__SYSCLK_DIV_12;
     
+    // FIXME: this is only applicable for split 8-bit timer mode, need to double check
     // FIXME: used for portisch
-    CKCON0 |= T2ML__SYSCLK;
-    CKCON0 |= T3ML__SYSCLK;
+    //CKCON0 |= T2ML__SYSCLK;
+    //CKCON0 |= T3ML__SYSCLK;
+    //TMR2CN0 default is 16-bit autoreload and system clock divided by 12
     
-    CKCON0 |= T1M__PRESCALE;
+    // default is timer 1 uses the clock defined by the prescale field sca
+    //CKCON0 |= T1M__PRESCALE;
 }
 
 
@@ -169,7 +172,7 @@ void disable_capture_interrupt(void)
 
 // FIXME: it is inconsistent to set 16-bit value for timer0 and 8-bit value for timer1
 //        we need to change the function names so it is clear what they do
-void init_timer0(const uint16_t value)
+void init_timer0_16bit(const uint16_t value)
 {
     // 16-bit
     TMOD |= T0M__MODE1;
@@ -177,34 +180,28 @@ void init_timer0(const uint16_t value)
     TH0 = (value >> 8) & 0xff;
     TL0 = value & 0xff;
 
-    // enable timer
-    TR0 = 1;
 }
 
-void init_timer1(const uint8_t value)
+void init_timer1_8bit_autoreload(const uint8_t value)
 {
     // 8-bit Counter/Timer with Auto-Reload
     TMOD |= T1M__MODE2;
     
+    // when TLx overflows, TLx is reloaded from THx
     TH1 = value;
-    
-    // enable timer
-    TR1 = 1;
+    TL1 = value;
 }
 
-void init_timer2(const uint16_t value)
+void init_timer2_16bit(const uint16_t value)
 {
+    // default is 16 bit auto reload mode
+    // default clock source is system clock divided by 12
     TMR2RLH = (value >> 8) & 0xff;
     TMR2RLL = value & 0xff;
     
-    // default is 16 bit auto reload mode
-    // default clock source is system clock divided by 12
-    
-    // timer 2 on
-    TR2 = 1;
 }
 
-void init_timer3(const uint16_t value)
+void init_timer3_16bit(const uint16_t value)
 {
     TMR3RLH = (value >> 8) & 0xff;
     TMR3RLL = value & 0xff;
@@ -212,21 +209,8 @@ void init_timer3(const uint16_t value)
     // default is 16 bit auto reload mode
     // default clock source is system clock divided by 12
     
-    // timer 3 on
-    TMR3CN0 |= TR3__RUN;
 }
 
-void load_timer0(const uint16_t value)
-{
-    TH0 = (value >> 8) & 0xff;
-    TL0 = value & 0xff;
-}
-
-void load_timer1(const uint16_t value)
-{
-    TH1 = (value >> 8) & 0xff;
-    TL1 = value & 0xff;
-}
 
 void pca0_init(void)
 {
@@ -242,12 +226,12 @@ void pca0_init(void)
 
 void pca0_run(void)
 {
-    CR = true;
+    CR = 1;
 }
 
 void pca0_halt(void)
 {
-    CR = false;
+    CR = 0;
 }
 
 

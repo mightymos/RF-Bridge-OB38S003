@@ -24,6 +24,7 @@
 #include "portisch.h"
 #include "portisch_protocols.h"
 #include "portisch_serial.h"
+#include "timer_interrupts.h"
 #include "uart.h"
 #include "util.h"
 
@@ -438,8 +439,11 @@ void main (void)
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
     // pca used timer0 on portisch, we just use the pca counter itself now
     // uart with 19200 baud, uart must use timer1 on efm8bb1
-    init_timer1(0xCB);
+    init_timer1_8bit_autoreload(TIMER1_UART0);
+    
+    //
     pca0_init();
+    
     // FIXME: we are not using timer3 right now because ob38s003 does not have it
     enable_timer2_interrupt();
     //enable_timer3_interrupt();

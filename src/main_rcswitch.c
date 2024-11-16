@@ -202,9 +202,8 @@ int main (void)
     tdata_off();
     
     // DEBUG:
-    // on some boards, "debug pin" is actually buzzer
-    // so we do not want to use it for debugging unless buzzer has been removed
-    //debug_pin01_off();
+    // on some boards, "debug pin" is actually buzzer so we do not want to use it for debugging unless buzzer has been removed
+    debug_pin01_off();
     
     //
     startup_blink();
@@ -234,6 +233,7 @@ int main (void)
     // timer 0 provides one millisecond tick or supports software uart
     // timer 1 provides ten microsecond tick
     // for ob38s003 0xFFFF - (10*10^-6)/(1/16000000)
+    // at various times during development timer 0 has been used to support software uart
     //init_timer0(SOFT_BAUD);
     //init_timer1(TH1_RELOAD_10MICROS, TL1_RELOAD_10MICROS);
     // 0x5F for 10 microsecs
@@ -248,17 +248,21 @@ int main (void)
     enable_timer1_interrupt();
     //enable_timer2_interrupt();
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
-    // pca used timer0 in portisch (why?), rcswitch can use dedicated pca counters
-    //init_timer0(TIMER0_PCA0);
+    // pca used timer0 in stock portisch (why?), however rcswitch can use dedicated pca counters
+    // at various times during development timer 0 has been used to support software uart
     //init_timer0(SOFT_BAUD);
     // uart must use timer1 on this controller
-    init_timer1(TIMER1_UART0);
+    init_timer1_8bit_autoreload(TIMER1_UART0);
+    timer1_run();
+    
+    // timer 2 is used on demand to produce delays (i.e., time enabled at start, wait, then timer stopped at overflow)
+    // however, we initialize reload value when using delay to nothing to initialize at this step
     //init_timer2(TIMER2_RELOAD_10MICROS);
+    
     // timer 3 is unused for now
     
     //enable_timer0_interrupt();
     //enable_timer1_interrupt();
-    // timer 2 is used on demand to produce delays (i.e., time enabled at start, wait, then timer stopped at overflow)
     enable_timer2_interrupt();
     
     // pca0 clock source was timer 0 on portisch

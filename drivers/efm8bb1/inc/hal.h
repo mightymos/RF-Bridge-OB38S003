@@ -142,7 +142,7 @@ inline bool get_soft_rx_pin(void)
     // FIXME: undefined for now because no pins available
     //        so force default of nothing received
     //return BUZZER;
-    return true;
+    return 1;
 }
 
 inline void debug_pin01_on(void)
@@ -215,6 +215,48 @@ inline void disable_timer3_interrupt(void)
     EIE1 |= ET3__DISABLED;
 }
 
+inline void timer0_run(void)
+{
+    TR0 = 1;
+}
+
+inline void timer0_stop(void)
+{
+    TR0 = 0;
+}
+
+inline void timer1_run(void)
+{
+    TR1 = 1;
+}
+
+inline void timer1_stop(void)
+{
+    TR1 = 0;
+}
+
+inline void timer2_run(void)
+{
+    TR2 = 1;
+}
+
+inline void timer2_stop(void)
+{
+    TR2 = 0;
+}
+
+inline void timer3_run(void)
+{
+    // timer 3 on
+    TMR3CN0 |= TR3__RUN;
+}
+
+inline void timer3_stop(void)
+{
+    // timer 3 stop
+    TMR3CN0 &= ~TR3__RUN;
+}
+
 extern void set_clock_mode(void);
 extern void enable_watchdog(void);
 extern void disable_watchdog(void);
@@ -223,10 +265,10 @@ extern void init_port_pins_for_passthrough(void);
 extern void init_port_pins_for_serial(void);
 extern void init_serial_interrupt(void);
 extern void init_uart(void);
-extern void init_timer0(const uint16_t);
-extern void init_timer1(const uint8_t);
-extern void init_timer2(const uint16_t);
-extern void init_timer3(const uint16_t);
+extern void init_timer0_16bit(const uint16_t);
+extern void init_timer1_8bit_autoreload(const uint8_t);
+extern void init_timer2_16bit(const uint16_t);
+extern void init_timer3_16bit(const uint16_t);
 
 extern void load_timer0(const uint16_t value);
 extern void load_timer1(const uint16_t value);

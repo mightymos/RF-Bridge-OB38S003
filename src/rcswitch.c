@@ -177,8 +177,8 @@ void capture_handler(const uint16_t currentCapture)
     const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
 
     // FIXME: rcswitch library originally relied on computing time difference
-    //        but I do not think they handled the cause when timer overflowed
-    //        an alternative is to just reset counter to zero each edge detection
+    //        but I do not think they handled the case when timer overflowed
+    //        an alternative is to just reset counter to zero each edge detection following measurement
     //previous = current;
     //current = currentCapture;
     //duration = current - previous;
@@ -197,7 +197,7 @@ void capture_handler(const uint16_t currentCapture)
     //duration = countsToTime(duration);
     duration = countsToTime(currentCapture);
     
-    // reset counter on each edge detection so we avoid need to computer time difference
+    // reset counter on each edge detection so we avoid need to compute time difference
     // and hopefully avoid situation where counter overflows and wraps around
     clear_pca_counter();
     
@@ -289,6 +289,8 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     //
     set_tdata(firstLogicLevel);
 
+    // DEBUG:
+    set_debug_pin01(firstLogicLevel);
 
     init_delay_timer_us(1, delayHigh);
     wait_delay_timer_finished();
@@ -296,6 +298,9 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
 
     //
     set_tdata(secondLogicLevel);
+    
+    // DEBUG:
+    set_debug_pin01(secondLogicLevel);
 
 
     init_delay_timer_us(1, delayLow);

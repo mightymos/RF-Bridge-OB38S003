@@ -87,10 +87,9 @@ void set_timer2_reload(const uint16_t reload)
 void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
 {
     //
-    set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
-    //TH1 = 0x60;
-    //TL1 = 0x60;
-
+    //set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
+    set_timer2_reload(TIMER2_RELOAD_10MICROS);
+    
     // remove 65micros because of startup delay
     gTimer2Timeout  = timeout;
     gTimer2Interval = interval;
@@ -105,7 +104,7 @@ void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
  */
 void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout)
 {    
-    set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000 / (uint32_t)interval))));
+    set_timer2_reload(TIMER2_RELOAD_1MILLIS);
 
     gTimer2Timeout  = timeout;
     gTimer2Interval = interval;

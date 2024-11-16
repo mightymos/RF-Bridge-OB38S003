@@ -15,7 +15,9 @@
 // FIXME: I think this is incorrect because we can receive variable data length with some commands
 #define PACKET_MAX_SIZE  12
 
-__xdata uint8_t uartPacket[PACKET_MAX_SIZE];
+
+// we place this in internal ram so that a larger external ram buffer can be allocated in uart.c for use in portisch
+uint8_t uartPacket[PACKET_MAX_SIZE];
 
 // includes protocol ID and actual radio data
 __xdata uint8_t gLengthExpected = 0;
@@ -334,6 +336,7 @@ void rf_state_machine(RF_COMMAND_T command)
             // bytes 2..3:  Tlow
             // bytes 4..5:  Thigh
             // bytes 6..8:  24bit Data
+            // remember index is less than protocol so for example protocol 1 is index zero
             protocolPtr = &protocols[uartPacket[0] - 1];
             
             // calculate timing pulses in microseconds
