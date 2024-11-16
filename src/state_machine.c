@@ -294,16 +294,19 @@ void rf_state_machine(RF_COMMAND_T command)
             timing = uartPacket[0] << 8 | uartPacket[1];
             pulses.syncLow  = timing;
             
+            // FIXME: I think this low and high naming convention on the wiki is misleading
+            // FIXME: and check into the convention on reedtripradio as well
             // low
             timing  = uartPacket[2] << 8 | uartPacket[3];
-            pulses.zeroLow  = timing;
-            pulses.oneHigh  = timing;
-            
-            // high
-            timing = uartPacket[4] << 8 | uartPacket[5];
             pulses.syncHigh = timing;
             pulses.zeroHigh = timing;
             pulses.oneLow   = timing;
+            
+            // high
+            timing = uartPacket[4] << 8 | uartPacket[5];
+            pulses.zeroLow  = timing;
+            pulses.oneHigh  = timing;
+
             
             // divide by ten to convert from microseconds to tens of microseconds
             pulses.oneHigh  = pulses.oneHigh  / 10;

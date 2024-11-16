@@ -247,11 +247,21 @@ void uart_state_machine(const unsigned int rxdata)
 			{
 				uart_state = SYNC_FINISH;
 
-				// FIXME: kind of a hack maybe, but only want to do conversion once ideally so do it here
-				// e.g. AA A5 2A 62 01 5E 04 1A D0 03 58 55
-				pulsewidths[0] = (uint16_t) (uartPacket[2] << 8) | uartPacket[3];
-				pulsewidths[1] = (uint16_t) (uartPacket[4] << 8) | uartPacket[5];
-				pulsewidths[2] = (uint16_t) (uartPacket[0] << 8) | uartPacket[1];
+				// FIXME: kind of a hack maybe, but only want to do conversion once, so do it here
+                // low
+				pulsewidths[0] = (uartPacket[2] << 8) | uartPacket[3];
+                // high
+				pulsewidths[1] = (uartPacket[4] << 8) | uartPacket[5];
+                // sync
+				pulsewidths[2] = (uartPacket[0] << 8) | uartPacket[1];
+                
+                // DEBUG:
+                //uart_putc((pulsewidths[0] >> 8) & 0xff);
+                //uart_putc(pulsewidths[0] & 0xff);
+                
+                // DEBUG:
+                //uart_putc((pulsewidths[1] >> 8) & 0xff);
+                //uart_putc(pulsewidths[1] & 0xff);
 
 				tr_packet[0] = uartPacket[6];
 				tr_packet[1] = uartPacket[7];
@@ -293,7 +303,7 @@ bool radio_state_machine(void)
 
 	// DEBUG:
 	//const uint16_t pulsewidths_dummy[3] = {350, 1050, 10850};
-	//const uint8_t  packet_dummy[3]  = {0xDE, 0xAD, 0xBE};
+	//const uint8_t  packet_dummy[3]  = {0xA5, 0x5A, 0xA5};
 
 	//
 
@@ -334,6 +344,9 @@ bool radio_state_machine(void)
 
 			SendBuckets(pulsewidths, PROTOCOL_DATA[0].start.dat, start_size, PROTOCOL_DATA[0].bit0.dat, bit0_size, PROTOCOL_DATA[0].bit1.dat, bit1_size, PROTOCOL_DATA[0].end.dat, end_size, bitcount, tr_packet);
 			
+            // DEBUG:
+            //SendBuckets(pulsewidths_dummy, PROTOCOL_DATA[0].start.dat, start_size, PROTOCOL_DATA[0].bit0.dat, bit0_size, PROTOCOL_DATA[0].bit1.dat, bit1_size, PROTOCOL_DATA[0].end.dat, end_size, bitcount, packet_dummy);
+            
 			// ping pong between idle and finished state until we reach zero repeat index
 			rf_state = RF_FINISHED;
 			
