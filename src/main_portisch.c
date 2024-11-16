@@ -440,6 +440,7 @@ void main (void)
     // pca used timer0 on portisch, we just use the pca counter itself now
     // uart with 19200 baud, uart must use timer1 on efm8bb1
     init_timer1_8bit_autoreload(TIMER1_UART0);
+    timer1_run();
     
     //
     pca0_init();

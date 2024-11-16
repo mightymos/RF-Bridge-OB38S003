@@ -58,6 +58,11 @@ inline void led_toggle(void)
     LED = !LED;
 }
 
+inline void set_led(const bool state)
+{
+    LED = state;
+}
+
 inline void radio_receiver_off(void)
 {
     //FIXME: do not know if this hardware has radio enable pin requirement or not

@@ -475,17 +475,11 @@ void PCA0_StopSniffing(void)
 	stop_delay_timer();
 }
 
-bool SendSingleBucket(bool high_low, uint16_t bucket_time)
+bool SendSingleBucket(const bool high_low, uint16_t bucket_time)
 {
 	// switch to high_low
-    if (high_low)
-    {
-        led_on();
-        tdata_on();
-    } else {
-        led_off();
-        tdata_off();
-    }
+    set_led(high_low);
+    set_tdata(high_low);
 	
 	// FIXME: remove need for Timer3 resource?
     //InitTimer3_us(10, bucket_time);
@@ -495,7 +489,7 @@ bool SendSingleBucket(bool high_low, uint16_t bucket_time)
 	// but delays measured at receiver are inaccurate due to delay_us inaccuracy
 	//efm8_delay_us(bucket_time);
 	// FIXME: so maybe just use timer2 instead
-	init_delay_timer_us(10, bucket_time);
+	init_delay_timer_us(1, bucket_time / 10);
 	wait_delay_timer_finished();
 
 	return !high_low;
