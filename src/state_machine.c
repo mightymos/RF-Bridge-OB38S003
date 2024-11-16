@@ -292,21 +292,26 @@ void rf_state_machine(RF_COMMAND_T command)
             // user provided pulse timings
             // sync
             timing = uartPacket[0] << 8 | uartPacket[1];
-            timing = timing / 10;
             pulses.syncLow  = timing;
             
             // low
             timing  = uartPacket[2] << 8 | uartPacket[3];
-            timing  =  timing / 10;
             pulses.zeroLow  = timing;
             pulses.oneHigh  = timing;
             
             // high
             timing = uartPacket[4] << 8 | uartPacket[5];
-            timing = timing / 10;
             pulses.syncHigh = timing;
             pulses.zeroHigh = timing;
             pulses.oneLow   = timing;
+            
+            // divide by ten to convert from microseconds to tens of microseconds
+            pulses.oneHigh  = pulses.oneHigh  / 10;
+            pulses.oneLow   = pulses.oneLow   / 10;
+            pulses.zeroHigh = pulses.zeroHigh / 10;
+            pulses.zeroLow  = pulses.zeroLow  / 10;
+            pulses.syncHigh = pulses.syncHigh / 10;
+            pulses.syncLow  = pulses.syncLow  / 10;
             
             // 
             pulses.invertedSignal = false;

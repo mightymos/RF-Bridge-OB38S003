@@ -315,9 +315,9 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
  * e.g., for Tasmota:
  * with timings (sync, low, high)
  * (timings identical to protocol 1)
- * RfRaw AA A5 2A 62 04 1A 01 5E D0 03 58 55
+ * RfRaw AA A5 2A 62 04 1A 01 5E A5 5A A5 55
  * by protocol (protocol 1)
- * RfRaw AA A8 04 01 D0 03 58 55
+ * RfRaw AA A8 04 01 A5 5A A5 55
  */
 //void sendByProtocol(const int nProtocol, const unsigned int length)
 void send(struct Pulse* pulses, unsigned char* packetStart, const unsigned char bitsInPacket)
