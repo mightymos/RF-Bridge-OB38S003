@@ -34,8 +34,8 @@
 
 // 0xB1 to 0xB0 web convert tool:
 // https://bbconv.hrbl.pl/
-// got this output from the tool (append rfraw in front for tasmota):
-// AA B0 21 03 08 01 38 03 B7 27 7C 28 18 19 09 08 19 08 19 08 19 09 09 08 18 19 08 18 18 18 18 19 08 19 08 18 55
+// got this output from the tool:
+// rfraw AA B0 21 03 08 01 38 03 B7 27 7C 28 18 19 09 08 19 08 19 08 19 09 09 08 18 19 08 18 18 18 18 19 08 19 08 18 55
 
 // uart state machine
 __xdata uart_state_t uart_state = IDLE;
