@@ -46,6 +46,11 @@ inline void led_off(void)
     LED = 0;
 }
 
+inline void set_led(const bool state)
+{
+    LED = state;
+}
+
 inline void led_toggle(void)
 {
     LED = !LED;
@@ -212,6 +217,18 @@ inline void disable_timer2_interrupt(void)
     ET2 = 0;
 }
 
+inline void timer0_run(void)
+{
+    // enable timer0
+    TR0 = 1;
+}
+
+inline void timer0_stop(void)
+{
+    // disable timer0
+    TR0 = 0;
+}
+
 extern bool get_radio_wake(void);
 extern unsigned char get_stack_pointer(void);
 
@@ -224,7 +241,7 @@ extern void init_port_pins(void);
 extern void init_serial_interrupt(void);
 extern void init_uart(void);
 extern void init_timer0(const uint16_t);
-extern void init_timer1(void);
+extern void init_timer1_8bit_autoreload(void);
 extern void init_timer2_as_capture(void);
 extern void enable_capture_interrupt(void);
 extern void disable_capture_interrupt(void);

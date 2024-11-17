@@ -203,7 +203,7 @@ int main (void)
     
     // DEBUG:
     // on some boards, "debug pin" is actually buzzer so we do not want to use it for debugging unless buzzer has been removed
-    debug_pin01_off();
+    //debug_pin01_off();
     
     //
     startup_blink();
@@ -231,14 +231,12 @@ int main (void)
     
 #if defined(TARGET_BOARD_OB38S003)
     // timer 0 provides one millisecond tick or supports software uart
-    // timer 1 provides ten microsecond tick
-    // for ob38s003 0xFFFF - (10*10^-6)/(1/16000000)
     // at various times during development timer 0 has been used to support software uart
     //init_timer0(SOFT_BAUD);
-    //init_timer1(TH1_RELOAD_10MICROS, TL1_RELOAD_10MICROS);
-    // 0x5F for 10 microsecs
-    // 0xEF for  1 microsec
-    init_timer1();
+    
+    // timer 1 provides ten microsecond tick for on demand delays
+    init_timer1_8bit_autoreload();
+    
     // timer 2 supports compare and capture module
     // for determining pulse lengths of received radio signals
     init_timer2_as_capture();

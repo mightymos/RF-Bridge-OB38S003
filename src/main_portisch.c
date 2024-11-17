@@ -34,7 +34,7 @@
 
 // 0xB1 to 0xB0 web convert tool:
 // https://bbconv.hrbl.pl/
-// got this output from the tool:
+// got this output from the tool (append rfraw in front for tasmota):
 // AA B0 21 03 08 01 38 03 B7 27 7C 28 18 19 09 08 19 08 19 08 19 09 09 08 18 19 08 18 18 18 18 19 08 19 08 18 55
 
 // uart state machine
@@ -449,7 +449,7 @@ void main (void)
     // DEBUG:
     // on some boards, "debug pin" is actually buzzer
     // so we do not want to use it for debugging unless buzzer has been removed
-    debug_pin01_off();
+    //debug_pin01_off();
     
     //
     startup_blink();
@@ -470,7 +470,7 @@ void main (void)
     enable_serial_interrupt();
     
 #if defined(TARGET_BOARD_OB38S003)
-    init_timer1();
+    init_timer1_8bit_autoreload();
     init_timer2_as_capture();
     enable_timer1_interrupt();
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)

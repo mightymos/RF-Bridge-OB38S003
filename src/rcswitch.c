@@ -290,7 +290,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     set_tdata(firstLogicLevel);
 
     // DEBUG:
-    set_debug_pin01(firstLogicLevel);
+    //set_debug_pin01(firstLogicLevel);
 
     init_delay_timer_us(1, delayHigh);
     wait_delay_timer_finished();
@@ -300,7 +300,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     set_tdata(secondLogicLevel);
     
     // DEBUG:
-    set_debug_pin01(secondLogicLevel);
+    //set_debug_pin01(secondLogicLevel);
 
 
     init_delay_timer_us(1, delayLow);
@@ -318,7 +318,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
  * RfRaw AA A5 2A 62 01 5E 04 1A A5 5A A5 55
  * by protocol (protocol 1)
  * FIXME: should be 0x00 for protocol 1 as in portisch?
- * RfRaw AA A8 04 01 A5 5A A5 55
+ * RfRaw AA A8 04 00 A5 5A A5 55
  */
 //void sendByProtocol(const int nProtocol, const unsigned int length)
 void send(struct Pulse* pulses, unsigned char* packetStart, const unsigned char bitsInPacket)

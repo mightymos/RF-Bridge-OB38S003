@@ -151,17 +151,13 @@ void init_timer0(const uint16_t value)
     // FIXME: this would not necessarily clear upper bit, so bad HAL
     PFCON |= 0x01;
     
-    // one millisecond to overflow
-    //TH0 = 0xc1;
-    //TL0 = 0x7f;
+    //
     TH0 = (value >> 8) & 0xff;
     TL0 = value & 0xff;
     
-    // enable timer0
-    TR0 = true;
 }
 
-void init_timer1(void)
+void init_timer1_8bit_autoreload(void)
 {
     // 16-bit mode
     //TMOD |= 0x10;
@@ -171,13 +167,6 @@ void init_timer1(void)
     // T1PS prescaler Fosc
     // b01 = FOCS
     PFCON |= 0x04;
-    
-    // ten microseconds to overflow
-    //TH1 = reload;
-    //TL1 = initial;
-    
-    // enable timer1
-    //TR1 = true;
 }
 
 void load_timer0(const uint16_t load)

@@ -22,7 +22,6 @@
 //static __xdata uint16_t gTimeTenMicroseconds = 0;
 
 static __xdata uint16_t gTimer1Timeout;
-static __xdata uint16_t gTimer1Interval;
 
 //uint16_t get_time_milliseconds(void)
 //{
@@ -68,16 +67,12 @@ void clear_pca_counter(void)
 // which decrements a timer all within the interrupt
 // and essentially indicates completion by disabling timer
 // and checking in user land that it has been disabled as a sort of finished flag
-void set_timer1_reload(const uint16_t reload)
+void set_timer1_reload(const uint8_t reload)
 {
-    /***********************************************************************
-     - Timer 2 Reload High Byte
-     ***********************************************************************/
-    TH1 = ((reload >> 8) & 0xFF);
-    /***********************************************************************
-     - Timer 2 Reload Low Byte = 0x86
-     ***********************************************************************/
-    TL1 = (reload & 0xFF);
+    // autoreload register
+    TH1 = reload;
+    // actual timer register
+    TL1 = reload;
 }
 
 
@@ -87,18 +82,10 @@ void set_timer1_reload(const uint16_t reload)
 void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
 {
     // FIXME: why were we explicitly setting to 10 microseconds previously?
-    set_timer1_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
-    // 10 microseconds
-    //TH1 = T1_AUTORELOAD_10MICROS;
-    //TL1 = T1_AUTORELOAD_10MICROS;
-
-    // 1 microsecond
-    //TH1 = 0xF0;
-    //TL1 = 0xF0;
+    set_timer1_reload(TIMER1_RELOAD_10MICROS);
     
     // remove 65micros because of startup delay
     gTimer1Timeout  = timeout;
-    gTimer1Interval = interval;
 
     // start timer
     TR1 = true;
@@ -110,10 +97,9 @@ void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
  */
 void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout)
 {    
-    set_timer1_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000 / (uint32_t)interval))));
+    set_timer1_reload(TIMER1_RELOAD_1MILLIS);
 
     gTimer1Timeout  = timeout;
-    gTimer1Interval = interval;
 
     // start timer
     TR1 = true;

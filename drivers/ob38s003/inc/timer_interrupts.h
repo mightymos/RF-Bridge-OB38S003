@@ -12,11 +12,13 @@
 //#define TL0_RELOAD_1MILLIS 0x7F
 
 // use separate defines to avoid any kind of bit manipulation for speed
-// hex(0xFFFF - (10*10^-6)/(1/16000000)) = 65375 (0xFF7F)
-#define T1_AUTORELOAD_10MICROS 0x60
+// hex(0xFFFF - (10*10^-6)/(1/16000000)) = 65375 (0xFF5F)
+//#define TIMER1_RELOAD_10MICROS  0xFFEA
+//hex(0xFF - (10*10^-6)/(1/16000000)) = 0x5F
+#define TIMER1_RELOAD_10MICROS 0x5F
 
-//uint16_t get_time_milliseconds(void);
-//uint16_t get_time_ten_microseconds(void);
+//
+#define TIMER1_RELOAD_1MILLIS 0x5F
 
 void init_delay_timer_us(const uint16_t interval, const uint16_t timeout);
 void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout);

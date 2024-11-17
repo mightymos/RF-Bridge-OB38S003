@@ -477,12 +477,13 @@ void PCA0_StopSniffing(void)
 
 bool SendSingleBucket(const bool high_low, uint16_t bucket_time)
 {
+    // FIXME: improve this comment
 	// switch to high_low
     set_led(high_low);
     set_tdata(high_low);
     
     // DEBUG
-    set_debug_pin01(high_low);
+    //set_debug_pin01(high_low);
 	
 	// FIXME: remove need for Timer3 resource?
     //InitTimer3_us(10, bucket_time);

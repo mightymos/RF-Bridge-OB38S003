@@ -8,13 +8,8 @@
 #ifndef INC_TIMER_INTERRUPT_H_
 #define INC_TIMER_INTERRUPT_H_
 
-// hex(0xFFFF - (10*10^-6)/(1/24500000)) = 0xFF0A
-// hex(0xFFFF - (1*10^-6)/(1/24500000))  = 0xFFE6.8
-// hex(0xFFFF - (1*10^-3)/(1/24500000))  = 0xA04B
 
-// hex(0xFFFF - (10*10^-6)/(1/(24500000/12))) = 0xFFEA.95
-// hex(0xFFFF - (1*10^-6)/(1/(24500000/12)))  = 0xFFFC.F5
-// hex(0xFFFF - (1*10^-3)/(1/(24500000/12)))  = 0xF805
+
 
 // FIXME: double check portisch, I think 0xA0 is incorrect (they used 0x0B later)
 // and that value makes more sense:
@@ -24,9 +19,18 @@
 // 19200 baud, same on portisch
 #define TIMER1_UART0 0xCB
 
+// 1 microsec
+// hex(0xFFFF - (1*10^-6)/(1/24500000))  = 0xFFE6.8
+// hex(0xFFFF - (1*10^-6)/(1/(24500000/12)))  = 0xFFFC.F5
+//
+
+// hex(0xFFFF - (10*10^-6)/(1/24500000)) = 0xFF0A
+// hex(0xFFFF - (10*10^-6)/(1/(24500000/12))) = 0xFFEA.95
 //
 #define TIMER2_RELOAD_10MICROS  0xFFEA
 
+// hex(0xFFFF - (1*10^-3)/(1/24500000))  = 0xA04B
+// hex(0xFFFF - (1*10^-3)/(1/(24500000/12)))  = 0xF805
 //
 #define TIMER2_RELOAD_1MILLIS   0xF805
 
