@@ -29,6 +29,14 @@
 #include "util.h"
 
 
+// example for sniffing (0xB1 command) and reply tranmission (0xB0 command) from my door sensor
+//{"RfRaw":{"Data":"AA B1 03 0138 03B7 277C 28181909081908190819090908181908181818181908190818 55"}}
+
+// 0xB1 to 0xB0 web convert tool:
+// https://bbconv.hrbl.pl/
+// got this output from the tool:
+// AA B0 21 03 08 01 38 03 B7 27 7C 28 18 19 09 08 19 08 19 08 19 09 09 08 18 19 08 18 18 18 18 19 08 19 08 18 55
+
 // uart state machine
 __xdata uart_state_t uart_state = IDLE;
 __xdata uart_command_t uart_command = NONE;
@@ -38,8 +46,14 @@ __xdata uart_command_t last_sniffing_command;
 //__xdata uint8_t uartPacket[10];
 
 
+// used in multiple functions so made global for now
+static __xdata uint8_t packetLength = 0;
+
 // used for count down radio transmissions
 __xdata uint8_t tr_repeats = 0;
+
+// pointer
+uint16_t* buckets_pointer;
 
 // sdcc manual section 3.8.1 general information
 // requires interrupt definition to appear or be included in main
@@ -126,9 +140,6 @@ void serial_loopback(void)
 
 void uart_state_machine(const unsigned int rxdata)
 {
-	//
-	static __xdata uint8_t packetLength = 0;
-
 	// FIXME: add comment
 	static __xdata uint8_t position = 0;
 
@@ -271,8 +282,26 @@ void uart_state_machine(const unsigned int rxdata)
 					case RF_CODE_ACK:
 						break;
 					case RF_CODE_RFOUT_BUCKET:
-						// FIXME: I do not think the wiki defines this byte as indicating repeat
+                        // conversion tool seems to show data length, then number of buckets, then number of repeats after 0xB0 command
+                        // FIXME: why plus ?
 						tr_repeats = RF_DATA[1] + 1;
+                        
+                        uint8_t num_buckets = RF_DATA[0];
+                        uint8_t byteIndex = 0;
+                        
+                        // this is a global variable with maximum size seven
+                        buckets_pointer = (uint16_t *)(RF_DATA + 2);
+                        
+                        // because sdcc is little endian for 8051, we need to swap bucket values to access by pointer later
+                        while (byteIndex < num_buckets)
+                        {
+                            buckets_pointer[byteIndex] = ((buckets_pointer[byteIndex] << 8) | (buckets_pointer[byteIndex] >> 8));
+                            byteIndex++;
+                        }
+                        
+                        // DEBUG:
+                        uart_putc(tr_repeats);
+                        
 						break;
 				}
 			}
@@ -313,7 +342,7 @@ bool radio_state_machine(void)
 			// byte 2..3:	Tlow
 			// byte 4..5:	Thigh
 			// byte 6..8:	24bit Data
-			// FIXME: based on putc(), I think this results in MSB last so bytes are swapped incorrectly
+			// FIXME: sdcc is little endian so we would need to swap bytes for this to work
 			//pulsewidths[0] = *(uint16_t *)&uartPacket[2];
 			//pulsewidths[1] = *(uint16_t *)&uartPacket[4];
 			//pulsewidths[2] = *(uint16_t *)&uartPacket[0];
@@ -707,7 +736,82 @@ void main (void)
 				}
 				break;
                 
-			// case RF_CODE_RFOUT_BUCKET:
+			case RF_CODE_RFOUT_BUCKET:
+			{
+				// only do the job if all data got received by UART
+				if (uart_state != IDLE)
+					break;
+
+				// do transmit of the data
+				switch(rf_state)
+				{
+					// init and start RF transmit
+					case RF_IDLE:
+						tr_repeats--;
+						PCA0_StopSniffing();
+
+                        uint8_t num_buckets = RF_DATA[0];
+                        
+                        // FIXME: I do not know what format this is, does it match 0xB0 on the wiki?
+						// byte 0:				number of buckets: k
+						// byte 1:				number of repeats: r
+						// byte 2*(1..k):		bucket time high
+						// byte 2*(1..k)+1:		bucket time low
+						// byte 2*k+2..N:		RF buckets to send
+                        //uint16_t* buckets = (uint16_t *)(RF_DATA + 2);
+                        
+
+                        // DEBUG:
+                        //uart_putc(buckets_pointer[0] >> 8);
+                        //uart_putc(buckets_pointer[0] & 0xff);
+                        
+                        // find the start of the data by skipping over the number of buckets times two and two bytes for numbers of buckets and number of repeats
+                        uint8_t* rfdata = RF_DATA + (num_buckets << 1) + 2;
+                        
+                        // DEBUG:
+                        //uart_putc(rfdata[0]);
+                        
+                        // subtract out two bytes for number of buckets and number of repeats
+                        // then subtract out number of buckets multiplied by 2
+                        uint8_t data_len = packetLength - 2 - (num_buckets << 1);
+                        
+                        // DEBUG:
+                        //uart_putc(data_len);
+                        
+                        //
+						SendRFBuckets(buckets_pointer, rfdata, data_len);
+                        
+                        // ping pong between idle and finished state until we reach zero repeat index
+                        rf_state = RF_FINISHED;
+                        
+						break;
+
+					// wait until data got transfered
+					case RF_FINISHED:
+						if (tr_repeats == 0)
+						{
+							// disable RF transmit
+							//T_DATA = TDATA_OFF;
+                            tdata_off();
+
+                            // indicate completed all transmissions
+                            uart_put_command(RF_CODE_ACK);
+
+                            // FIXME: need to examine this logic
+                            // restart sniffing in its previous mode
+                            PCA0_DoSniffing();
+
+                            // change back to previous command (i.e., not rfout)
+                            uart_command = last_sniffing_command;
+						}
+						else
+						{
+							rf_state = RF_IDLE;
+						}
+						break;
+				}
+				break;
+			}
 			case RF_CODE_SNIFFING_ON_BUCKET:
 
 				// check if a RF signal got decoded
@@ -746,7 +850,7 @@ void main (void)
 				// this is blocking unfortunately
 				buzzer_on();
 
-				// FIXME: need to check that MSB and LSB are swapped or not
+				// FIXME: sdcc is little endian for 8051 so we need to swap byte order
 				delay1ms(*(uint16_t *)&RF_DATA[1]);
 				buzzer_off();
 
