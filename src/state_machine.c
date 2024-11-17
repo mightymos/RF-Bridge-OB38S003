@@ -20,7 +20,7 @@
 uint8_t uartPacket[PACKET_MAX_SIZE];
 
 // includes protocol ID and actual radio data
-__xdata uint8_t gLengthExpected = 0;
+uint8_t gLengthExpected = 0;
     
 
 //-----------------------------------------------------------------------------
@@ -344,8 +344,10 @@ void rf_state_machine(RF_COMMAND_T command)
             // bytes 2..3:  Tlow
             // bytes 4..5:  Thigh
             // bytes 6..8:  24bit Data
-            // remember index is less than protocol so for example protocol 1 is index zero
-            protocolPtr = &protocols[uartPacket[0] - 1];
+            // FIXME: in portisch array index equal to protocol number, so 0x00 is the first protocol
+            // however, receive_protocol() in rcswitch uses 0x00 to be protocol 1
+            // so we may need to make these consistent
+            protocolPtr = &protocols[uartPacket[0]];
             
             // calculate timing pulses in microseconds
             pulses.oneHigh  = protocolPtr->pulseLength * protocolPtr->one.high;

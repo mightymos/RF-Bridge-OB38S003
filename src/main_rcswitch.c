@@ -174,14 +174,14 @@ void startup_blink(void)
 int main (void)
 {
     // just track how many loops have transpired as a rough way of tracking time
-    __xdata uint32_t ticks = HEARTBEAT_THRESHOLD;
+    uint32_t ticks = HEARTBEAT_THRESHOLD;
     
     
     // upper eight bits hold error or no data flags
-    __xdata unsigned int rxdataWithFlags = UART_NO_DATA;
+    unsigned int rxdataWithFlags = UART_NO_DATA;
     
     // allows communication between uart state machine and radio state machine
-    __xdata RF_COMMAND_T rfCommand = NONE;
+    RF_COMMAND_T rfCommand = NONE;
     
 
     // hardware initialization

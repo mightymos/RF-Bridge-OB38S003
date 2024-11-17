@@ -20,7 +20,7 @@
 
 // FIXME: explain choice of size, I think TX=64 is needed for portisch sniffing mode output
 #define UART_RX_BUFFER_SIZE 40
-#define UART_TX_BUFFER_SIZE	40
+#define UART_TX_BUFFER_SIZE	48
 
 
 // high byte error return code of uart_getc()

@@ -33,7 +33,9 @@
 __xdata uart_state_t uart_state = IDLE;
 __xdata uart_command_t uart_command = NONE;
 __xdata uart_command_t last_sniffing_command;
-__xdata uint8_t uartPacket[10];
+
+// we share rf_data[] array with uart and radio in order to save on bytes (e.g., and for long commands such as 0xB0)
+//__xdata uint8_t uartPacket[10];
 
 
 // used for count down radio transmissions
@@ -231,11 +233,11 @@ void uart_state_machine(const unsigned int rxdata)
 
 		// Receiving UART data
 		case RECEIVING:
-			uartPacket[position] = rxdata & 0xFF;
+			RF_DATA[position] = rxdata & 0xFF;
 
 			// DEBUG:
-			//puthex2(uartPacket[position]);
-			//uart_putc(uartPacket[position]);
+			//puthex2(RF_DATA[position]);
+			//uart_putc(RF_DATA[position]);
 			
 			position++;
 
@@ -270,7 +272,7 @@ void uart_state_machine(const unsigned int rxdata)
 						break;
 					case RF_CODE_RFOUT_BUCKET:
 						// FIXME: I do not think the wiki defines this byte as indicating repeat
-						tr_repeats = uartPacket[1] + 1;
+						tr_repeats = RF_DATA[1] + 1;
 						break;
 				}
 			}
@@ -317,14 +319,14 @@ bool radio_state_machine(void)
 			//pulsewidths[2] = *(uint16_t *)&uartPacket[0];
             
             // low, high, sync order in array (from uart order is sync, low, high)
-            pulsewidths[0] = (uartPacket[2] << 8) | uartPacket[3];
-            pulsewidths[1] = (uartPacket[4] << 8) | uartPacket[5];
-            pulsewidths[2] = (uartPacket[0] << 8) | uartPacket[1];
+            pulsewidths[0] = (RF_DATA[2] << 8) | RF_DATA[3];
+            pulsewidths[1] = (RF_DATA[4] << 8) | RF_DATA[5];
+            pulsewidths[2] = (RF_DATA[0] << 8) | RF_DATA[1];
             
             // data
-            tr_packet[0] = uartPacket[6];
-            tr_packet[1] = uartPacket[7];
-            tr_packet[2] = uartPacket[8];
+            tr_packet[0] = RF_DATA[6];
+            tr_packet[1] = RF_DATA[7];
+            tr_packet[2] = RF_DATA[8];
 
 			
 			// help make function call more readable
@@ -672,7 +674,7 @@ void main (void)
 						// byte 0:		PROTOCOL_DATA index
 						// byte 1..:	Data
                         // FIXME: rcswitch treats "protocol 1" as index 0, so might need to make consistent with portisch
-						SendBucketsByIndex(uartPacket[0], &uartPacket[1]);
+						SendBucketsByIndex(RF_DATA[0], &RF_DATA[1]);
                         
                         // ping pong between idle and finished state until we reach zero repeat index
                         rf_state = RF_FINISHED;
@@ -745,7 +747,7 @@ void main (void)
 				buzzer_on();
 
 				// FIXME: need to check that MSB and LSB are swapped or not
-				delay1ms(*(uint16_t *)&uartPacket[1]);
+				delay1ms(*(uint16_t *)&RF_DATA[1]);
 				buzzer_off();
 
 				// send acknowledge

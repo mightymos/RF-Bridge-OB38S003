@@ -22,7 +22,6 @@
 //static unsigned long gTimeTenMicroseconds = 0;
 
 static __xdata uint16_t gTimer2Timeout;
-static __xdata uint16_t gTimer2Interval;
 
 //unsigned long get_time_milliseconds(void)
 //{
@@ -91,7 +90,9 @@ void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
     
     // remove 65micros because of startup delay
     gTimer2Timeout  = timeout;
-    gTimer2Interval = interval;
+    
+    // we removed the interval variable because we only ever need a 10 microsecond count
+    // and the interrupt logic to handle decrementing by an interval made the transmission timing inaccurate
 
     // start timer
     TR2 = true;
@@ -106,7 +107,6 @@ void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout)
     set_timer2_reload(TIMER2_RELOAD_1MILLIS);
 
     gTimer2Timeout  = timeout;
-    gTimer2Interval = interval;
 
     // start timer
     TR2 = true;
