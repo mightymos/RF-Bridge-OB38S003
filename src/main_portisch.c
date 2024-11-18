@@ -300,7 +300,7 @@ void uart_state_machine(const unsigned int rxdata)
                         }
                         
                         // DEBUG:
-                        uart_putc(tr_repeats);
+                        //uart_putc(tr_repeats);
                         
 						break;
 				}

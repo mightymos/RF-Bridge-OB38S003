@@ -398,21 +398,31 @@ void rf_state_machine(RF_COMMAND_T command)
 // FIXME: consider calling this from within state machine
 void radio_rfin(void)
 {
+    uint16_t buckets[3];
+    
+    // assumes standard PT226x timings
+    // FIXME: how to handle otherwise?
+    // FIXME: handle inverted signal?
+    // FIXME: not sure if we should compute an average or something for repeats?
+    buckets[0] = timings[0];
+    buckets[1] = timings[0] / 31;
+    buckets[2] = buckets[1] * 3;
+
+                    
     // packet start sequence
     putchar(RF_CODE_START);
+    // command
     putchar(RF_CODE_RFIN);
     
-    // sync, low, high timings
+    // sync, low, high timings are the portisch 0xA4 order convention
     putchar((timings[0] >> 8) & 0xFF);
     putchar(timings[0] & 0xFF);
 
-    
-    // FIXME: not sure if we should compute an average or something
-    // FIXME: handle inverted signal?
-    putchar((timings[2] >> 8) & 0xFF);
-    putchar( timings[2] & 0xFF);
+
     putchar((timings[1] >> 8) & 0xFF);
     putchar( timings[1] & 0xFF);
+    putchar((timings[2] >> 8) & 0xFF);
+    putchar( timings[2] & 0xFF);
     
     // data
     // FIXME: strange that shifting by ZERO works but omitting the shift does not
