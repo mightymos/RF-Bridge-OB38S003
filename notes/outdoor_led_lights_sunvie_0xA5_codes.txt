@@ -1,0 +1,27 @@
+// outdoor led light
+// https://www.amazon.com/gp/product/B09DYK4CC6/
+// SUNVIE Christmas Spotlight Outdoor 12W RGB LED Color Changing Landscape Lights with Remote Control 120V Landscape Lighting
+
+// increase brightness
+AA A5 2B 7E 01 C6 04 EA FF FF 01 55
+
+// off
+AA A5 2B 7E 01 C6 04 EA FF FF 02 55
+
+// reduce brightness
+AA A5 2B 7E 01 C6 04 EA FF FF 03 55
+
+// on
+AA A5 2B 7E 01 C6 04 EA FF FF 04 55
+
+// red
+AA A5 2B 7E 01 C6 04 EA FF FF 05 55
+
+// green
+AA A5 2B 7E 01 C6 04 EA FF FF 0A 55
+
+// blue
+AA A5 2B 7E 01 C6 04 EA FF FF 0B 55
+
+// white
+AA A5 2B 7E 01 C6 04 EA FF FF 07 55
