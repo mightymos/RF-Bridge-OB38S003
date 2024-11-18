@@ -415,14 +415,14 @@ void radio_rfin(void)
     putchar(RF_CODE_RFIN);
     
     // sync, low, high timings are the portisch 0xA4 order convention
-    putchar((timings[0] >> 8) & 0xFF);
-    putchar(timings[0] & 0xFF);
+    putchar((buckets[0] >> 8) & 0xFF);
+    putchar(buckets[0] & 0xFF);
 
 
-    putchar((timings[1] >> 8) & 0xFF);
-    putchar( timings[1] & 0xFF);
-    putchar((timings[2] >> 8) & 0xFF);
-    putchar( timings[2] & 0xFF);
+    putchar((buckets[1] >> 8) & 0xFF);
+    putchar( buckets[1] & 0xFF);
+    putchar((buckets[2] >> 8) & 0xFF);
+    putchar( buckets[2] & 0xFF);
     
     // data
     // FIXME: strange that shifting by ZERO works but omitting the shift does not
