@@ -12,11 +12,11 @@ esphome:
   
 esp8266:
   # sonoff r2 v2.2
-  #board: esp8285
+  board: esp8285
   # wemos v4
-  board: d1_mini
+  #board: d1_mini
 
-# use this if hardware is a generic esp32 board combined with a receiver module
+# use this instead of esp8266 if hardware is a generic esp32 board combined with a receiver module
 # correct pin definitions below as appropriate
 #esp32:
 #  board: nodemcu-32s
@@ -51,9 +51,9 @@ api:
   password: !secret api_password
 
 
-#status_led:
-# # see sonoff_r2v2.2_connector_pinouts_fv1.txt for pin information
-# pin: GPIO13
+status_led:
+  # see sonoff_r2v2.2_connector_pinouts_fv1.txt for pin information
+  pin: GPIO13
 #  
 # # Wemos D1 mini v4 (but conflicts with UART1 TX logging output)
 # pin: GPIO2
