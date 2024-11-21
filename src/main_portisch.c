@@ -55,6 +55,9 @@ __xdata uint8_t tr_repeats = 0;
 // pointer
 uint16_t* buckets_pointer;
 
+// FIXME: comment on what this really does
+bool blockReadingUART = false;
+
 // sdcc manual section 3.8.1 general information
 // requires interrupt definition to appear or be included in main
 // sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
@@ -272,6 +275,9 @@ void uart_state_machine(const unsigned int rxdata)
 			if ((rxdata & 0xFF) == RF_CODE_STOP)
 			{
 				uart_state = IDLE;
+                
+                // FIXME: comment on what this really does
+                blockReadingUART = true;
 
 				// check if ACK should be sent
 				switch(uart_command)
@@ -284,6 +290,7 @@ void uart_state_machine(const unsigned int rxdata)
 						// send acknowledge
 						uart_put_command(RF_CODE_ACK);
 					case RF_CODE_ACK:
+                        blockReadingUART = false;
 						break;
 					case RF_CODE_RFOUT_BUCKET:
                         // conversion tool seems to show data length, then number of buckets, then number of repeats after 0xB0 command
@@ -565,7 +572,7 @@ void main (void)
 #if 1
 		// check if something got received by UART
 		// only read data from uart if idle
-		if (true)
+		if (!blockReadingUART)
         {
 			rxdata = uart_getc();
 		} else {
@@ -685,6 +692,8 @@ void main (void)
 					// FIXME: need to examine this logic
 					// restart sniffing in its previous mode
 					PCA0_DoSniffing();
+                    
+                    blockReadingUART = false;
 
 					// change back to previous command (i.e., not rfout)
 					uart_command = last_sniffing_command;
@@ -724,6 +733,8 @@ void main (void)
 
                             // indicate completed all transmissions
                             uart_put_command(RF_CODE_ACK);
+                            
+                            blockReadingUART = false;
 
                             // FIXME: need to examine this logic
                             // restart sniffing in its previous mode
@@ -801,6 +812,8 @@ void main (void)
                             // indicate completed all transmissions
                             uart_put_command(RF_CODE_ACK);
 
+                            blockReadingUART = false;
+                            
                             // FIXME: need to examine this logic
                             // restart sniffing in its previous mode
                             PCA0_DoSniffing();
@@ -861,6 +874,9 @@ void main (void)
 				// send acknowledge
 				// send uart command
 				uart_put_command(RF_CODE_ACK);
+                
+                blockReadingUART = false;
+                
 				uart_command = last_sniffing_command;
 				break;
 
@@ -869,6 +885,9 @@ void main (void)
 
 				// send firmware version
 				uart_put_command(FIRMWARE_VERSION);
+                
+                blockReadingUART = false;
+                
 				uart_command = last_sniffing_command;
 				break;
 
