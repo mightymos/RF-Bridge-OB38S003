@@ -214,7 +214,8 @@ void uart_state_machine(const unsigned int rxdata)
 					break;
 				case RF_CODE_ACK:
 					// re-enable default RF_CODE_RFIN sniffing
-					//last_sniffing_command = PCA0_DoSniffing();
+					uart_command          = RF_CODE_RFIN;
+					last_sniffing_command = RF_CODE_RFIN;
 					uart_state = IDLE;
 					rf_state = RF_IDLE;
 					break;
