@@ -213,9 +213,10 @@ void uart_state_machine(const unsigned int rxdata)
 				case RF_CODE_LEARN_NEW:
 					break;
 				case RF_CODE_ACK:
+                    // FIXME: I do not think this comment matches what happens in code, need to examine
 					// re-enable default RF_CODE_RFIN sniffing
-					uart_command          = RF_CODE_RFIN;
-					last_sniffing_command = RF_CODE_RFIN;
+                    PCA0_DoSniffing();
+					uart_command = last_sniffing_command;
 					uart_state = IDLE;
 					rf_state = RF_IDLE;
 					break;
@@ -235,7 +236,9 @@ void uart_state_machine(const unsigned int rxdata)
 			if (packetLength > 0)
 			{
 				// stop sniffing while handling received data
+                // FIXME: comment on why
 				PCA0_StopSniffing();
+                
 				rf_state = RF_IDLE;
 				uart_state = RECEIVING;
 			} else {

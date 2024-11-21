@@ -122,6 +122,7 @@ switch:
     optimistic: true
     turn_on_action: 
       - rf_bridge.send_code:
+          # 0x2F08 0x0162 0x04A4
           sync: 0x2F08
           low:  0x0162
           high: 0x04A4
