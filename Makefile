@@ -48,9 +48,9 @@
 # sonoff black box
 #TARGET_BOARD ?= EFM8BB1
 # low cost development board
-TARGET_BOARD ?= EFM8BB1LCB
+#TARGET_BOARD ?= EFM8BB1LCB
 # sonoff white box
-#TARGET_BOARD ?= OB38S003
+TARGET_BOARD ?= OB38S003
 
 # catches undefined
 ifndef TARGET_BOARD
@@ -172,7 +172,7 @@ LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 
 .PHONY: all clean
 
-all: $(TARGET_RCSWITCH) $(TARGET_PASSTHROUGH) $(TARGET_PORTISCH)
+all: $(TARGET_PASSTHROUGH) $(TARGET_PORTISCH) $(TARGET_RCSWITCH)
 
 clean:
 	# it is safer to remove wildcard with file extension instead of the entire directory

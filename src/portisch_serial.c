@@ -78,6 +78,8 @@ void uart_put_RF_Data_Advanced(uint8_t command, uint8_t protocol_index)
 
 
 // for bucket sniffing
+// a state machine might be ideal for this eventually
+// but unclear if it is really necessary
 void uart_put_RF_buckets(uint8_t command)
 {
 	uint8_t index = 0;
@@ -88,10 +90,20 @@ void uart_put_RF_buckets(uint8_t command)
 	// put bucket count + sync bucket
 	uart_putc(bucket_count + 1);
 
-	// FIXME: should not need this as long as buffer is large enough...
-	// start and wait for transmit
-	//UART0_initTxPolling();
-	//uart_wait_until_TX_finished();
+	// because the sniffing command (0xB1) can transmit a significant amount of bytes
+    // and we do not have so much ram to allocate as a buffer
+    // we normally check for buffer bytes to transmit by uart in the main loop
+    // but there is potentially so much data here that we would overflow prior to returning to main loop
+    // so just send in pieces instead
+
+    while(!is_uart_tx_buffer_empty())
+    {
+        if (is_uart_tx_finished())
+        {
+            // if not empty, set TI, which triggers interrupt to actually transmit
+            uart_init_tx_polling();
+        }
+    }
 
 	// send up to 7 buckets
 	while (index < bucket_count)
@@ -106,8 +118,13 @@ void uart_put_RF_buckets(uint8_t command)
 	uart_putc(bucket_sync & 0xFF);
 
 	// start and wait for transmit
-	//UART0_initTxPolling();
-	//uart_wait_until_TX_finished();
+    while(!is_uart_tx_buffer_empty())
+    {
+        if (is_uart_tx_finished())
+        {
+            uart_init_tx_polling();
+        }
+    }
 
 	index = 0;
     
@@ -116,13 +133,19 @@ void uart_put_RF_buckets(uint8_t command)
 		uart_putc(RF_DATA[index]);
 		index++;
 
-		// be safe to have no buffer overflow
-		//if ((i % UART_TX_BUFFER_SIZE) == 0)
-		//{
-		//	// start and wait for transmit
-		//	UART0_initTxPolling();
-		//	uart_wait_until_TX_finished();
-		//}
+		// be safe so as to avoid buffer overflow
+        // FIXME: could modulo divide be worked into ring buffer logic itself?
+		if ((index % UART_TX_BUFFER_SIZE) == 0)
+		{
+			// start and wait for transmit
+            while(!is_uart_tx_buffer_empty())
+            {
+                if (is_uart_tx_finished())
+                {
+                    uart_init_tx_polling();
+                }
+            }
+		}
 	}
 
 	uart_putc(RF_CODE_STOP);
