@@ -22,6 +22,7 @@
 #include "delay.h"
 #include "hal.h"
 #include "portisch.h"
+#include "portisch_command_format.h"
 #include "portisch_protocols.h"
 #include "portisch_serial.h"
 #include "timer_interrupts.h"
@@ -203,10 +204,10 @@ void uart_state_machine(const unsigned int rxdata)
 					break;
 				case RF_CODE_RFOUT_NEW:
 					tr_repeats = RF_TRANSMIT_REPEATS;
-					uart_state = RECEIVE_LEN;
+					uart_state = RECEIVE_LENGTH;
 					break;
 				case RF_CODE_RFOUT_BUCKET:
-					uart_state = RECEIVE_LEN;
+					uart_state = RECEIVE_LENGTH;
 					break;
 				case RF_CODE_SNIFFING_ON_BUCKET:
 					PCA0_DoSniffing();
@@ -233,7 +234,7 @@ void uart_state_machine(const unsigned int rxdata)
 			break;
 
 		// Receiving UART data length
-		case RECEIVE_LEN:
+		case RECEIVE_LENGTH:
 			position = 0;
 			packetLength = rxdata & 0xFF;
 			if (packetLength > 0)

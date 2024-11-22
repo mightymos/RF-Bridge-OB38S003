@@ -290,7 +290,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     set_tdata(firstLogicLevel);
 
     // DEBUG:
-    set_debug_pin01(firstLogicLevel);
+    //set_debug_pin01(firstLogicLevel);
 
     init_delay_timer_us(1, delayHigh);
     wait_delay_timer_finished();
@@ -300,7 +300,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     set_tdata(secondLogicLevel);
     
     // DEBUG:
-    set_debug_pin01(secondLogicLevel);
+    //set_debug_pin01(secondLogicLevel);
 
 
     init_delay_timer_us(1, delayLow);

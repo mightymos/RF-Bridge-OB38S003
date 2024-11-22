@@ -30,8 +30,7 @@ The downside is the effort required to develop firmware and flash by the end use
 The firmware radio decoding is inspired by 1) RF-Bridge-EFM8BB1 (Portisch) and 2) rc-switch projects.  
 
 # Status
-THIS IS A WORK IN PROGRESS and requires multiple flashing steps.  
-Decoding has only been tested with a single door sensor using standard 24 bit protocol.  
+THIS IS A WORK IN PROGRESS and requires multiple flashing steps.   
  
 For many users it is probably easiest to flash the passthrough mode.  
 Then perform any actual decoding/encoding on the ESP8265 using Tasmota/ESPHome.

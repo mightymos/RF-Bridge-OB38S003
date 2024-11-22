@@ -11,14 +11,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-//#include <EFM8BB1.h>
-
-// used in timer functions
-//#define SYSCLK	24500000
-
-//
-#define FIRMWARE_VERSION		0x03
-
 // macros
 #define ARRAY_LENGTH(array) (sizeof((array))/sizeof((array)[0]))
 

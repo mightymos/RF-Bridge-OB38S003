@@ -3,12 +3,6 @@
 #include "portisch_serial.h"
 #include "uart.h"
 
-//void uart_put_command(uint8_t command)
-//{
-//	uart_putc(RF_CODE_START);
-//	uart_putc(command);
-//	uart_putc(RF_CODE_STOP);
-//}
 
 void uart_put_RF_Data_Standard(uint8_t command)
 {

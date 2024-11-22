@@ -1,5 +1,9 @@
 #include "delay.h"
 #include "hal.h"
+
+// we use the same format as portisch so okay to include
+#include "portisch_command_format.h"
+
 #include "rcswitch.h"
 #include "state_machine.h"
 #include "uart.h"
@@ -36,8 +40,8 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 {
     // FIXME: eventually an appropriate initialization value might be RF_RFIN for decoding by default
     // but right now we decode outside of state machine
-    __xdata static UART_STATE_T     state = IDLE;
-    __xdata static UART_COMMAND_T command = NONE;
+    __xdata static uart_state_t     state = IDLE;
+    __xdata static uart_command_t command = NONE;
 
     // FIXME: need to know what initialization value is appropriate
     __xdata static uint8_t position = 0;
