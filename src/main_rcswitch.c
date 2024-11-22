@@ -71,7 +71,7 @@
 // a rough way of setting a blink period
 // set a threshold
 // about every six seconds @ 24500000 MHz
-#define HEARTBEAT_THRESHOLD 0x80000
+//#define HEARTBEAT_THRESHOLD 0x80000
 
 
 // sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
@@ -174,7 +174,7 @@ void startup_blink(void)
 int main (void)
 {
     // just track how many loops have transpired as a rough way of tracking time
-    uint32_t ticks = HEARTBEAT_THRESHOLD;
+    //uint32_t ticks = HEARTBEAT_THRESHOLD;
     
     
     // upper eight bits hold error or no data flags
@@ -203,7 +203,7 @@ int main (void)
     
     // DEBUG:
     // on some boards, "debug pin" is actually buzzer so we do not want to use it for debugging unless buzzer has been removed
-    //debug_pin01_off();
+    debug_pin01_off();
     
     //
     startup_blink();
@@ -361,7 +361,7 @@ int main (void)
         }
         
         
-#if 1
+#if 0
         // it would be nice to increment ticks instead and then track current minus previous
         // so that ticks may be used with multiple thresholds for various rough timing needs
         // or the alternative would be to repurpose or dual purpose a timer, however software uart has been very helpful for debugging

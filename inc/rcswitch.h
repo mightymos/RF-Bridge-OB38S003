@@ -13,38 +13,26 @@
 #include <stdint.h>
 //#include <stdio.h>
 
-// FIXME: how much do we need to or can we save ?
-#define RCSWITCH_MAX_CHANGES 64
+// original sui77/rc-switch stated:
+// we can handle up to (unsigned long) => 32 bit * 2 H/L changes per bit + 2 for sync
+#define RCSWITCH_MAX_CHANGES 67
 
-// bucket sniffing constants
-//#define MIN_FOOTER_LENGTH	300
-//#define MIN_BUCKET_LENGTH	100
-
-//#define PT226x_SYNC_MIN 4500
-
-// sync constants
-//#define TOLERANCE_MAX 500
-//#define TOLERANCE_MIN 200
-
-//
-//#define TOTAL_RF_DATA_BITS 24
+// see comment below - I do not think these would ever be changed while the system is running
+// so just define as constants here to save on memory space
+// percent
+#define N_RECEIVE_TOLERANCE   60
+// microseconds
+#define N_SEPARATION_LIMIT  4300
 
 // number of repeating by default
 //#define RF_TRANSMIT_REPEATS 8
 
 
-// FIXME: some of these probably need to be changed to uint8_t or uint16_t as needed
-struct RC_SWITCH_T
-{
-    // FIXME: we changed some ints to char so that printing over software uart was reasonable
-    // would we ever have more than 256 protocols or bit length anyway ?
-    unsigned long      nReceivedValue;
-    unsigned char      nReceivedBitlength;
-    unsigned int       nReceivedDelay;
-    unsigned char      nReceivedProtocol;
-    int                nReceiveTolerance;
-    const unsigned int nSeparationLimit;
-};
+// there is not a need to use a structure on a little 8051 microcontroller
+//struct RC_SWITCH_T
+//{
+    // moved these to individual variables
+//};
 
 
 /**
@@ -111,9 +99,9 @@ extern bool available(void);
 extern void reset_available(void);
 
 extern unsigned long get_received_value(void);
-extern unsigned char get_received_bitlength(void);
-extern unsigned int  get_received_delay(void);
-extern unsigned char get_received_protocol(void);
+extern uint8_t       get_received_bitlength(void);
+extern uint16_t      get_received_delay(void);
+extern uint8_t       get_received_protocol(void);
 extern int           get_received_tolerance(void);
 
 
@@ -131,10 +119,8 @@ void setProtocol(const struct Protocol pro);
 void send(struct Pulse* pro, unsigned char* packetPtr, const unsigned char bitsInPacket);
 
 
-extern volatile __xdata struct RC_SWITCH_T gRCSwitch;
 extern volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
 
-//extern __xdata long long gTXRFData;
 
 extern const struct Protocol protocols[];
 extern const unsigned int numProto;

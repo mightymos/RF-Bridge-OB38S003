@@ -7,19 +7,27 @@
 #include "hal.h"
 #include "rcswitch.h"
 
-#include "uart_software.h"
+//#include "uart_software.h"
 
 #include "timer_interrupts.h"
 
 //#include "ticks.h"
 
 
-// FIXME: explain constants
-volatile __xdata struct RC_SWITCH_T gRCSwitch = {0, 0, 0, 0, 60, 4300};
+// store measured pulse times for comparison to known protocol timings
 volatile __xdata uint16_t timings[RCSWITCH_MAX_CHANGES];
 
+// we changed some ints to uint8_t so that printing over software uart was reasonable
+// would we ever have more than 256 protocols or bit length anyway ?
+unsigned long      nReceivedValue;
+uint8_t            nReceivedBitlength;
+uint16_t           nReceivedDelay;
+uint8_t            nReceivedProtocol;
 
 const uint8_t nRepeatTransmit = 8;
+
+const int nReceiveTolerance = N_RECEIVE_TOLERANCE;
+const unsigned int nSeparationLimit = N_SEPARATION_LIMIT;
 
 // pulse length is units of 10 microseconds, modified from the microsecond version because it is unreasonable to generate microsecond timing on these microcontrollers
 const struct Protocol protocols[] = {
@@ -46,43 +54,38 @@ const unsigned int numProto = sizeof(protocols) / sizeof(protocols[0]);
 
 bool available(void)
 {
-    return gRCSwitch.nReceivedValue != 0;
+    return nReceivedValue != 0;
 }
 
 void reset_available(void)
 {
-    gRCSwitch.nReceivedValue = 0;
+    nReceivedValue = 0;
 }
 
 
 unsigned long get_received_value(void)
 {
-    return gRCSwitch.nReceivedValue;
+    return nReceivedValue;
 }
 
-unsigned char get_received_bitlength(void)
+uint8_t get_received_bitlength(void)
 {
-    return gRCSwitch.nReceivedBitlength;
+    return nReceivedBitlength;
 }
 
-unsigned int get_received_delay(void)
+uint16_t get_received_delay(void)
 {
-    return gRCSwitch.nReceivedDelay;
+    return nReceivedDelay;
 }
 
-unsigned char get_received_protocol(void)
+uint8_t get_received_protocol(void)
 {
-    return gRCSwitch.nReceivedProtocol;
+    return nReceivedProtocol;
 }
 
 int get_received_tolerance(void)
 {
-    return gRCSwitch.nReceiveTolerance;
-}
-
-uint16_t* getReceivedRawdata(void)
-{
-    return timings;
+    return nReceiveTolerance;
 }
 
 
@@ -143,10 +146,10 @@ bool receive_protocol(const int p, unsigned int changeCount)
     // ignore very short transmissions: no device sends them, so this must be noise
     if (changeCount > 7)
     {
-        gRCSwitch.nReceivedValue     = code;
-        gRCSwitch.nReceivedBitlength = (changeCount - 1) / 2;
-        gRCSwitch.nReceivedDelay     = delay;
-        gRCSwitch.nReceivedProtocol  = p;
+        nReceivedValue     = code;
+        nReceivedBitlength = (changeCount - 1) / 2;
+        nReceivedDelay     = delay;
+        nReceivedProtocol  = p;
         
         return true;
     }
@@ -156,12 +159,9 @@ bool receive_protocol(const int p, unsigned int changeCount)
 
 void capture_handler(const uint16_t currentCapture)
 {
+    // FIXME: comment on meaning
     const uint8_t gapMagicNumber  = 200;
     const uint8_t repeatThreshold   = 2;
-    
-    // for converting 8-bit timer values to 16-bits to allow subtraction
-    uint16_t        previous;
-    static uint16_t current = 0;
     
     // this eventually represents the level duration in microseconds (difference between edge transitions)
     // FIXME: we should probably comment on why this is long type once I remember
@@ -174,11 +174,11 @@ void capture_handler(const uint16_t currentCapture)
     static uint8_t changeCount = 0;
 
 
-    const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
+    //const unsigned int separationLimit = gRCSwitch.nSeparationLimit;
 
-    // FIXME: rcswitch library originally relied on computing time difference
-    //        but I do not think they handled the case when timer overflowed
-    //        an alternative is to just reset counter to zero each edge detection following measurement
+    // rcswitch library originally relied on computing time difference
+    // but I do not think they handled the case when timer overflowed
+    // nevertheless an alternative is to just reset counter to zero each edge detection following measurement
     //previous = current;
     //current = currentCapture;
     //duration = current - previous;
@@ -204,7 +204,7 @@ void capture_handler(const uint16_t currentCapture)
     // from oscillscope readings it appears that first sync pulse of first radio packet is frequently not output properly by receiver
     // this could be because radio receiver needs to "warm up" (despite already being enabled?)
     // and it is known that radio packet transmissions are often repeated (between about four and twenty times) perhaps in part for this reason
-    if (duration > separationLimit)
+    if (duration > nSeparationLimit)
     {
         // A long stretch without signal level change occurred. This could
         // be the gap between two transmission.
@@ -290,7 +290,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     set_tdata(firstLogicLevel);
 
     // DEBUG:
-    //set_debug_pin01(firstLogicLevel);
+    set_debug_pin01(firstLogicLevel);
 
     init_delay_timer_us(1, delayHigh);
     wait_delay_timer_finished();
@@ -300,7 +300,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     set_tdata(secondLogicLevel);
     
     // DEBUG:
-    //set_debug_pin01(secondLogicLevel);
+    set_debug_pin01(secondLogicLevel);
 
 
     init_delay_timer_us(1, delayLow);
@@ -347,8 +347,8 @@ void send(struct Pulse* pulses, unsigned char* packetStart, const unsigned char 
         // make a copy of current byte in order to shift that copy
         currentByte = *packetPtr;
         
-        // moved sync pulse sending here to match manchester encoding style shown in application notes
-        transmit(pulses->invertedSignal, pulses->syncHigh, pulses->syncLow);
+        // FIXME: in applications notes sync pulse sending is here to match manchester encoding style
+        //transmit(pulses->invertedSignal, pulses->syncHigh, pulses->syncLow);
         
         // we must send repeat transmission for decoder to accept radio packet
         for (bitIndex = 0; bitIndex < bitsInPacket; bitIndex++)
@@ -383,9 +383,9 @@ void send(struct Pulse* pulses, unsigned char* packetStart, const unsigned char 
             currentBit++;
         }
         
-        // FIXME: sync is actually supposed to be transmitted before data
+        // FIXME: see comment above, however original rcswitch sent sync here
         //        even if rcswitch ignores the first sync pulse and just looks for gaps (the sync) between repeat transmissions
-        //transmit(pulses->invertedSignal, pulses->syncHigh, pulses->syncLow);
+        transmit(pulses->invertedSignal, pulses->syncHigh, pulses->syncLow);
     }
 
     // disable transmit after sending (i.e., for inverted protocols)

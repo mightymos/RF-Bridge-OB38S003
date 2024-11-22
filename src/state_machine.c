@@ -7,13 +7,19 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "uart_software.h"
+//#include "uart_software.h"
 
 // using commands documented here:
 // https://github.com/Portisch/RF-Bridge-EFM8BB1/wiki
 
-// FIXME: I think this is incorrect because we can receive variable data length with some commands
-#define PACKET_MAX_SIZE  12
+// we try to borrow portisch uart protocol but in some cases it does not translate exactly
+// standard decoding 0xA4 is 12 bytes always
+// standard transmit 0xA5 is 12 bytes always
+// advanced sniffing 0xA6 is unsupported
+// (rcswitch is essentially doing a form of this anyway with 0xA4 because we compare measured timings to a table to look for match)
+// advanced transmit 0xA8 can take a variable data length
+// with sync, command, length, protocol index, and end, we will choose to support eight data bytes (64 bits) for a total of 13 bytes
+#define PACKET_MAX_SIZE  13
 
 
 // we place this in internal ram so that a larger external ram buffer can be allocated in uart.c for use in portisch
@@ -33,21 +39,20 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
     __xdata static UART_STATE_T     state = IDLE;
     __xdata static UART_COMMAND_T command = NONE;
 
+    // FIXME: need to know what initialization value is appropriate
+    __xdata static uint8_t position = 0;
+    
+    // track count of entries into function
+    static uint16_t idleResetCount = 0;
+    
+    
     // return this value when we need the radio state machine to do something
     __xdata RF_COMMAND_T rfCommand = NO_COMMAND;
     
-    // FIXME: need to know what initialization value is appropriate
-    __xdata static uint8_t position = 0;
-
-
-    // FIXME: needed?
-    //uint16_t bucket = 0;
     
-    // track count of entries into function
-    __xdata static uint16_t idleResetCount = 0;
-
-    // strip uart flags to 
-    __xdata const uint8_t rxdata = rxdataWithFlags & 0xFF;  
+    // strip uart flags to leave only potential data remaining
+    // so that code is more readable below (do not need to keep remembering to AND with 0xff)
+    const uint8_t rxdata = rxdataWithFlags & 0xFF;  
     
 
     // if we do not receive any data over uart in a long time, we reset state machine
@@ -172,12 +177,6 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
                 {
                     state = RECEIVING;
                     
-                    // store length in bytes of protocol id and actual data
-                    //uartPacket[position] = gLengthExpected;
-                    //position++;
-                    
-                    // DEBUG:
-                    //puthex2(gLengthExpected);
                 } else {
                     state = SYNC_FINISH;
                 }
@@ -256,9 +255,11 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 
 void rf_state_machine(RF_COMMAND_T command)
 {
-    struct Protocol* protocolPtr;
-    
+    // persists between function calls
     __xdata static RF_STATE_T state = RF_IDLE;
+    
+    
+    struct Protocol* protocolPtr;
     __xdata struct Pulse pulses;
     
     // only used when timings are provided
