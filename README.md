@@ -16,11 +16,11 @@ Decoding may then be done directly on the ESP8265 (e.g., ESPHome/Tasmota/ESPurna
 
 
 The intent here is to avoid the need to perform hardware modification.  
-This can be accomplished in two ways:  
+This can be accomplished by either on of two ways:  
 
 1) Mirroring the voltage levels on the radio data pins over to uart pins (used as gpio) already connected to ESP8265.  
    (this uses the microcontroller as a passthrough but using software instead of hardware modification)  
-   
+
 2) Decoding/encoding radio packets on the microcontroller and sending formatted to ESP8265 over uart/serial  
    (similar to factory firmware but with ability for source code protocols to be added, behavior modified, etc.)  
    
@@ -35,7 +35,7 @@ THIS IS A WORK IN PROGRESS and requires multiple flashing steps.
 For many users it is probably easiest to flash the passthrough mode.  
 Then perform any actual decoding/encoding on the ESP8265 using Tasmota/ESPHome.
 
-# Installation
+# Building
 Install SDCC compiler for your platform:  
 https://sdcc.sourceforge.net/  
 
@@ -44,8 +44,35 @@ For now modify Makefile to select desired target.
 Built firmware placed in build directory.  
 See Flasher section below.  
 
+
+# Flashing
+OB38S003 reprogamming requires erasing the chip because the stock firmware is protected.  
+The stock firmware cannot be recovered because it has not been read out. 
+
+### Flasher (official)
+ 
+An official MSM9066 programmer or open source flasher (see below) can be used.  
+EFM8BB1 reprogramming can be done with Tasmota.  
+The module must be set as Sonoff Bridge (25) to allow flashing:  
+https://tasmota.github.io/docs/Modules/  
+Follow the instructions for flashing Portisch but using this firmware:  
+https://tasmota.github.io/docs/devices/Sonoff-RF-Bridge-433/  
+
+
+### Flasher (open source) (Recommended)
+An Arduino based flasher written for the built in ESP8265/ESP8266/ESP32 is available:  
+https://github.com/mightymos/OnbrightFlasher
+
+Logic analyzer decodings of several flasher operations/programming cycles had been captured:  
+https://github.com/mightymos/msm9066_capture  
+
+While cumbersome to use, several people have successfully flashed hex files.  
+
 # Tasmota/ESPHome
-Using passthrough hex file.
+The radio chip is flashed independently of the ESP8266 chip and flashing the ESP8266 with Tasmota/ESPHome can be done before or after flashing the radio chip, although more users were successful flashing the ESP8266 first, then flashing the radio chip. 
+
+The configuration of ESPHome/Tasmota depends on whether passthrough or RCswitch/Portisch firmwares are used
+### **Using passthrough hex file**:
 
 The following pins can be used in ESPHome / Tasmota:  
 -flash **tasmota-sensors.bin** to ESP on RFbridge  
@@ -57,28 +84,10 @@ TX pin to GPIO1        (RFSend)
 RX pin to GPIO3        (RFRecv)  
 WIFI LED pin to GPIO13 (LedLink)  
 
-# Flasher (official)
-OB38S003 reprogamming requires erasing the chip because the stock firmware is protected.  
-The stock firmware cannot be recovered because it has not been read out.  
-An official MSM9066 programmer or open source flasher (see below) can be used.  
 
+### **Using RCswitch or Portisch file**:
 
-EFM8BB1 reprogramming can be done with Tasmota.  
-The module must be set as Sonoff Bridge (25) to allow flashing:  
-https://tasmota.github.io/docs/Modules/  
-Follow the instructions for flashing Portisch but using this firmware:  
-https://tasmota.github.io/docs/devices/Sonoff-RF-Bridge-433/  
-
-
-# Flasher (open source)
-An Arduino based flasher written for the built in ESP8265/ESP8266/ESP32 is available:  
-https://github.com/mightymos/OnbrightFlasher
-
-Logic analyzer decodings of several flasher operations/programming cycles had been captured:  
-https://github.com/mightymos/msm9066_capture  
-
-While cumbersome to use, several people have successfully flashed hex files.  
-
+See example YAML configs (https://github.com/mightymos/RF-Bridge-OB38S003/tree/main/example_esphome_yaml)
 
 # Previous Work
 
