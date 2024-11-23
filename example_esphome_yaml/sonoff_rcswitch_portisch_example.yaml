@@ -3,43 +3,40 @@ esphome:
   friendly_name: Sonoff RF Bridge
 
 esp8266:
-  # sonoff r2 v2.2
-  board: esp8285
+  board: esp01_1m
 
 # Enable logging
 logger:
   baud_rate: 0
 
-# Enable over-the-air updates.
 ota:
-  safe_mode: true
-  password: !secret ota_password
-  
-status_led:
-  # see sonoff_r2v2.2_connector_pinouts_fv1.txt for pin information
-  pin: GPIO13
+ - platform: esphome
+   password: "**************"
+
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Sonoff-Rf-Bridge"
+    password: "CWaaf568KJlb"
+
+captive_portal:
  
 uart:
   tx_pin: 1
   rx_pin: 3
   baud_rate: 19200
-  
-  debug:
-  
-  # FIXME: attempt at debugging by increasing
-  #rx_buffer_size: 1024
-  
+
+
 # Enable Home Assistant API
 api:
-# FIXME: enable this once it is understood
-#  encryption:
-#    key: "************************"
+  encryption:
+    key: "**********************"
 
   services:
+  #Code can be sent as int or as a hex. I've chosen integer. Most people use hex.
     - service: send_rf_code
       variables:
         sync: int
@@ -64,15 +61,17 @@ api:
 
 
 rf_bridge:
+#code can also be recieved (sniffed) as hex or as integer or both. Dealer's choice!
   on_code_received:
     then:
-    #  - homeassistant.event:
-    #     event: esphome.rf_code_received
-    #      data:
-    #        sync: !lambda 'return format_hex(data.sync);'
-    #        low: !lambda 'return format_hex(data.low);'
-    #        high: !lambda 'return format_hex(data.high);'
-    #        code: !lambda 'return format_hex(data.code);'
+      - homeassistant.event:
+          event: esphome.rf_code_received
+          data:
+            sync: !lambda 'return format_hex(data.sync);'
+            low: !lambda 'return format_hex(data.low);'
+            high: !lambda 'return format_hex(data.high);'
+            code: !lambda 'return format_hex(data.code);'
+            
       - homeassistant.event:
           event: esphome.rf_code_received
           data:
@@ -81,7 +80,7 @@ rf_bridge:
             high: !lambda 'return int(data.high);'
             code: !lambda 'return int(data.code);'
   
-  on_advanced_code_received:
+  on_advanced_code_received: #Portisch only, doesnt do anything on RCswitch firmware
     then:
       - homeassistant.event:
           event: esphome.rf_advanced_code_received
@@ -91,30 +90,77 @@ rf_bridge:
             code: !lambda 'return data.code;'
 
 
-button:
 
+button:
+  # Restart the ESP
+  - platform: restart
+    name: "Restart"
+  
   - platform: template
     name: Advanced sniffing start
-    id: asstart
+    id: AS_start
     on_press:
       then:
         - rf_bridge.start_advanced_sniffing
 
   - platform: template
     name: Advanced sniffing stop
-    id: ASStop
+    id: AS_stop
     on_press:
       then:
         - rf_bridge.stop_advanced_sniffing    
 
   - platform: template
     name: Bucket sniffing start
-    id: BSstart
+    id: BS_start
     on_press:
       then:
         - rf_bridge.start_bucket_sniffing 
 
 
+  - platform: template
+    name: Beep
+    id: Beep
+    on_press:
+      then:
+        - rf_bridge.beep:
+            duration: 100
+
+            
+
+# Sensors for ESP version and WIFI information
+text_sensor:
+  # ESPHome version
+  - platform: version
+    hide_timestamp: true
+    name: "ESPHome Version"
+  # IP address and connected SSID
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+      icon: mdi:wifi
+    ssid:
+      name: "Connected SSID"
+      icon: mdi:wifi-strength-2
+sensor:
+  # WiFi signal
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 120s
+  - platform: uptime
+    name: Sonoff RF Bridge Uptime
+binary_sensor:
+  - platform: status
+    name: Sonoff RF Bridge Status
+
+light:
+  - platform: status_led
+    name: "Status LED"
+    pin: 
+      number: GPIO13
+      inverted: true
+
+#Example LED strip using standard protocol. Works on RCswitch and Portisch firmwares.
 switch:
   - platform: template
     id: range
@@ -122,14 +168,31 @@ switch:
     optimistic: true
     turn_on_action: 
       - rf_bridge.send_code:
-          # 0x2F08 0x0162 0x04A4
-          sync: 0x2F08
-          low:  0x0162
-          high: 0x04A4
+          sync: 0x2F4C
+          low: 0x0186
+          high: 0x0492
           code: 0x00C301    
     turn_off_action: 
       - rf_bridge.send_code:
-          sync: 0x2F23
-          low:  0x0163
-          high: 0x04A1
+          sync: 0x2F1A 
+          low: 0x0184 
+          high: 0x048C 
           code: 0x00C303
+
+#Example window blinds using Bitbucket sending. Works on Portisch firmware only.
+cover:
+  - platform: time_based
+    name: "Living room blinds"
+    device_class: blind
+    open_action:
+      - rf_bridge.send_raw: 
+          raw: 'AAB04C0408137702440111139B38192A192A1A1A19292A192A1A19292929292A1A1A1A1A192A19292A1A192A192A1A1A1A1A1A1A1A192A1A1A1A1A1A1A1A1A1A1A1A192A1929292A192A1A1929292955'
+    open_duration: 26.26s
+    close_action:
+      - rf_bridge.send_raw: 
+          raw: 'AAB04C0408137E0249010E139C38192A192A1A1A19292A192A1A19292929292A1A1A1A1A192A19292A1A192A192A1A1A1A1A1A1A1A192A1A1A1A1A1A1A1A1A192A1A1A1A192929292A19292929292955'
+    close_duration: 25.99s
+    stop_action:
+      - rf_bridge.send_raw: 
+          raw: 'AAB08F0408137502490111139F38192A192A1A1A19292A192A1A19292929292A1A1A1A1A192A19292A1A192A192A1A1A1A1A1A1A1A192A1A1A1A1A1A1A1A1A1A192A1A1A1929292A192929292929295538192A192A1A1A19292A192A1A19292929292A1A1A1A1A192A19292A1A192A192A1A1A1A1A1A1A1A192A1A1A1A1A1A1A1A1A1A192A1A1A1929292A1929292929292955'
+    has_built_in_endstop: true
