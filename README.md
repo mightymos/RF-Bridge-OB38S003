@@ -35,8 +35,8 @@ THIS IS A WORK IN PROGRESS and requires multiple flashing steps.
 For many users it is probably easiest to flash the passthrough mode.  
 Then perform any actual decoding/encoding on the ESP8265 using Tasmota/ESPHome.
 
-# Building
-Install SDCC compiler for your platform:  
+# Building the firmware 
+if you dont wish to use the pre-build from releases, Install SDCC compiler for your platform:  
 https://sdcc.sourceforge.net/  
 
 On command line run make.  
@@ -46,13 +46,27 @@ See Flasher section below.
 
 
 # Flashing
-OB38S003 reprogamming requires erasing the chip because the stock firmware is protected.  
-The stock firmware cannot be recovered because it has not been read out. 
+OB38S003 reprogamming requires erasing the radio chip because the stock firmware is protected.  
+The stock firmware cannot be recovered because it has not been read out.
+
+Steps overview:
+1. **Erase the RFbridge oboard ESP8265** (to ensure no interference from the ESP8265 with radio chip's serial lines). Important if you're coming from stock RFbridge (no tasmota/ESPHome).
+2. Have an **external flasher board** prepared (see below). Could be a D1 Mini, NodeMCU, or an arduino, or an official flasher.
+3. **Connect** the external flasher pins to the OB38S003 pins on the bridge (SCL<->SCL, SDA<->SDA, GND<->GND, 3.3V<->3.3V). See [ESP8266 pinout](https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/) and [OBS38S003 pinout](https://www.irrgang.dev/wp-content/uploads/PXL_20231026_163656981.jpg)
+4. **Download** the firmware wanted and place in the same directory as flashscript.py
+5. **Run FlashScript.py** which will erase the OB38S003 and write the firmware you choose.
+6. **Flash ESPhome/Tasmota** to the RFbridge's internal ESP8265.
+
+Note: Some users (especially when falshing passthrough firmware) has experienced inteference between the onboard ESP8265 and OB38S003 while others did not and were able to erase and update the RF chip many times without erasing and having to reflash the ESP8265 with Tasmota/ESPhome. So rules of thumb are 
+1) coming from stock: Erase ESP8265 first, flash OB38S003, then flash ESP8265.
+2) Coming from esphome/tasmota: flash OB38S003 only no need to reflash the ESP8265
+3) Flashing passthrough firmware: Erase ESP8265 first, flash OB38S003, then flash ESP8265.
+[Detailed flashing guide](https://github.com/mightymos/OnbrightFlasher/blob/main/flashing-guide-by-example.md)
 
 ### Flasher (official)
- 
 An official MSM9066 programmer or open source flasher (see below) can be used.  
-EFM8BB1 reprogramming can be done with Tasmota.  
+
+EFM8BB1 reprogramming can also be done with Tasmota using the RFbridge's own internal ESP8265  
 The module must be set as Sonoff Bridge (25) to allow flashing:  
 https://tasmota.github.io/docs/Modules/  
 Follow the instructions for flashing Portisch but using this firmware:  
