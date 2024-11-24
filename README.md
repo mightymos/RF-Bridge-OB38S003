@@ -57,10 +57,11 @@ Steps overview:
 5. **Run FlashScript.py** which will erase the OB38S003 and write the firmware you choose.
 6. **Flash ESPhome/Tasmota** to the RFbridge's internal ESP8265.
 
-Note: Some users (especially when falshing passthrough firmware) has experienced inteference between the onboard ESP8265 and OB38S003 while others did not and were able to erase and update the RF chip many times without erasing and having to reflash the ESP8265 with Tasmota/ESPhome. So rules of thumb are 
-1) coming from stock: Erase ESP8265 first, flash OB38S003, then flash ESP8265.
-2) Coming from esphome/tasmota: flash OB38S003 only no need to reflash the ESP8265
+Note: Some users (especially when flashing passthrough firmware) has experienced inteference between the onboard ESP8265 and OB38S003 while others did not and were able to erase and update the RF chip many times without erasing and having to reflash the ESP8265 with Tasmota/ESPhome. So rules of thumb are 
+1) Coming from stock: Erase ESP8265 first, flash OB38S003, then flash ESP8265.
+2) Coming from esphome/tasmota: flash OB38S003 only. No need to reflash the ESP8265
 3) Flashing passthrough firmware: Erase ESP8265 first, flash OB38S003, then flash ESP8265.
+   
 [Detailed flashing guide](https://github.com/mightymos/OnbrightFlasher/blob/main/flashing-guide-by-example.md)
 
 ### Flasher (official)
@@ -83,7 +84,7 @@ https://github.com/mightymos/msm9066_capture
 While cumbersome to use, several people have successfully flashed hex files.  
 
 # Tasmota/ESPHome
-The radio chip is flashed independently of the ESP8266 chip and flashing the ESP8266 with Tasmota/ESPHome can be done before or after flashing the radio chip, although more users were successful flashing the ESP8266 first, then flashing the radio chip. 
+On Sonoff RF bridges, the radio chip is flashed independently of the ESP8256 chip. Flashing the ESP8256 with Tasmota/ESPHome can be done before or after flashing the radio chip, although some users were only successful by erasing the ESP8266 first, flashing the radio chip, then flashing ESPHome/Tasmota on to the ESP8256.  
 
 The configuration of ESPHome/Tasmota depends on whether passthrough or RCswitch/Portisch firmwares are used
 ### **Using passthrough hex file**:
