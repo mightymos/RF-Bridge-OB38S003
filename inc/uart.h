@@ -15,8 +15,8 @@
 // Global Constants
 //-----------------------------------------------------------------------------
 // FIXME: these are duplicated in portisch so may consolidate in the future
-#define RF_CODE_START		0xAA
-#define RF_CODE_STOP		0x55
+//#define RF_CODE_START		0xAA
+//#define RF_CODE_STOP		0x55
 
 // FIXME: explain choice of size
 // portisch allocated TX=64 and RX=32

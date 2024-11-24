@@ -14,6 +14,7 @@
     #define SCON SCON0
 #endif
 
+#include "portisch_command_format.h"
 #include "uart.h"
 
 #include <stdint.h>
