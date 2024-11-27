@@ -58,7 +58,9 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
     // so that code is more readable below (do not need to keep remembering to AND with 0xff)
     const uint8_t rxdata = rxdataWithFlags & 0xFF;  
     
-
+    // used with beep
+    uint16_t delay;
+    
     // if we do not receive any data over uart in a long time, we reset state machine
     // also, if we do not receive data when we check, we do not enter state machine
     if (rxdataWithFlags == UART_NO_DATA)
@@ -232,7 +234,9 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
                             rfCommand = RF_RFOUT_NEW_START;
                             break;
                         case RF_DO_BEEP:
-                            uint16_t delay = *(uint16_t *)&uartPacket[0];
+                        
+                            //
+                            delay = *(uint16_t *)&uartPacket[0];
                             
                             // FIXME: will blocking trip watchdog timer? 
                             buzzer_on();

@@ -868,8 +868,15 @@ void main (void)
 				// this is blocking unfortunately
 				buzzer_on();
 
-				// FIXME: sdcc is little endian for 8051 so we need to swap byte order
-				delay1ms(*(uint16_t *)&RF_DATA[1]);
+                // sdcc is little endian for 8051 so MSB first
+                // reuse uint16_t variable here
+                bucket = (RF_DATA[2] << 8) | RF_DATA[1];
+                delay1ms(bucket);
+                
+				// 
+				//delay1ms(*(uint16_t *)&RF_DATA[1]);
+
+                
 				buzzer_off();
 
 				// send acknowledge
