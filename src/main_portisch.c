@@ -33,10 +33,13 @@
 // example for sniffing (0xB1 command) and reply tranmission (0xB0 command) from my door sensor
 //{"RfRaw":{"Data":"AA B1 03 0138 03B7 277C 28181909081908190819090908181908181818181908190818 55"}}
 
-// 0xB1 to 0xB0 web convert tool:
+// 0xB1 to 0xB0 web convert tool (json format):
 // https://bbconv.hrbl.pl/
 // got this output from the tool:
-// rfraw AA B0 21 03 08 01 38 03 B7 27 7C 28 18 19 09 08 19 08 19 08 19 09 09 08 18 19 08 18 18 18 18 19 08 19 08 18 55
+// rfraw AA B0 21 03 08 0138 03B7 277C 28 18 19 09 08 19 08 19 08 19 09 09 08 18 19 08 18 18 18 18 19 08 19 08 18 55
+
+// converter tool for raw byte format
+// https://jonajona.nl/convertB1.html
 
 // uart state machine
 __xdata uart_state_t uart_state = IDLE;

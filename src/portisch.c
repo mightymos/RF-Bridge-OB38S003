@@ -475,6 +475,7 @@ void PCA0_StopSniffing(void)
 	stop_delay_timer();
 }
 
+// returns the inverted bit of what was passed in to high_low
 bool SendSingleBucket(const bool high_low, uint16_t bucket_time)
 {
     // FIXME: improve this comment
@@ -508,6 +509,10 @@ void SendRFBuckets(uint16_t* buckets, uint8_t* rfdata, uint8_t data_len)
 	bool high_low = true;
 	bool high_low_mark = false;
 	uint8_t i;
+    
+    // help human readability
+    bool level;
+    uint16_t bucket_time;
 
 	// check first two buckets if high/low marking is included
 	high_low_mark = (rfdata[0] & 0x88) > 0;
@@ -515,8 +520,15 @@ void SendRFBuckets(uint16_t* buckets, uint8_t* rfdata, uint8_t data_len)
 	// transmit data
 	for (i = 0; i < data_len; i++)
 	{
-		high_low = SendSingleBucket(high_low_mark ? (bool)(rfdata[i] >> 7) : high_low, buckets[(rfdata[i] >> 4) & 0x07]);
-		high_low = SendSingleBucket(high_low_mark ? (bool)((rfdata[i] >> 3) & 0x01) : high_low, buckets[rfdata[i] & 0x07]);
+        //
+        level = high_low_mark ? (bool)(rfdata[i] >> 7) : high_low;
+        bucket_time = buckets[(rfdata[i] >> 4) & 0x07];
+		high_low = SendSingleBucket(level, bucket_time);
+        
+        //
+        level = high_low_mark ? (bool)((rfdata[i] >> 3) & 0x01) : high_low;
+        bucket_time = buckets[rfdata[i] & 0x07];
+		high_low = SendSingleBucket(level, bucket_time);
 	}
 
 	led_off();
@@ -528,10 +540,17 @@ void SendBuckets(uint16_t *pulses, uint8_t* start, uint8_t start_size, uint8_t* 
 	uint8_t i, a;
 	uint8_t actual_byte = 0;
 	uint8_t actual_bit = 0x80;
+    
+    bool level;
+    uint16_t bucket_time;
 
 	// transmit sync bucket(s)
 	for (i = 0; i < start_size; i++)
-		SendSingleBucket(((start[i] & 0x08) >> 3), pulses[start[i] & 0x07]);
+    {
+        level = (start[i] & 0x08) >> 3;
+        bucket_time = pulses[start[i] & 0x07];
+		SendSingleBucket(level, bucket_time);
+    }
 
 	// transmit bit bucket(s)
 	for (i = 0; i < bit_count; i++)
@@ -541,14 +560,18 @@ void SendBuckets(uint16_t *pulses, uint8_t* start, uint8_t start_size, uint8_t* 
 		{
 			for (a = 0; a < bit0_size; a++)
 			{
-				SendSingleBucket(((bit0[a] & 0x08) >> 3), pulses[bit0[a] & 0x07]);
+                level = (bit0[a] & 0x08) >> 3;
+                bucket_time = pulses[bit0[a] & 0x07];
+				SendSingleBucket(level, bucket_time);
 			}
 		}
 		else
 		{	// send bit 1
 			for (a = 0; a < bit1_size; a++)
 			{
-				SendSingleBucket(((bit1[a] & 0x08) >> 3), pulses[bit1[a] & 0x07]);
+                level = (bit1[a] & 0x08) >> 3;
+                bucket_time = pulses[bit1[a] & 0x07];
+				SendSingleBucket(level, bucket_time);
 			}
 		}
 
@@ -564,7 +587,9 @@ void SendBuckets(uint16_t *pulses, uint8_t* start, uint8_t start_size, uint8_t* 
 	// transmit end bucket(s)
 	for (i = 0; i < end_size; i++)
 	{
-		SendSingleBucket(((end[i] & 0x08) >> 3), pulses[end[i] & 0x07]);
+        level = (end[i] & 0x08) >> 3;
+        bucket_time = pulses[end[i] & 0x07];
+		SendSingleBucket(level, bucket_time);
 	}
 
 	led_off();
