@@ -68,6 +68,11 @@ void refresh_watchdog(void)
     WDTCN = 0xA5;
 }
 
+void reset_mcu(void)
+{
+    // writing a 1 to this bit forces a system reset
+    RSTSRC |= SWRSF;
+}
 
 void init_port_pins_for_passthrough(void)
 {

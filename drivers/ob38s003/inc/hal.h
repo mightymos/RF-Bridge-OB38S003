@@ -237,6 +237,7 @@ extern void set_clock_mode(void);
 extern void enable_watchdog(void);
 extern void disable_watchdog(void);
 extern void refresh_watchdog(void);
+extern void reset_mcu(void);
 extern void init_port_pins(void);
 extern void init_serial_interrupt(void);
 extern void init_uart(void);

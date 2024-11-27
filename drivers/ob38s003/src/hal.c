@@ -50,6 +50,17 @@ void refresh_watchdog(void)
     WDTK = 0x55;
 }
 
+void reset_mcu(void)
+{
+    // 1.5.6 Example of software reset
+    TAKEY = 0x55;
+    TAKEY = 0xAA;
+    // enable SWRES write attribute
+    TAKEY = 0x5A;
+    // software reset MCU
+    SWRES = 0xFF;
+}
+
 void init_port_pins(void)
 {
     // buzzer push pull

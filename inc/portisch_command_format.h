@@ -45,6 +45,7 @@ typedef enum
 	RF_CODE_RFOUT_BUCKET       = 0xB0,
 	RF_CODE_SNIFFING_ON_BUCKET = 0xB1,
 	RF_DO_BEEP                 = 0xC0,
+    RF_RESET_MCU               = 0xFE,
 	RF_ALTERNATIVE_FIRMWARE    = 0xFF
 } uart_command_t;
 

@@ -186,6 +186,9 @@ void uart_state_machine(const unsigned int rxdata)
 					packetLength = 2;
 					break;
 				case RF_ALTERNATIVE_FIRMWARE:
+                    // FIXME: comment on this, we want an empty switch entry because
+                    // no further data is expected but we want uart_command to not be set
+                    // to NONE as in default switch entry
 					break;
 				case RF_CODE_SNIFFING_ON:
 					sniffing_mode = ADVANCED;
@@ -224,7 +227,8 @@ void uart_state_machine(const unsigned int rxdata)
 					uart_state = IDLE;
 					rf_state = RF_IDLE;
 					break;
-
+                case RF_RESET_MCU:
+                    break;
 				// unknown command
 				default:
 					uart_command = NONE;
@@ -887,7 +891,12 @@ void main (void)
                 
 				uart_command = last_sniffing_command;
 				break;
+            case RF_RESET_MCU:
+                
+                // force the microcontroller to reset
+                reset_mcu();
 
+                break;
 			// host was requesting the firmware version
 			case RF_ALTERNATIVE_FIRMWARE:
 
