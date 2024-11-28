@@ -11,7 +11,7 @@ logger:
 
 ota:
  - platform: esphome
-   password: "**************"
+   password: !secret ota_password
 
 wifi:
   ssid: !secret wifi_ssid
@@ -20,7 +20,7 @@ wifi:
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Sonoff-Rf-Bridge"
-    password: "CWaaf568KJlb"
+    password: !secret api_password
 
 captive_portal:
  
@@ -33,7 +33,7 @@ uart:
 # Enable Home Assistant API
 api:
   encryption:
-    key: "**********************"
+    key: !secret api_key
 
   services:
   #Code can be sent as int or as a hex. I've chosen integer. Most people use hex.
@@ -126,7 +126,14 @@ button:
         - rf_bridge.beep:
             duration: 100
 
-            
+
+  - platform: template
+    name: "restart radio"
+    id: mcu_reset
+    on_press:
+      then:
+      - rf_bridge.send_raw: 
+          raw: 'AAFE55'   
 
 # Sensors for ESP version and WIFI information
 text_sensor:
