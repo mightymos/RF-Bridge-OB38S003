@@ -371,6 +371,14 @@ bool radio_state_machine(void)
             pulsewidths[1] = (RF_DATA[4] << 8) | RF_DATA[5];
             pulsewidths[2] = (RF_DATA[0] << 8) | RF_DATA[1];
             
+            // DEBUG:
+            //uart_putc(pulsewidths[0] >> 8);
+            //uart_putc(pulsewidths[0] & 0xff);
+            //uart_putc(pulsewidths[1] >> 8);
+            //uart_putc(pulsewidths[1] & 0xff);
+            //uart_putc(pulsewidths[2] >> 8);
+            //uart_putc(pulsewidths[2] & 0xff);
+            
             // data
             tr_packet[0] = RF_DATA[6];
             tr_packet[1] = RF_DATA[7];
@@ -875,13 +883,21 @@ void main (void)
 				// this is blocking unfortunately
 				buzzer_on();
 
-                // sdcc is little endian for 8051 so MSB first
-                // reuse uint16_t variable here
-                bucket = (RF_DATA[2] << 8) | RF_DATA[1];
-                delay1ms(bucket);
+                // as best I can tell, these do not work because sdcc is little endian on 8051
+                // so we would need to swap bytes and then cast to uint16
+                // but since it's just two bytes anyway, do it with bit shifts instead
+                //bucket = *(uint16_t *)&RF_DATA[0];
+                //bucket = *(uint16_t *)&RF_DATA[1];
                 
-				// 
-				//delay1ms(*(uint16_t *)&RF_DATA[1]);
+                // reuse uint16_t variable used elsewhere
+                bucket = (RF_DATA[0] << 8) | RF_DATA[1];
+                
+                // DEBUG:
+                //uart_putc(bucket >> 8);
+                //uart_putc(bucket & 0xff);
+                
+                // nop based delay, could use timer based
+                delay1ms(bucket);
 
                 
 				buzzer_off();

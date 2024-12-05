@@ -29,6 +29,8 @@ uart:
   rx_pin: 3
   baud_rate: 19200
 
+  # this shows raw bytes in log (can be viewed in terminal over wifi)
+  #debug:
 
 # Enable Home Assistant API
 api:
