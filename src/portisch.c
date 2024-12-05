@@ -430,6 +430,13 @@ void capture_handler(uint16_t current_capture_value)
 	}
 }
 
+// original logic
+//out = PCA0_DoSniffing(in)
+//
+//out = last_sniffing_command;
+//uart_command          = in;
+//last_sniffing_command = in;
+//return out;
 uint8_t PCA0_DoSniffing(void)
 {
 	// FIXME:
