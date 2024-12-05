@@ -453,6 +453,10 @@ uint8_t PCA0_DoSniffing(void)
 	//WaitTimer3Finished();
 	delay1ms(10);
 
+    // FIXME: add comment
+    // FIXME: eventually move setting radio outside outside of function
+    rf_state = RF_IDLE;
+    
 	// FIXME: add comment
 	RF_DATA_STATUS = 0;
 
@@ -473,6 +477,9 @@ void PCA0_StopSniffing(void)
 
 	// be sure the timeout timer is stopped
 	stop_delay_timer();
+    
+    // FIXME: eventually move setting radio outside outside of function
+    rf_state = RF_IDLE;
 }
 
 // returns the inverted bit of what was passed in to high_low

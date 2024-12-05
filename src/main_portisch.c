@@ -174,7 +174,7 @@ void uart_state_machine(const unsigned int rxdata)
 				case RF_CODE_RFOUT:
 					// stop sniffing while handling received data
 					PCA0_StopSniffing();
-					rf_state = RF_IDLE;
+
 					uart_state = RECEIVING;
 					tr_repeats = RF_TRANSMIT_REPEATS;
 					position = 0;
@@ -182,8 +182,8 @@ void uart_state_machine(const unsigned int rxdata)
 					break;
 				case RF_DO_BEEP:
 					// stop sniffing while handling received data
-					//PCA0_StopSniffing();
-					//rf_state = RF_IDLE;
+					PCA0_StopSniffing();
+
 					uart_state = RECEIVING;
 					position = 0;
 					packetLength = 2;
@@ -196,8 +196,8 @@ void uart_state_machine(const unsigned int rxdata)
 				case RF_CODE_SNIFFING_ON:
 					sniffing_mode = ADVANCED;
 					PCA0_DoSniffing();
+                    uart_command          = RF_CODE_SNIFFING_ON;
 					last_sniffing_command = RF_CODE_SNIFFING_ON;
-					rf_state = RF_IDLE;
 					break;
 				case RF_CODE_SNIFFING_OFF:
 					// set desired RF protocol PT2260
@@ -206,7 +206,6 @@ void uart_state_machine(const unsigned int rxdata)
 					PCA0_DoSniffing();
 					uart_command          = RF_CODE_RFIN;
 					last_sniffing_command = RF_CODE_RFIN;
-					rf_state = RF_IDLE;
 					break;
 				case RF_CODE_RFOUT_NEW:
 					tr_repeats = RF_TRANSMIT_REPEATS;
@@ -217,8 +216,7 @@ void uart_state_machine(const unsigned int rxdata)
 					break;
 				case RF_CODE_SNIFFING_ON_BUCKET:
 					PCA0_DoSniffing();
-					last_sniffing_command = RF_CODE_SNIFFING_ON_BUCKET;
-					rf_state = RF_IDLE;
+					uart_command = RF_CODE_SNIFFING_ON_BUCKET;
 					break;
 				case RF_CODE_LEARN_NEW:
 					break;
@@ -228,7 +226,6 @@ void uart_state_machine(const unsigned int rxdata)
                     PCA0_DoSniffing();
 					uart_command = last_sniffing_command;
 					uart_state = IDLE;
-					rf_state = RF_IDLE;
 					break;
                 case RF_RESET_MCU:
                     break;
@@ -250,7 +247,6 @@ void uart_state_machine(const unsigned int rxdata)
                 // FIXME: comment on why
 				PCA0_StopSniffing();
                 
-				rf_state = RF_IDLE;
 				uart_state = RECEIVING;
 			} else {
 				uart_state = SYNC_FINISH;
@@ -524,23 +520,20 @@ void main (void)
 	// set desired sniffing type to PT2260
 	sniffing_mode = STANDARD;
     
-    // FIXME: as best I can tell on development board, advanced sniffing does not even work with portisch hex
+#if 1
+    //
 	//sniffing_mode = ADVANCED;
 	PCA0_DoSniffing();
-	rf_state = RF_IDLE;
 
     // FIXME: double check if this comment is accurate
 	// basically chooses between standard (i.e., three buckets) and advanced output (i.e. up to seven buckets)
-	last_sniffing_command = RF_CODE_RFIN;
 	uart_command          = RF_CODE_RFIN;
+	last_sniffing_command = RF_CODE_RFIN;
 	//last_sniffing_command = RF_CODE_SNIFFING_ON;
 	//uart_command          = RF_CODE_SNIFFING_ON;
-
-	
-	// alternative with no sniffing on startup
-	//PCA0_StopSniffing();
-	//rf_state = RF_IDLE;
-
+#else
+    PCA0_StopSniffing();
+#endif
 
     // FIXME: we already enable this previously where portisch did
     // so can do it here or above, does it matter?
