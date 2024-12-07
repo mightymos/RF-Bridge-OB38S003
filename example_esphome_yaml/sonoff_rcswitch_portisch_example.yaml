@@ -177,14 +177,14 @@ switch:
     optimistic: true
     turn_on_action: 
       - rf_bridge.send_code:
-          sync: 0x2F4C
-          low: 0x0186
-          high: 0x0492
+          sync: 0x2F1A
+          low:  0x0184
+          high: 0x048C
           code: 0x00C301    
     turn_off_action: 
       - rf_bridge.send_code:
           sync: 0x2F1A 
-          low: 0x0184 
+          low:  0x0184 
           high: 0x048C 
           code: 0x00C303
 

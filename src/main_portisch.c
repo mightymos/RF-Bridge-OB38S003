@@ -324,7 +324,7 @@ void uart_state_machine(const unsigned int rxdata)
 	}
 }
 
-bool radio_state_machine(void)
+bool radio_state_machine(const uart_command_t command)
 {
 	bool completed = false;
 
@@ -353,48 +353,68 @@ bool radio_state_machine(void)
 
 			PCA0_StopSniffing();
 
-			// byte 0..1:	Tsyn
-			// byte 2..3:	Tlow
-			// byte 4..5:	Thigh
-			// byte 6..8:	24bit Data
-			// FIXME: sdcc is little endian so we would need to swap bytes for this to work
-			//pulsewidths[0] = *(uint16_t *)&uartPacket[2];
-			//pulsewidths[1] = *(uint16_t *)&uartPacket[4];
-			//pulsewidths[2] = *(uint16_t *)&uartPacket[0];
-            
-            // low, high, sync order in array (from uart order is sync, low, high)
-            pulsewidths[0] = (RF_DATA[2] << 8) | RF_DATA[3];
-            pulsewidths[1] = (RF_DATA[4] << 8) | RF_DATA[5];
-            pulsewidths[2] = (RF_DATA[0] << 8) | RF_DATA[1];
-            
-            // DEBUG:
-            //uart_putc(pulsewidths[0] >> 8);
-            //uart_putc(pulsewidths[0] & 0xff);
-            //uart_putc(pulsewidths[1] >> 8);
-            //uart_putc(pulsewidths[1] & 0xff);
-            //uart_putc(pulsewidths[2] >> 8);
-            //uart_putc(pulsewidths[2] & 0xff);
-            
-            // data
-            tr_packet[0] = RF_DATA[6];
-            tr_packet[1] = RF_DATA[7];
-            tr_packet[2] = RF_DATA[8];
+            // this chooses between the different transmission types
+            switch (command)
+            {
+                case RF_CODE_RFOUT:
+                    // byte 0..1:	Tsyn
+                    // byte 2..3:	Tlow
+                    // byte 4..5:	Thigh
+                    // byte 6..8:	24bit Data
+                    // sdcc is little endian so we would need to swap bytes for pointers to work
+                    // low, high, sync order in array (from uart order is sync, low, high)
+                    pulsewidths[0] = (RF_DATA[2] << 8) | RF_DATA[3];
+                    pulsewidths[1] = (RF_DATA[4] << 8) | RF_DATA[5];
+                    pulsewidths[2] = (RF_DATA[0] << 8) | RF_DATA[1];
+                    
+                    // data
+                    tr_packet[0] = RF_DATA[6];
+                    tr_packet[1] = RF_DATA[7];
+                    tr_packet[2] = RF_DATA[8];
+                    
+                    // help make function call more readable
+                    start_size = PROTOCOL_DATA[0].start.size;
+                    bit0_size  = PROTOCOL_DATA[0].bit0.size;
+                    bit1_size  = PROTOCOL_DATA[0].bit1.size;
+                    end_size   = PROTOCOL_DATA[0].end.size;
+                    bitcount   = PROTOCOL_DATA[0].bit_count;
 
-			
-			// help make function call more readable
-			start_size = PROTOCOL_DATA[0].start.size;
-			bit0_size  = PROTOCOL_DATA[0].bit0.size;
-			bit1_size  = PROTOCOL_DATA[0].bit1.size;
-			end_size   = PROTOCOL_DATA[0].end.size;
-			bitcount   = PROTOCOL_DATA[0].bit_count;
+                    // user supplied timings
+                    SendBuckets(pulsewidths, PROTOCOL_DATA[0].start.dat, start_size, PROTOCOL_DATA[0].bit0.dat, bit0_size, PROTOCOL_DATA[0].bit1.dat, bit1_size, PROTOCOL_DATA[0].end.dat, end_size, bitcount, tr_packet);
+                    
+                    break;
+                case RF_CODE_RFOUT_NEW:
+                    // byte 0:		PROTOCOL_DATA index
+                    // byte 1..:	Data
+                    // FIXME: rcswitch treats "protocol 1" as index 0, so might need to make consistent with portisch
+                    SendBucketsByIndex(RF_DATA[0], &RF_DATA[1]);
+                    break;
+                case RF_CODE_RFOUT_BUCKET:
+                    uint8_t num_buckets = RF_DATA[0];
+                    
+                    // FIXME: I do not know what format this is, does it match 0xB0 on the wiki?
+                    // byte 0:				number of buckets: k
+                    // byte 1:				number of repeats: r
+                    // byte 2*(1..k):		bucket time high
+                    // byte 2*(1..k)+1:		bucket time low
+                    // byte 2*k+2..N:		RF buckets to send
+                    //uint16_t* buckets = (uint16_t *)(RF_DATA + 2);
+                    
+                    // find the start of the data by skipping over the number of buckets times two and two bytes for numbers of buckets and number of repeats
+                    uint8_t* rfdata = RF_DATA + (num_buckets << 1) + 2;
+                    
+                    // subtract out two bytes for number of buckets and number of repeats
+                    // then subtract out number of buckets multiplied by 2
+                    uint8_t data_len = packetLength - 2 - (num_buckets << 1);
 
-
-			SendBuckets(pulsewidths, PROTOCOL_DATA[0].start.dat, start_size, PROTOCOL_DATA[0].bit0.dat, bit0_size, PROTOCOL_DATA[0].bit1.dat, bit1_size, PROTOCOL_DATA[0].end.dat, end_size, bitcount, tr_packet);
-			
-            // DEBUG:
-            //SendBuckets(pulsewidths_dummy, PROTOCOL_DATA[0].start.dat, start_size, PROTOCOL_DATA[0].bit0.dat, bit0_size, PROTOCOL_DATA[0].bit1.dat, bit1_size, PROTOCOL_DATA[0].end.dat, end_size, bitcount, packet_dummy);
+                    // 0xB0 transmission using timings that generally would have been sniffed with 0xB1 mode
+                    SendRFBuckets(buckets_pointer, rfdata, data_len);
+                    
+                    break;
+            }
             
-			// ping pong between idle and finished state until we reach zero repeat index
+            
+			// causes ping pong between idle and finished state until we reach zero repeat index
 			rf_state = RF_FINISHED;
 			
 			break;
@@ -693,7 +713,7 @@ void main (void)
 					break;
 
 				// if statement allows repeat transmissions
-				if (radio_state_machine())
+				if (radio_state_machine(uart_command))
 				{
 					// indicate completed all transmissions
 					uart_put_command(RF_CODE_ACK);
@@ -708,55 +728,25 @@ void main (void)
 					uart_command = last_sniffing_command;
 				}
 				break;
-			// FIXME: need to add back in 0xA8 and 0xB0 command
 			case RF_CODE_RFOUT_NEW:
 				// only do the job if all data got received by UART
 				if (uart_state != IDLE)
 					break;
 
-				// do transmit of the data
-				switch(rf_state)
+				// if statement allows repeat transmissions
+				if (radio_state_machine(uart_command))
 				{
-					// init and start RF transmit
-					case RF_IDLE:
-						tr_repeats--;
-						PCA0_StopSniffing();
+					// indicate completed all transmissions
+					uart_put_command(RF_CODE_ACK);
 
-						// byte 0:		PROTOCOL_DATA index
-						// byte 1..:	Data
-                        // FIXME: rcswitch treats "protocol 1" as index 0, so might need to make consistent with portisch
-						SendBucketsByIndex(RF_DATA[0], &RF_DATA[1]);
-                        
-                        // ping pong between idle and finished state until we reach zero repeat index
-                        rf_state = RF_FINISHED;
-            
-						break;
+					// FIXME: need to examine this logic
+					// restart sniffing in its previous mode
+					PCA0_DoSniffing();
+                    
+                    blockReadingUART = false;
 
-					// wait until data got transfered
-					case RF_FINISHED:
-						if (tr_repeats == 0)
-						{
-							// disable RF transmit
-							//T_DATA = TDATA_OFF;
-                            tdata_off();
-
-                            // indicate completed all transmissions
-                            uart_put_command(RF_CODE_ACK);
-                            
-                            blockReadingUART = false;
-
-                            // FIXME: need to examine this logic
-                            // restart sniffing in its previous mode
-                            PCA0_DoSniffing();
-
-                            // change back to previous command (i.e., not rfout)
-                            uart_command = last_sniffing_command;
-						}
-						else
-						{
-							rf_state = RF_IDLE;
-						}
-						break;
+					// change back to previous command (i.e., not rfout)
+					uart_command = last_sniffing_command;
 				}
 				break;
                 
@@ -766,75 +756,20 @@ void main (void)
 				if (uart_state != IDLE)
 					break;
 
-				// do transmit of the data
-				switch(rf_state)
+				// if statement allows repeat transmissions
+				if (radio_state_machine(uart_command))
 				{
-					// init and start RF transmit
-					case RF_IDLE:
-						tr_repeats--;
-						PCA0_StopSniffing();
+					// indicate completed all transmissions
+					uart_put_command(RF_CODE_ACK);
 
-                        uint8_t num_buckets = RF_DATA[0];
-                        
-                        // FIXME: I do not know what format this is, does it match 0xB0 on the wiki?
-						// byte 0:				number of buckets: k
-						// byte 1:				number of repeats: r
-						// byte 2*(1..k):		bucket time high
-						// byte 2*(1..k)+1:		bucket time low
-						// byte 2*k+2..N:		RF buckets to send
-                        //uint16_t* buckets = (uint16_t *)(RF_DATA + 2);
-                        
+					// FIXME: need to examine this logic
+					// restart sniffing in its previous mode
+					PCA0_DoSniffing();
+                    
+                    blockReadingUART = false;
 
-                        // DEBUG:
-                        //uart_putc(buckets_pointer[0] >> 8);
-                        //uart_putc(buckets_pointer[0] & 0xff);
-                        
-                        // find the start of the data by skipping over the number of buckets times two and two bytes for numbers of buckets and number of repeats
-                        uint8_t* rfdata = RF_DATA + (num_buckets << 1) + 2;
-                        
-                        // DEBUG:
-                        //uart_putc(rfdata[0]);
-                        
-                        // subtract out two bytes for number of buckets and number of repeats
-                        // then subtract out number of buckets multiplied by 2
-                        uint8_t data_len = packetLength - 2 - (num_buckets << 1);
-                        
-                        // DEBUG:
-                        //uart_putc(data_len);
-                        
-                        //
-						SendRFBuckets(buckets_pointer, rfdata, data_len);
-                        
-                        // ping pong between idle and finished state until we reach zero repeat index
-                        rf_state = RF_FINISHED;
-                        
-						break;
-
-					// wait until data got transfered
-					case RF_FINISHED:
-						if (tr_repeats == 0)
-						{
-							// disable RF transmit
-							//T_DATA = TDATA_OFF;
-                            tdata_off();
-
-                            // indicate completed all transmissions
-                            uart_put_command(RF_CODE_ACK);
-
-                            blockReadingUART = false;
-                            
-                            // FIXME: need to examine this logic
-                            // restart sniffing in its previous mode
-                            PCA0_DoSniffing();
-
-                            // change back to previous command (i.e., not rfout)
-                            uart_command = last_sniffing_command;
-						}
-						else
-						{
-							rf_state = RF_IDLE;
-						}
-						break;
+					// change back to previous command (i.e., not rfout)
+					uart_command = last_sniffing_command;
 				}
 				break;
 			}
@@ -876,7 +811,7 @@ void main (void)
 				// this is blocking unfortunately
 				buzzer_on();
 
-                // as best I can tell, these do not work because sdcc is little endian on 8051
+                // as best I can tell, cast using pointers do not work because sdcc is little endian on 8051
                 // so we would need to swap bytes and then cast to uint16
                 // but since it's just two bytes anyway, do it with bit shifts instead
                 //bucket = *(uint16_t *)&RF_DATA[0];
@@ -885,9 +820,6 @@ void main (void)
                 // reuse uint16_t variable used elsewhere
                 bucket = (RF_DATA[0] << 8) | RF_DATA[1];
                 
-                // DEBUG:
-                //uart_putc(bucket >> 8);
-                //uart_putc(bucket & 0xff);
                 
                 // nop based delay, could use timer based
                 delay1ms(bucket);
@@ -907,6 +839,12 @@ void main (void)
                 
                 // force the microcontroller to reset
                 reset_mcu();
+                
+                // we should never reach this because mcu should reset
+                while (1)
+                {
+                    startup_blink();
+                }
 
                 break;
 			// host was requesting the firmware version
