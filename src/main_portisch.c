@@ -46,9 +46,9 @@ __xdata uart_state_t uart_state = IDLE;
 __xdata uart_command_t uart_command = NONE;
 __xdata uart_command_t last_sniffing_command;
 
-// we share rf_data[] array with uart and radio in order to save on bytes (e.g., and for long commands such as 0xB0)
-//__xdata uint8_t uartPacket[10];
 
+// FIXME: add comment
+rf_sniffing_mode_t last_sniffing_mode;
 
 // used in multiple functions so made global for now
 static __xdata uint8_t packetLength = 0;
@@ -170,7 +170,20 @@ void uart_state_machine(const unsigned int rxdata)
 			switch(uart_command)
 			{
 				case RF_CODE_LEARN:
-					break;
+                    init_delay_timer_ms(1, 50);
+                    buzzer_on();
+                    // wait until timer has finished
+                    wait_delay_timer_finished();
+                    buzzer_off();
+
+                    // set desired RF protocol PT2260
+                    sniffing_mode = STANDARD;
+                    PCA0_DoSniffing();
+                    uart_command = RF_CODE_LEARN;
+
+                    // start timeout timer
+                    init_delay_timer_ms(1, 30000);
+                    break;
 				case RF_CODE_RFOUT:
 					// stop sniffing while handling received data
 					PCA0_StopSniffing();
@@ -219,7 +232,21 @@ void uart_state_machine(const unsigned int rxdata)
 					uart_command = RF_CODE_SNIFFING_ON_BUCKET;
 					break;
 				case RF_CODE_LEARN_NEW:
-					break;
+                    init_delay_timer_ms(1, 50);
+                    buzzer_on();
+                    // wait until timer has finished
+                    wait_delay_timer_finished();
+                    buzzer_off();
+
+                    // enable sniffing for all known protocols
+                    last_sniffing_mode = sniffing_mode;
+                    sniffing_mode = ADVANCED;
+                    PCA0_DoSniffing();
+                    uart_command = RF_CODE_LEARN_NEW;
+
+                    // start timeout timer
+                    init_delay_timer_ms(1, 30000);
+                    break;
 				case RF_CODE_ACK:
                     // FIXME: I do not think this comment matches what happens in code, need to examine
 					// re-enable default RF_CODE_RFIN sniffing
@@ -468,6 +495,7 @@ void main (void)
 	// FIXME: add comment
     __xdata uint16_t idleResetCount = 0;
 
+
 	// prefer bool type in internel ram to take advantage of bit addressable locations
 	bool result;
 
@@ -661,6 +689,92 @@ void main (void)
 		{
 			case NONE:
 				break;
+			// do original learning, new RF code learning
+			case RF_CODE_LEARN:
+			case RF_CODE_LEARN_NEW:
+
+				// check if a RF signal got decoded
+				if ((RF_DATA_STATUS & RF_DATA_RECEIVED_MASK) != 0)
+				{
+					init_delay_timer_ms(1, 200);
+					buzzer_on();
+					// wait until timer has finished
+					wait_delay_timer_finished();
+					buzzer_off();
+
+					switch(uart_command)
+					{
+						case RF_CODE_LEARN:
+							PCA0_DoSniffing();
+                            uart_command = last_sniffing_command;
+                            
+							uart_put_RF_Data_Standard(RF_CODE_LEARN_OK);
+							break;
+
+						case RF_CODE_LEARN_NEW:
+							sniffing_mode = last_sniffing_mode;
+							PCA0_DoSniffing();
+                            uart_command = last_sniffing_command;
+							uart_put_RF_Data_Advanced(RF_CODE_LEARN_OK_NEW, RF_DATA_STATUS & 0x7F);
+							break;
+					}
+
+					// clear RF status
+					RF_DATA_STATUS = 0;
+
+					// enable interrupt for RF receiving
+					//PCA0CPM0 |= PCA0CPM0_ECCF__ENABLED;
+                    enable_capture_interrupt();
+
+					// enable UART again
+					blockReadingUART = false;
+				}
+				// check for learning timeout
+				else if (is_delay_timer_finished())
+				{
+					init_delay_timer_ms(1, 1000);
+					buzzer_on();
+					// wait until timer has finished
+					wait_delay_timer_finished();
+					buzzer_off();
+
+					// send not-acknowledge
+					switch(uart_command)
+					{
+						case RF_CODE_LEARN:
+                            // send uart command
+                            uart_put_command(RF_CODE_LEARN_KO);
+
+                            // enable UART again
+                            blockReadingUART = false;
+
+                            // restart sniffing in its previous mode
+                            PCA0_DoSniffing();
+                            uart_command = last_sniffing_command;
+							break;
+
+						case RF_CODE_LEARN_NEW:
+                            // send uart command
+                            uart_put_command(RF_CODE_LEARN_KO_NEW);
+
+                            // enable UART again
+                            blockReadingUART = false;
+
+                            // restart sniffing in its previous mode
+                            PCA0_DoSniffing();
+                            uart_command = last_sniffing_command;
+							break;
+					}
+				}
+				else
+				{
+					// handle new received buckets
+					if (buffer_out(&bucket))
+                    {
+						HandleRFBucket(bucket & 0x7FFF, (bool)((bucket & 0x8000) >> 15));
+                    }
+				}
+				break;
 			// do original sniffing
 			case RF_CODE_RFIN:
 			case RF_CODE_SNIFFING_ON:
@@ -707,49 +821,7 @@ void main (void)
 				}
 				break;
 			case RF_CODE_RFOUT:
-
-				// only do the job if all data got received by UART
-				if (uart_state != IDLE)
-					break;
-
-				// if statement allows repeat transmissions
-				if (radio_state_machine(uart_command))
-				{
-					// indicate completed all transmissions
-					uart_put_command(RF_CODE_ACK);
-
-					// FIXME: need to examine this logic
-					// restart sniffing in its previous mode
-					PCA0_DoSniffing();
-                    
-                    blockReadingUART = false;
-
-					// change back to previous command (i.e., not rfout)
-					uart_command = last_sniffing_command;
-				}
-				break;
 			case RF_CODE_RFOUT_NEW:
-				// only do the job if all data got received by UART
-				if (uart_state != IDLE)
-					break;
-
-				// if statement allows repeat transmissions
-				if (radio_state_machine(uart_command))
-				{
-					// indicate completed all transmissions
-					uart_put_command(RF_CODE_ACK);
-
-					// FIXME: need to examine this logic
-					// restart sniffing in its previous mode
-					PCA0_DoSniffing();
-                    
-                    blockReadingUART = false;
-
-					// change back to previous command (i.e., not rfout)
-					uart_command = last_sniffing_command;
-				}
-				break;
-                
 			case RF_CODE_RFOUT_BUCKET:
 			{
 				// only do the job if all data got received by UART
@@ -757,6 +829,7 @@ void main (void)
 					break;
 
 				// if statement allows repeat transmissions
+                // and pass in the type of transmission to the state machine (e.g. 0xA5 by timing, 0xA8 by protocol, or 0xB0 by sniffed bucket timing)
 				if (radio_state_machine(uart_command))
 				{
 					// indicate completed all transmissions
