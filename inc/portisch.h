@@ -70,12 +70,12 @@ extern __xdata uint8_t bucket_count;
 
 extern bool buffer_out(uint16_t* bucket);
 extern void HandleRFBucket(uint16_t duration, bool high_low);
-extern uint8_t PCA0_DoSniffing(void);
+extern void PCA0_DoSniffing(void);
 extern void PCA0_StopSniffing(void);
 extern void SendRFBuckets(uint16_t* buckets, uint8_t* rfdata, uint8_t data_len);
 extern void SendBuckets(uint16_t *pulses,uint8_t* start, uint8_t start_size,uint8_t* bit0, uint8_t bit0_size,uint8_t* bit1, uint8_t bit1_size,uint8_t* end, uint8_t end_size,uint8_t bit_count,uint8_t* rfdata);
 extern void SendBucketsByIndex(uint8_t index, uint8_t* rfdata);
-extern void Bucket_Received(uint16_t duration, bool high_low);
+extern void Bucket_Received(const uint16_t duration, const bool high_low);
 
 void capture_handler(uint16_t current_capture_value);
 

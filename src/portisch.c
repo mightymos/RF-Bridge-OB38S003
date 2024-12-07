@@ -437,11 +437,8 @@ void capture_handler(uint16_t current_capture_value)
 //uart_command          = in;
 //last_sniffing_command = in;
 //return out;
-uint8_t PCA0_DoSniffing(void)
+void PCA0_DoSniffing(void)
 {
-	// FIXME:
-	uint8_t ret = 0;
-
     // FIXME: possible to remove to save code size?
 	memset(status, 0, sizeof(PROTOCOL_STATUS) * NUM_OF_PROTOCOLS);
 
@@ -466,9 +463,6 @@ uint8_t PCA0_DoSniffing(void)
     
 	// FIXME: add comment
 	RF_DATA_STATUS = 0;
-
-
-	return ret;
 }
 
 void PCA0_StopSniffing(void)
@@ -658,7 +652,7 @@ bool findBucket(uint16_t duration, uint8_t *index)
 	return false;
 }
 
-void Bucket_Received(uint16_t duration, bool high_low)
+void Bucket_Received(const uint16_t duration, const bool high_low)
 {
 	uint8_t bucket_index;
 
