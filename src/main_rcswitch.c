@@ -234,7 +234,7 @@ int main (void)
     // at various times during development timer 0 has been used to support software uart
     //init_timer0(SOFT_BAUD);
     
-    // timer 1 provides ten microsecond tick for on demand delays
+    // timer 1 provides ten microsecond or one millisecond auto reload for on demand delays
     init_timer1_8bit_autoreload();
     
     // timer 2 supports compare and capture module

@@ -177,7 +177,9 @@ void init_timer1_8bit_autoreload(void)
     
     // T1PS prescaler Fosc
     // b01 = FOCS
-    PFCON |= 0x04;
+    //PFCON |= 0x04;
+    // b10 = FOCS / 96
+    PFCON |= 0x08;
 }
 
 void load_timer0(const uint16_t load)
