@@ -184,6 +184,7 @@ switch:
     optimistic: true
     turn_on_action: 
       - rf_bridge.send_code:
+          # made these times equal for on/off even though when sniffed they would vary a little
           sync: 0x2F1A
           low:  0x0184
           high: 0x048C
