@@ -671,7 +671,7 @@ void main (void)
 					switch(uart_command)
 					{
 						case RF_CODE_RFIN:
-							// we no longer share a buffer between radio and uart, however need to avoid writing to radio buffer while reading it
+							// we share a buffer between radio and uart - assume an atomic lock would work better here
 							disable_capture_interrupt();
 							
 							//we read RF_DATA[] so do not want decoding writing to it while trying to read it
