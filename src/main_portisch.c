@@ -147,8 +147,8 @@ void serial_loopback(void)
 
 void uart_state_machine(const unsigned int rxdata)
 {
-	// FIXME: add comment
-	static __xdata uint8_t position = 0;
+	// tracks which byte we are currently receiving from uart
+	static uint8_t position = 0;
 
 	// state machine for UART
 	switch(uart_state)

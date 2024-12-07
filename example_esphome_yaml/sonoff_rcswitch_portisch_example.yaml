@@ -135,7 +135,14 @@ button:
     on_press:
       then:
       - rf_bridge.send_raw: 
-          raw: 'AAFE55'   
+          raw: 'AAFE55'
+
+  - platform: template
+    name: "learning mode"
+    id: learning
+    on_press:
+      then:
+      - rf_bridge.learn  
 
 # Sensors for ESP version and WIFI information
 text_sensor:
