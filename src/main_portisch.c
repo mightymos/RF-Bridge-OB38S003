@@ -179,7 +179,9 @@ void uart_state_machine(const unsigned int rxdata)
                     // set desired RF protocol PT2260
                     sniffing_mode = STANDARD;
                     PCA0_DoSniffing();
-                    uart_command = RF_CODE_LEARN;
+                    
+                    // redundant
+                    //uart_command = RF_CODE_LEARN;
 
                     // start timeout timer
                     init_delay_timer_ms(1, 30000);
@@ -202,14 +204,15 @@ void uart_state_machine(const unsigned int rxdata)
 					packetLength = 2;
 					break;
 				case RF_ALTERNATIVE_FIRMWARE:
-                    // FIXME: comment on this, we want an empty switch entry because
+                    // we want an empty switch entry because
                     // no further data is expected but we want uart_command to not be set
                     // to NONE as in default switch entry
 					break;
 				case RF_CODE_SNIFFING_ON:
 					sniffing_mode = ADVANCED;
 					PCA0_DoSniffing();
-                    uart_command          = RF_CODE_SNIFFING_ON;
+                    // redundant
+                    //uart_command          = RF_CODE_SNIFFING_ON;
 					last_sniffing_command = RF_CODE_SNIFFING_ON;
 					break;
 				case RF_CODE_SNIFFING_OFF:
@@ -229,7 +232,8 @@ void uart_state_machine(const unsigned int rxdata)
 					break;
 				case RF_CODE_SNIFFING_ON_BUCKET:
 					PCA0_DoSniffing();
-					uart_command = RF_CODE_SNIFFING_ON_BUCKET;
+                    // redundant
+					//uart_command = RF_CODE_SNIFFING_ON_BUCKET;
 					break;
 				case RF_CODE_LEARN_NEW:
                     init_delay_timer_ms(1, 50);
@@ -242,7 +246,8 @@ void uart_state_machine(const unsigned int rxdata)
                     last_sniffing_mode = sniffing_mode;
                     sniffing_mode = ADVANCED;
                     PCA0_DoSniffing();
-                    uart_command = RF_CODE_LEARN_NEW;
+                    // redundant
+                    //uart_command = RF_CODE_LEARN_NEW;
 
                     // start timeout timer
                     init_delay_timer_ms(1, 30000);
@@ -663,9 +668,9 @@ void main (void)
 			// but seems to reset uart if it sits in non-idle state
 			// for too long without receiving any more data
 			if (uart_state == IDLE)
+            {
 				idleResetCount = 0;
-			else
-			{
+			} else {
 				idleResetCount += 1;
 			
 				if (idleResetCount > 30000)
