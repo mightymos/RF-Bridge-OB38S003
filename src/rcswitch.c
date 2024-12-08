@@ -283,8 +283,8 @@ void capture_handler(const uint16_t currentCapture)
  */
 void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
 {
-    __xdata uint8_t firstLogicLevel  = invertedSignal ? 0 : 1;
-    __xdata uint8_t secondLogicLevel = invertedSignal ? 1 : 0;
+    uint8_t firstLogicLevel  = invertedSignal ? 0 : 1;
+    uint8_t secondLogicLevel = invertedSignal ? 1 : 0;
 
     //
     set_tdata(firstLogicLevel);
@@ -293,7 +293,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     //set_debug_pin01(firstLogicLevel);
 
     init_delay_timer_us(1, delayHigh);
-    wait_delay_timer_finished();
+    wait_delay_timer_us_finished();
 
 
     //
@@ -304,7 +304,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
 
 
     init_delay_timer_us(1, delayLow);
-    wait_delay_timer_finished();
+    wait_delay_timer_us_finished();
 }
 
 
@@ -391,6 +391,6 @@ void send(struct Pulse* pulses, unsigned char* packetStart, const unsigned char 
     // disable transmit after sending (i.e., for inverted protocols)
     tdata_off();
 
-    // we do this outside of the function
+    // we enable receiver outside of the function now
     //radio_receiver_on();
 }

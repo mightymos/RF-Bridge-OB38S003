@@ -223,7 +223,7 @@ bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses,
 	if (status[i].bit_count >= bit_count)
 	{
 		// check if timeout timer for crc is finished
-		if (is_delay_timer_finished())
+		if (is_delay_timer_ms_finished())
 		{
 			old_crc = 0;
 		}
@@ -232,7 +232,7 @@ bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses,
 		if (crc != old_crc)
 		{
 			// new data, restart crc timeout
-			stop_delay_timer();
+			stop_delay_timer_ms();
 			init_delay_timer_ms(1, 800);
 			old_crc = crc;
 
@@ -477,7 +477,7 @@ void PCA0_StopSniffing(void)
 	disable_capture_interrupt();
 
 	// be sure the timeout timer is stopped
-	stop_delay_timer();
+	stop_delay_timer_us();
     
     // FIXME: eventually move setting radio outside outside of function
     rf_state = RF_IDLE;
@@ -499,11 +499,11 @@ bool SendSingleBucket(const bool high_low, uint16_t bucket_time)
 	// wait until timer has finished
 	//WaitTimer3Finished();
 	// FIXME: nop style delay seems to basically work (with first protocol)
-	// but delays measured at receiver are inaccurate due to delay_us inaccuracy
+	// but bucket timings measured at receiver are inaccurate due to delay_us inaccuracy
 	//efm8_delay_us(bucket_time);
-	// FIXME: so maybe just use timer2 instead
+	// FIXME: so maybe just use timer delays instead
 	init_delay_timer_us(1, bucket_time / 10);
-	wait_delay_timer_finished();
+	wait_delay_timer_us_finished();
 
 	return !high_low;
 }
@@ -768,14 +768,16 @@ void Bucket_Received(const uint16_t duration, const bool high_low)
 			else if (matchesFooter(duration, high_low))
 			{
 				// check if timeout timer for crc is finished
-				if (is_delay_timer_finished())
+				if (is_delay_timer_ms_finished())
+                {
 					old_crc = 0;
+                }
 
 				// check new crc on last received data for debounce
 				if (crc != old_crc)
 				{
 					// new data, restart crc timeout
-					stop_delay_timer();
+					stop_delay_timer_ms();
 					init_delay_timer_ms(1, 800);
 					old_crc = crc;
 

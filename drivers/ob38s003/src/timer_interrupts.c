@@ -7,6 +7,8 @@
 #include "hal.h"
 
 // FIXME: is there a way to avoid this?
+// we are getting the definition of capture_handler() from the portisch header
+// but actually getting the implementation from rcswitch when that mode is compiled
 //#if defined(TARGET_RCSWITCH)
 //    #include "rcswitch.h"
 //#elif defined(TARGET_PORTISCH)
@@ -17,21 +19,12 @@
 
 #include "timer_interrupts.h"
 
-// track time since startup in one millisecond increments
-//static __xdata uint16_t gTimeMilliseconds = 0;
-//static __xdata uint16_t gTimeTenMicroseconds = 0;
 
+// tens of microseconds increments
+static __xdata uint16_t gTimer0Timeout;
+// milliseconds increments
 static __xdata uint16_t gTimer1Timeout;
 
-//uint16_t get_time_milliseconds(void)
-//{
-//  return gTimeMilliseconds;
-//}
-
-//uint16_t get_time_ten_microseconds(void)
-//{
-//  return gTimeTenMicroseconds;
-//}
 
 // FIXME: this is actually timer2 on ob38s003 but use pca naming convention for now
 void clear_interrupt_flags_pca(void)
@@ -67,6 +60,15 @@ void clear_pca_counter(void)
 // which decrements a timer all within the interrupt
 // and essentially indicates completion by disabling timer
 // and checking in user land that it has been disabled as a sort of finished flag
+
+void set_timer0_reload(const uint8_t reload)
+{
+    // autoreload register
+    TH0 = reload;
+    // actual timer register
+    TL0 = reload;
+}
+
 void set_timer1_reload(const uint8_t reload)
 {
     // autoreload register
@@ -81,14 +83,19 @@ void set_timer1_reload(const uint8_t reload)
  */
 void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
 {
-    // FIXME: why were we explicitly setting to 10 microseconds previously?
-    set_timer1_reload(TIMER1_RELOAD_10MICROS);
+    // this approach to changing prescale values does not seem to result in successful transmission
+    // for ten microsecond range timer value obtained is a whole number when we have no prescale
+    //set_timer1_no_prescale();
     
-    // remove 65micros because of startup delay
-    gTimer1Timeout  = timeout;
+    //
+    set_timer0_reload(TIMER0_RELOAD_10MICROS);
+    
+    // FIXME: portisch removed 65micros because of startup delay
+    //        but I do not see any information on this in ob38s003 datasheet
+    gTimer0Timeout  = timeout;
 
     // start timer
-    TR1 = true;
+    TR0 = true;
 }
 
 
@@ -96,7 +103,11 @@ void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
  * Init Timer 1 with milliseconds interval, maximum is ~2.5ms.
  */
 void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout)
-{    
+{
+    // we need the prescale to support millisecond range
+    //set_timer1_prescale_fosc96();
+    
+    //
     set_timer1_reload(TIMER1_RELOAD_1MILLIS);
 
     gTimer1Timeout  = timeout;
@@ -106,14 +117,29 @@ void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout)
 }
 
 
-void wait_delay_timer_finished(void)
+void wait_delay_timer_us_finished(void)
+{
+    // wait until timer has finished
+    while(TR0);
+}
+
+void wait_delay_timer_ms_finished(void)
 {
     // wait until timer has finished
     while(TR1);
 }
 
 
-void stop_delay_timer(void)
+void stop_delay_timer_us(void)
+{
+    // stop timer
+    TR0 = false;
+    
+    // clear overflow flag (why, to avoid triggering interrupt next enable?)
+    TF0 = false;
+}
+
+void stop_delay_timer_ms(void)
 {
     // stop timer
     TR1 = false;
@@ -122,26 +148,19 @@ void stop_delay_timer(void)
     TF1 = false;
 }
 
-bool is_delay_timer_finished(void)
+bool is_delay_timer_us_finished(void)
+{
+    return !TR0;
+}
+
+bool is_delay_timer_ms_finished(void)
 {
     return !TR1;
 }
 
-#if 0
 
+// timer 0 interrupt
 void timer0_isr(void) __interrupt (d_T0_Vector)
-{
-    // one millisecond to overflow
-    TH0 = TH0_RELOAD_1MILLIS;
-    TL0 = TL0_RELOAD_1MILLIS;
-    
-    gTimeMilliseconds++;
-}
-
-#endif
-
-// timer 1 interrupt
-void timer1_isr(void) __interrupt (d_T1_Vector)
 {
     // we use autoreload instead of manually reloading count so that interrupt is short
     // ob38s003 microcontroller automatically clears timer flag
@@ -149,12 +168,25 @@ void timer1_isr(void) __interrupt (d_T1_Vector)
     // DEBUG:
     //debug_pin01_toggle();
     
-    
     // we avoid handling intervals of more than one because instructions slow done interrupt too much
     
     // we decrement because if we incremented we would have to compare to a timeout external to interrupt
     // and we would then have to access variable atomically (e.g., by disabling interrupts briefly)
     // and as a result we might miss counts
+    gTimer0Timeout--;
+        
+    // check if pulse time is over
+    if(gTimer0Timeout == 0)
+    {
+        // stop timer
+        TR0 = false;
+    }    
+}
+
+
+// timer 1 interrupt
+void timer1_isr(void) __interrupt (d_T1_Vector)
+{
     gTimer1Timeout--;
         
     // check if pulse time is over

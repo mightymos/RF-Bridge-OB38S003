@@ -17,11 +17,11 @@
 
 #include "timer_interrupts.h"
 
-// track time since startup in one millisecond increments
-//static unsigned long gTimeMilliseconds = 0;
-//static unsigned long gTimeTenMicroseconds = 0;
 
+// tens of microseconds increments
 static __xdata uint16_t gTimer2Timeout;
+// milliseconds increments
+static __xdata uint16_t gTimer3Timeout;
 
 //unsigned long get_time_milliseconds(void)
 //{
@@ -77,6 +77,17 @@ void set_timer2_reload(const uint16_t reload)
     TMR2RLL = (reload & 0xFF);
 }
 
+void set_timer3_reload(const uint16_t reload)
+{
+    // we need to initialize timer registers and setup reload values next
+    TMR3H = ((reload >> 8) & 0xFF);
+    TMR3L = (reload & 0xFF);
+    
+    // these are the reload values (placed into actual timer registers on overflow)
+    TMR3RLH = ((reload >> 8) & 0xFF);
+    TMR3RLL = (reload & 0xFF);
+}
+
 
 /*
  * we use this generic naming as compared with Portisch because different timers are used depending on microcontroller
@@ -100,27 +111,33 @@ void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
 
 
 /*
- * Init Timer 2 with milliseconds interval, maximum is ~2.5ms.
+ * Init Timer 3 with milliseconds interval, maximum is ~2.5ms.
  */
 void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout)
 {    
-    set_timer2_reload(TIMER2_RELOAD_1MILLIS);
+    set_timer3_reload(TIMER3_RELOAD_1MILLIS);
 
-    gTimer2Timeout  = timeout;
+    gTimer3Timeout  = timeout;
 
     // start timer
-    TR2 = true;
+    TMR3CN0 |= TR3__RUN;
 }
 
 
-void wait_delay_timer_finished(void)
+void wait_delay_timer_us_finished(void)
 {
     // wait until timer has finished
     while(TR2);
 }
 
+void wait_delay_timer_ms_finished(void)
+{
+    // wait until timer has finished
+    while(TMR3CN0 & TR3__BMASK);
+}
 
-void stop_delay_timer(void)
+
+void stop_delay_timer_us(void)
 {
     // stop timer
     TR2 = false;
@@ -129,9 +146,23 @@ void stop_delay_timer(void)
     TF2 = false;
 }
 
-bool is_delay_timer_finished(void)
+void stop_delay_timer_ms(void)
+{
+    // stop timer
+    TMR3CN0 &= ~TR3__RUN;
+    
+    // clear overflow flag (why, to avoid triggering interrupt next enable?)
+    TMR3CN0 &= ~TF3H__BMASK;
+}
+
+bool is_delay_timer_us_finished(void)
 {
     return !TR2;
+}
+
+bool is_delay_timer_ms_finished(void)
+{
+    return !((TMR3CN0 & TR3__BMASK) >> TR3__SHIFT);
 }
 
 // timer 2 interrupt
@@ -150,7 +181,23 @@ void timer2_isr(void) __interrupt (TIMER2_VECTOR)
     }   
 }
 
+// timer 3 interrupt
+void timer3_isr(void) __interrupt (TIMER3_VECTOR)
+{
+    // FIXME: clear at start or end of interrupt?
+    TMR3CN0 &= ~TF3H__BMASK;
+    
+    gTimer3Timeout--;
+        
+    // check if pulse time is over
+    if(gTimer3Timeout == 0)
+    {
+        // stop timer
+        TMR3CN0 |= ~TR3__RUN;
+    }   
+}
 
+// captures counter value on edge transitions
 void pca0_isr(void) __interrupt (PCA0_VECTOR)
 {
     //FIXME: we need to record the actual time step this represents so it is clear to human readers

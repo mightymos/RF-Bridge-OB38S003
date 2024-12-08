@@ -229,10 +229,6 @@ inline void timer0_stop(void)
     TR0 = 0;
 }
 
-extern bool get_radio_wake(void);
-extern unsigned char get_stack_pointer(void);
-
-
 extern void set_clock_mode(void);
 extern void enable_watchdog(void);
 extern void disable_watchdog(void);
@@ -241,7 +237,7 @@ extern void reset_mcu(void);
 extern void init_port_pins(void);
 extern void init_serial_interrupt(void);
 extern void init_uart(void);
-extern void init_timer0(const uint16_t);
+extern void init_timer0_8bit_autoreload(void);
 extern void init_timer1_8bit_autoreload(void);
 extern void init_timer2_as_capture(void);
 extern void enable_capture_interrupt(void);
@@ -252,9 +248,6 @@ extern void disable_serial_interrupt(void);
 void pca0_run(void);
 void pca0_halt(void);
 
-extern bool is_global_interrupt_enabled(void);
-
-void load_timer0(const uint16_t load);
 extern uint16_t get_capture_mode(void);
 
 extern void clear_capture_flag(void);

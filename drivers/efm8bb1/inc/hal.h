@@ -273,11 +273,7 @@ extern void init_serial_interrupt(void);
 extern void init_uart(void);
 extern void init_timer0_16bit(const uint16_t);
 extern void init_timer1_8bit_autoreload(const uint8_t);
-extern void init_timer2_16bit(const uint16_t);
-extern void init_timer3_16bit(const uint16_t);
 
-extern void load_timer0(const uint16_t value);
-extern void load_timer1(const uint16_t value);
 
 extern void pca0_init(void);
 extern void pca0_run(void);
@@ -287,12 +283,6 @@ extern void enable_capture_interrupt(void);
 extern void disable_capture_interrupt(void);
 extern void enable_serial_interrupt(void);
 extern void disable_serial_interrupt(void);
-
-extern bool is_global_interrupt_enabled(void);
-
-
-extern unsigned char get_timer2_low(void);
-extern unsigned char get_timer2_high(void);
 
 extern void clear_capture_flag(void);
 

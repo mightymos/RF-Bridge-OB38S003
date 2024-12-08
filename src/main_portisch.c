@@ -68,7 +68,9 @@ bool blockReadingUART = false;
 // it is probably more proper to achieve this through include files but also easy to omit
 // and then things just will not work with no clear reason why, even though compilation is succcessful
 #if defined(TARGET_BOARD_OB38S003)
-    // supports timeout
+    // supports tens of microseconds delays
+    void timer0_isr(void) __interrupt (d_T0_Vector);
+    // supports  milliseconds delays
     void timer1_isr(void) __interrupt (d_T1_Vector);
     // pca like capture mode for radio decoding
     void timer2_isr(void) __interrupt (d_T2_Vector);
@@ -79,11 +81,12 @@ bool blockReadingUART = false;
     // timer0 was used for PCA in portisch, instead just use system clock
     // timer1 must be used for uart on this controller
     void uart_isr(void) __interrupt (UART0_VECTOR);
-    // timer2 is used on demand to provide delays
+    // timer2 is used on demand to provide tens of microseconds delays
     void timer2_isr(void) __interrupt (TIMER2_VECTOR);
+    // timer3 is used on demand to provide milliseconds delays
+    void timer3_isr(void) __interrupt (TIMER3_VECTOR);
     void pca0_isr(void) __interrupt (PCA0_VECTOR);
-    // timer3 was previously used on demand to provide delays
-    //void TIMER3_ISR(void) __interrupt (TIMER3_VECTOR);
+
 #else
     #error Please define TARGET_BOARD in makefile
 #endif
@@ -173,7 +176,7 @@ void uart_state_machine(const unsigned int rxdata)
                     init_delay_timer_ms(1, 50);
                     buzzer_on();
                     // wait until timer has finished
-                    wait_delay_timer_finished();
+                    wait_delay_timer_ms_finished();
                     buzzer_off();
 
                     // set desired RF protocol PT2260
@@ -239,7 +242,7 @@ void uart_state_machine(const unsigned int rxdata)
                     init_delay_timer_ms(1, 50);
                     buzzer_on();
                     // wait until timer has finished
-                    wait_delay_timer_finished();
+                    wait_delay_timer_ms_finished();
                     buzzer_off();
 
                     // enable sniffing for all known protocols
@@ -488,17 +491,17 @@ void main (void)
 	// for buzzer (milliseconds)
 	//const uint16_t startupDelay = 100;
 	// longer for LED
-	const uint16_t startupDelay = 3000;
+	//const uint16_t startupDelay = 3000;
 
-	// changed by external hardware, so must specify volatile type so not optimized out
-	volatile unsigned int rxdata = UART_NO_DATA;
+	// 
+	unsigned int rxdata = UART_NO_DATA;
 
 	// FIXME: add comment
     uint16_t bucket = 0;
     
 
 	// FIXME: add comment
-    __xdata uint16_t idleResetCount = 0;
+    uint16_t idleResetCount = 0;
 
 
 	// prefer bool type in internel ram to take advantage of bit addressable locations
@@ -529,7 +532,7 @@ void main (void)
     
     //
     startup_blink();
-    delay1ms(500);
+
     
 	// baud rate is 19200, 8 data bits, 1 stop bit, no parity
 	// polled version basically sets TI flag so putchar() does not get stuck in an infinite loop
@@ -546,8 +549,13 @@ void main (void)
     enable_serial_interrupt();
     
 #if defined(TARGET_BOARD_OB38S003)
+    // supports microseconds and milliseconds delays respectively
+    init_timer0_8bit_autoreload();
     init_timer1_8bit_autoreload();
+    // pca like capture
     init_timer2_as_capture();
+    // enable for eventually use once timer(s) are enabled for a delay
+    enable_timer0_interrupt();
     enable_timer1_interrupt();
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
     // pca used timer0 on portisch, we just use the pca counter itself now
@@ -558,9 +566,9 @@ void main (void)
     //
     pca0_init();
     
-    // FIXME: we are not using timer3 right now because ob38s003 does not have it
+    // enable interrupts in anticipation of enabling timer for on demand delays
     enable_timer2_interrupt();
-    //enable_timer3_interrupt();
+    enable_timer3_interrupt();
     
     //FIXME: in rcswitch we did pca0_run() here, but it happens in DoSniffing() for portisch
 #endif
@@ -698,13 +706,14 @@ void main (void)
 			case RF_CODE_LEARN:
 			case RF_CODE_LEARN_NEW:
 
+#if 0
 				// check if a RF signal got decoded
 				if ((RF_DATA_STATUS & RF_DATA_RECEIVED_MASK) != 0)
 				{
 					init_delay_timer_ms(1, 200);
 					buzzer_on();
 					// wait until timer has finished
-					wait_delay_timer_finished();
+					wait_delay_timer_ms_finished();
 					buzzer_off();
 
 					switch(uart_command)
@@ -735,12 +744,12 @@ void main (void)
 					blockReadingUART = false;
 				}
 				// check for learning timeout
-				else if (is_delay_timer_finished())
+				else if (is_delay_timer_ms_finished())
 				{
 					init_delay_timer_ms(1, 1000);
 					buzzer_on();
 					// wait until timer has finished
-					wait_delay_timer_finished();
+					wait_delay_timer_ms_finished();
 					buzzer_off();
 
 					// send not-acknowledge
@@ -780,6 +789,9 @@ void main (void)
                     }
 				}
 				break;
+                
+#endif
+                
 			// do original sniffing
 			case RF_CODE_RFIN:
 			case RF_CODE_SNIFFING_ON:

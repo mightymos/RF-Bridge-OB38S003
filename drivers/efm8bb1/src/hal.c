@@ -197,25 +197,6 @@ void init_timer1_8bit_autoreload(const uint8_t value)
     TL1 = value;
 }
 
-void init_timer2_16bit(const uint16_t value)
-{
-    // default is 16 bit auto reload mode
-    // default clock source is system clock divided by 12
-    TMR2RLH = (value >> 8) & 0xff;
-    TMR2RLL = value & 0xff;
-    
-}
-
-void init_timer3_16bit(const uint16_t value)
-{
-    TMR3RLH = (value >> 8) & 0xff;
-    TMR3RLL = value & 0xff;
-    
-    // default is 16 bit auto reload mode
-    // default clock source is system clock divided by 12
-    
-}
-
 
 void pca0_init(void)
 {
@@ -239,21 +220,6 @@ void pca0_halt(void)
     CR = 0;
 }
 
-
-bool is_global_interrupt_enabled(void)
-{
-    return EA;
-}
-
-unsigned char get_timer2_low(void)
-{
-    return TMR2L;
-}
-
-unsigned char get_timer2_high(void)
-{
-    return TMR2H;
-}
 
 void clear_capture_flag(void)
 {

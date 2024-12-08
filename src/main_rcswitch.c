@@ -82,7 +82,7 @@
     // FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
     //extern void tm0(void)        __interrupt (d_T0_Vector);
     // supports timeout
-    extern void timer1_isr(void) __interrupt (d_T1_Vector);
+    extern void timer0_isr(void) __interrupt (d_T0_Vector);
     // pca like capture mode for radio decoding
     extern void timer2_isr(void) __interrupt (d_T2_Vector);
     // hardware uart
@@ -146,6 +146,7 @@ void __sdcc_external_startup(void)
     }
 #endif
 
+// buzzer
 void startup_beep(void)
 {
     // FIXME: startup beep helpful or annoying?
@@ -154,6 +155,8 @@ void startup_beep(void)
     buzzer_off();   
 }
 
+
+// led
 void startup_blink(void)
 {
     // double blink
@@ -234,16 +237,17 @@ int main (void)
     // at various times during development timer 0 has been used to support software uart
     //init_timer0(SOFT_BAUD);
     
-    // timer 1 provides ten microsecond or one millisecond auto reload for on demand delays
-    init_timer1_8bit_autoreload();
+    // supports microseconds and milliseconds delays respectively
+    init_timer0_8bit_autoreload();
+    //init_timer0_8bit_autoreload();
     
     // timer 2 supports compare and capture module
     // for determining pulse lengths of received radio signals
     init_timer2_as_capture();
     
     //
-    //enable_timer0_interrupt();
-    enable_timer1_interrupt();
+    enable_timer0_interrupt();
+    //enable_timer1_interrupt();
     //enable_timer2_interrupt();
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
     // pca used timer0 in stock portisch (why?), however rcswitch can use dedicated pca counters
@@ -254,7 +258,7 @@ int main (void)
     timer1_run();
     
     // timer 2 is used on demand to produce delays (i.e., time enabled at start, wait, then timer stopped at overflow)
-    // however, we initialize reload value when using delay to nothing to initialize at this step
+    // however, we initialize reload value when using delay so nothing to initialize at this step
     //init_timer2(TIMER2_RELOAD_10MICROS);
     
     // timer 3 is unused for now
