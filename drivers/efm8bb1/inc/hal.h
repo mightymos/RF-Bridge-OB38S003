@@ -271,7 +271,7 @@ extern void init_port_pins_for_passthrough(void);
 extern void init_port_pins_for_serial(void);
 extern void init_serial_interrupt(void);
 extern void init_uart(void);
-extern void init_timer0_16bit(const uint16_t);
+extern void init_timer0_8bit_autoreload(const uint8_t);
 extern void init_timer1_8bit_autoreload(const uint8_t);
 
 

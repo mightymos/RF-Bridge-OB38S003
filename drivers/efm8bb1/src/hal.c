@@ -177,13 +177,13 @@ void disable_capture_interrupt(void)
 
 // FIXME: it is inconsistent to set 16-bit value for timer0 and 8-bit value for timer1
 //        we need to change the function names so it is clear what they do
-void init_timer0_16bit(const uint16_t value)
+void init_timer0_8bit_autoreload(const uint8_t value)
 {
     // 16-bit
-    TMOD |= T0M__MODE1;
+    //TMOD |= T0M__MODE1;
 
-    TH0 = (value >> 8) & 0xff;
-    TL0 = value & 0xff;
+    //TH0 = (value >> 8) & 0xff;
+    //TL0 = value & 0xff;
 
 }
 
