@@ -286,6 +286,6 @@ extern void disable_serial_interrupt(void);
 
 extern void clear_capture_flag(void);
 
-extern unsigned long countsToTime(const unsigned long duration);
+extern uint16_t countsToTime(const uint16_t duration);
 
 #endif // INC_HAL_H_

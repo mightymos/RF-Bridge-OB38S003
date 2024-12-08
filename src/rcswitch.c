@@ -191,10 +191,7 @@ void capture_handler(const uint16_t currentCapture)
     
     // e.g., OBS38S003
     // e.g. prescale at (1/4) at 16 MHz, four counts are needed to get one microsecond
-    // e.g. prescale at (1/24) at 16 MHz, 2/3 counts are need to get one microsecond
-    // so inverse is counts * 3/2 = time
-    // e.g., (1/(16000000/24)) * dec(0xFFFF) = 98.30 milliseconds maximum can be counted
-    //duration = countsToTime(duration);
+    // e.g. prescale at (1/8) at 16 MHz, two counts are need to get one microsecond
     duration = countsToTime(currentCapture);
     
     // reset counter on each edge detection so we avoid need to compute time difference

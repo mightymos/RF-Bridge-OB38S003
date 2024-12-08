@@ -252,7 +252,7 @@ extern uint16_t get_capture_mode(void);
 
 extern void clear_capture_flag(void);
 
-extern unsigned long countsToTime(const unsigned long duration);
+extern uint16_t countsToTime(const uint16_t duration);
 
 
 

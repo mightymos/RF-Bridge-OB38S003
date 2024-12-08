@@ -229,11 +229,12 @@ void clear_capture_flag(void)
 
 // the time constant is explained in the rcswitch.c file
 
-unsigned long countsToTime(const unsigned long duration)
+uint16_t countsToTime(const uint16_t counts)
 {
-    unsigned long converted;
+    uint16_t duration;
     
-    converted = duration / 2;
+    // equivalent to divide by two
+    duration = counts >> 2;
     
-    return converted;
+    return duration;
 }
