@@ -133,6 +133,7 @@ void wait_delay_timer_us_finished(void)
 void wait_delay_timer_ms_finished(void)
 {
     // wait until timer has finished
+    // FIXME: compare to TR3__RUN as portisch did?
     while(TMR3CN0 & TR3__BMASK);
 }
 
@@ -152,7 +153,7 @@ void stop_delay_timer_ms(void)
     TMR3CN0 &= ~TR3__RUN;
     
     // clear overflow flag (why, to avoid triggering interrupt next enable?)
-    TMR3CN0 &= ~TF3H__BMASK;
+    TMR3CN0 &= ~TF3H__SET;
 }
 
 bool is_delay_timer_us_finished(void)
@@ -162,7 +163,7 @@ bool is_delay_timer_us_finished(void)
 
 bool is_delay_timer_ms_finished(void)
 {
-    return !((TMR3CN0 & TR3__BMASK) >> TR3__SHIFT);
+    return ((TMR3CN0 & TR3__BMASK) != TR3__RUN);
 }
 
 // timer 2 interrupt
@@ -185,7 +186,7 @@ void timer2_isr(void) __interrupt (TIMER2_VECTOR)
 void timer3_isr(void) __interrupt (TIMER3_VECTOR)
 {
     // FIXME: clear at start or end of interrupt?
-    TMR3CN0 &= ~TF3H__BMASK;
+    TMR3CN0 &= ~TF3H__SET;
     
     gTimer3Timeout--;
         
@@ -193,7 +194,7 @@ void timer3_isr(void) __interrupt (TIMER3_VECTOR)
     if(gTimer3Timeout == 0)
     {
         // stop timer
-        TMR3CN0 |= ~TR3__RUN;
+        TMR3CN0 &= ~TR3__RUN;
     }   
 }
 
