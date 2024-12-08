@@ -11,10 +11,10 @@
 
 
 
-// FIXME: double check portisch, I think 0xA0 is incorrect (they used 0x0B later)
-// and that value makes more sense:
+// original portisch used 0xA0 which seems incorrect (they used 0x0B later)
+// and 0x0B value makes more sense:
 // 1/((24500000)/(256-0x0B)) = 0.00001
-//#define TIMER0_PCA0  0xA0
+#define TIMER0_PCA0  0x0B
 
 // 19200 baud, same on portisch
 #define TIMER1_UART0 0xCB

@@ -201,29 +201,27 @@ void timer3_isr(void) __interrupt (TIMER3_VECTOR)
 // captures counter value on edge transitions
 void pca0_isr(void) __interrupt (PCA0_VECTOR)
 {
-    //FIXME: we need to record the actual time step this represents so it is clear to human readers
-    //FIXME: should be PCA0CP0 * 10 for Portisch?
-    //       probably not, because we are using dedicated PCA counter instead of timer 0 as portisch did originally
+    // this was originally PCA0CP0 * 10 on original portisch which used timer 0 overflow instead of the dedicated PCA counter
     uint16_t currentCapture = PCA0CP0;
     
     // save and clear flags
     uint8_t flags = PCA0CN0 & (CF__BMASK | CCF0__BMASK | CCF1__BMASK | CCF2__BMASK);
+    //bool flag = CCF0;
 
     // clear
     PCA0CN0 &= ~flags;
+    //CCF0 = 0;
 
     // FIXME: we might eventually want to use CF flag to detect counter wrap around
     if((flags & CCF0__BMASK) && (PCA0CPM0 & ECCF__BMASK))
+    //if (flag)
     {
         // apparently our radio input
         //pca0_channel0EventCb();
         capture_handler(currentCapture);
     }
     
-    // done in the interrupt already on efm8bb1
-    // but must be explicitly cleared on ob38s003
-    // so just always clear it
-    //clear pca0 interrupt flag
-    clear_capture_flag();
+    //clear overflow flag
+    //clear_capture_flag();
 
 }

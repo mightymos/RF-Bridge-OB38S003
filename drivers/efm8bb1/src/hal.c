@@ -221,11 +221,12 @@ void pca0_halt(void)
 }
 
 
-void clear_capture_flag(void)
-{
-    //PCA0CN0 &= ~CF__SET;
-    CCF0 = 0;
-}
+//void clear_capture_flag(void)
+//{
+//    // overflow flag
+//    //PCA0CN0 &= ~CF__SET;
+//    CF = 0;
+//}
 
 // the time constant is explained in the rcswitch.c file
 
@@ -233,11 +234,11 @@ uint16_t countsToTime(const uint16_t counts)
 {
     uint16_t duration;
     
-    duration = counts / 2;
+    //duration = counts / 2;
     
     // this only saves two code bytes on ob38s003 apparently
     // equivalent to divide by two
-    //duration = counts >> 1;
+    duration = counts >> 1;
     
     return duration;
 }

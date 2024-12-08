@@ -85,6 +85,7 @@ bool blockReadingUART = false;
     void timer2_isr(void) __interrupt (TIMER2_VECTOR);
     // timer3 is used on demand to provide milliseconds delays
     void timer3_isr(void) __interrupt (TIMER3_VECTOR);
+    // programmable counter for measuring time between edge transitions of radio pulses
     void pca0_isr(void) __interrupt (PCA0_VECTOR);
 
 #else
@@ -95,8 +96,8 @@ bool blockReadingUART = false;
 // ----------------------------------------------------------------------------
 // This function is called immediately after reset, before the initialization
 // code (which runs before main() ). This is a
-// useful place to disable the watchdog timer, which is enable by default
-// and may trigger before main() in some instances.
+// useful place to disable the watchdog timer, which is enabled by default
+// and may trigger before main() if for example external ram is cleared and takes too long
 //-----------------------------------------------------------------------------
 unsigned char __sdcc_external_startup(void)
 {

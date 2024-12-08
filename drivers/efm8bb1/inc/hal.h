@@ -284,7 +284,7 @@ extern void disable_capture_interrupt(void);
 extern void enable_serial_interrupt(void);
 extern void disable_serial_interrupt(void);
 
-extern void clear_capture_flag(void);
+//extern void clear_capture_flag(void);
 
 extern uint16_t countsToTime(const uint16_t duration);
 
