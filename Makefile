@@ -140,7 +140,6 @@ OBJECTS_RCSWITCH = \
  $(OBJECT_DIR)/timer_interrupts.rel
                         
 OBJECTS_PORTISCH = \
- $(OBJECT_DIR)/delay.rel            \
  $(OBJECT_DIR)/main_portisch.rel    \
  $(OBJECT_DIR)/portisch.rel         \
  $(OBJECT_DIR)/portisch_serial.rel  \

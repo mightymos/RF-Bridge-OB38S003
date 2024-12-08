@@ -233,7 +233,7 @@ bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses,
 		{
 			// new data, restart crc timeout
 			stop_delay_timer_ms();
-			init_delay_timer_ms(1, 800);
+			init_delay_timer_ms(800);
 			old_crc = crc;
 
 			// FIXME: it can be confusing to bury things like this in functions
@@ -450,11 +450,11 @@ void PCA0_DoSniffing(void)
 	// start PCA
 	pca0_run();
 
-	// FIXME: trying to remove use of Timer3 resource to save code size
-	//InitTimer3_ms(1, 10);
+	// 
 	// wait until timer has finished
-	//WaitTimer3Finished();
-	delay1ms(10);
+    init_delay_timer_ms(10);
+    wait_delay_timer_ms_finished();
+	//delay1ms(10);
 
     // FIXME: add comment
     // FIXME: eventually move setting radio outside outside of function
@@ -497,7 +497,7 @@ bool SendSingleBucket(const bool high_low, uint16_t bucket_time)
 	// but bucket timings measured at receiver are inaccurate due to delay_us inaccuracy
 	//efm8_delay_us(bucket_time);
 	// FIXME: so maybe just use timer delays instead
-	init_delay_timer_us(1, bucket_time / 10);
+	init_delay_timer_us(bucket_time / 10);
 	wait_delay_timer_us_finished();
 
 	return !high_low;
@@ -773,7 +773,7 @@ void Bucket_Received(const uint16_t duration, const bool high_low)
 				{
 					// new data, restart crc timeout
 					stop_delay_timer_ms();
-					init_delay_timer_ms(1, 800);
+					init_delay_timer_ms(800);
 					old_crc = crc;
 
 					// disable interrupt for RF receiving while uart transfer

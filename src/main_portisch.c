@@ -173,7 +173,7 @@ void uart_state_machine(const unsigned int rxdata)
 			switch(uart_command)
 			{
 				case RF_CODE_LEARN:
-                    init_delay_timer_ms(1, 50);
+                    init_delay_timer_ms(50);
                     buzzer_on();
                     // wait until timer has finished
                     wait_delay_timer_ms_finished();
@@ -187,7 +187,7 @@ void uart_state_machine(const unsigned int rxdata)
                     //uart_command = RF_CODE_LEARN;
 
                     // start timeout timer
-                    init_delay_timer_ms(1, 30000);
+                    init_delay_timer_ms(30000);
                     break;
 				case RF_CODE_RFOUT:
 					// stop sniffing while handling received data
@@ -239,7 +239,7 @@ void uart_state_machine(const unsigned int rxdata)
 					//uart_command = RF_CODE_SNIFFING_ON_BUCKET;
 					break;
 				case RF_CODE_LEARN_NEW:
-                    init_delay_timer_ms(1, 50);
+                    init_delay_timer_ms(50);
                     buzzer_on();
                     // wait until timer has finished
                     wait_delay_timer_ms_finished();
@@ -253,7 +253,7 @@ void uart_state_machine(const unsigned int rxdata)
                     //uart_command = RF_CODE_LEARN_NEW;
 
                     // start timeout timer
-                    init_delay_timer_ms(1, 30000);
+                    init_delay_timer_ms(30000);
                     break;
 				case RF_CODE_ACK:
                     // FIXME: I do not think this comment matches what happens in code, need to examine
@@ -475,11 +475,11 @@ void startup_blink(void)
 {
     // double blink
     led_on();
-    delay1ms(1000);
+    //delay1ms(1000);
     led_off();
     
     led_on();
-    delay1ms(1000);
+    //delay1ms(1000);
     led_off();
 }
 
@@ -706,11 +706,11 @@ void main (void)
 			case RF_CODE_LEARN:
 			case RF_CODE_LEARN_NEW:
 
-#if 0
+#if 1
 				// check if a RF signal got decoded
 				if ((RF_DATA_STATUS & RF_DATA_RECEIVED_MASK) != 0)
 				{
-					init_delay_timer_ms(1, 200);
+					init_delay_timer_ms(200);
 					buzzer_on();
 					// wait until timer has finished
 					wait_delay_timer_ms_finished();
@@ -746,7 +746,7 @@ void main (void)
 				// check for learning timeout
 				else if (is_delay_timer_ms_finished())
 				{
-					init_delay_timer_ms(1, 1000);
+					init_delay_timer_ms(1000);
 					buzzer_on();
 					// wait until timer has finished
 					wait_delay_timer_ms_finished();
@@ -911,8 +911,10 @@ void main (void)
                 bucket = (RF_DATA[0] << 8) | RF_DATA[1];
                 
                 
-                // nop based delay, could use timer based
-                delay1ms(bucket);
+                // we finally avoided nop based delays to save on code space
+                //delay1ms(bucket);
+                init_delay_timer_ms(bucket);
+                wait_delay_timer_ms_finished();
 
                 
 				buzzer_off();

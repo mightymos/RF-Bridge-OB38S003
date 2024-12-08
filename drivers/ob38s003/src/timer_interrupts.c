@@ -81,7 +81,7 @@ void set_timer1_reload(const uint8_t reload)
 /*
  * Init Timer 1 with microseconds interval, maximum is 65535micros.
  */
-void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
+void init_delay_timer_us(const uint16_t timeout)
 {
     //
     set_timer0_reload(TIMER0_RELOAD_10MICROS);
@@ -98,7 +98,7 @@ void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
 /*
  * Init Timer 1 with milliseconds interval, maximum is ~2.5ms.
  */
-void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout)
+void init_delay_timer_ms(const uint16_t timeout)
 {
     //
     set_timer1_reload(TIMER1_RELOAD_1MILLIS);

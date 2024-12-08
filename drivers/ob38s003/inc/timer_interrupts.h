@@ -25,8 +25,8 @@
 //hex(0xFF - (1*10^-3)/(1/(16000000/96))) = 0x58.55555555555555555555
 #define TIMER1_RELOAD_1MILLIS 0x58
 
-void init_delay_timer_us(const uint16_t interval, const uint16_t timeout);
-void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout);
+void init_delay_timer_us(const uint16_t timeout);
+void init_delay_timer_ms(const uint16_t timeout);
 void wait_delay_timer_us_finished(void);
 void wait_delay_timer_ms_finished(void);
 void stop_delay_timer_us(void);

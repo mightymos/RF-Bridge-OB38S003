@@ -289,7 +289,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     // DEBUG:
     //set_debug_pin01(firstLogicLevel);
 
-    init_delay_timer_us(1, delayHigh);
+    init_delay_timer_us(delayHigh);
     wait_delay_timer_us_finished();
 
 
@@ -300,7 +300,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     //set_debug_pin01(secondLogicLevel);
 
 
-    init_delay_timer_us(1, delayLow);
+    init_delay_timer_us(delayLow);
     wait_delay_timer_us_finished();
 }
 
