@@ -406,7 +406,6 @@ void capture_handler(uint16_t current_capture_value)
     // makes code more readable
 	bool pin;
     
-    //FIXME: possible to eliminate multiplication to save code size?
     //FIXME: make hardware abstraction
 	//uint16_t current_capture_value = get_capture_value();
     //current_capture_value = current_capture_value / 2;
@@ -494,10 +493,6 @@ bool SendSingleBucket(const bool high_low, uint16_t bucket_time)
     // DEBUG
     //set_debug_pin01(high_low);
 	
-	// FIXME: remove need for Timer3 resource?
-    //InitTimer3_us(10, bucket_time);
-	// wait until timer has finished
-	//WaitTimer3Finished();
 	// FIXME: nop style delay seems to basically work (with first protocol)
 	// but bucket timings measured at receiver are inaccurate due to delay_us inaccuracy
 	//efm8_delay_us(bucket_time);

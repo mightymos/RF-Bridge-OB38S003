@@ -83,10 +83,6 @@ void set_timer1_reload(const uint8_t reload)
  */
 void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
 {
-    // this approach to changing prescale values does not seem to result in successful transmission
-    // for ten microsecond range timer value obtained is a whole number when we have no prescale
-    //set_timer1_no_prescale();
-    
     //
     set_timer0_reload(TIMER0_RELOAD_10MICROS);
     
@@ -104,9 +100,6 @@ void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
  */
 void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout)
 {
-    // we need the prescale to support millisecond range
-    //set_timer1_prescale_fosc96();
-    
     //
     set_timer1_reload(TIMER1_RELOAD_1MILLIS);
 

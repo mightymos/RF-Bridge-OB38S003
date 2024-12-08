@@ -27,7 +27,7 @@
 // hex(0xFFFF - (10*10^-6)/(1/24500000)) = 0xFF0A
 // hex(0xFFFF - (10*10^-6)/(1/(24500000/12))) = 0xFFEA.95
 //
-#define TIMER2_RELOAD_10MICROS  0xFFEA
+#define TIMER2_RELOAD_10MICROS  0xFFEB
 
 // hex(0xFFFF - (1*10^-3)/(1/24500000))  = 0xA04B
 // hex(0xFFFF - (1*10^-3)/(1/(24500000/12)))  = 0xF805

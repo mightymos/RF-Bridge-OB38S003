@@ -15,6 +15,9 @@
 //hex(0xFF - (10*10^-6)/(1/16000000)) = 0x5F
 #define TIMER0_RELOAD_10MICROS 0x5F
 
+//hex(0xFF - (1*10^-6)/(1/16000000)) = 0xEF
+//#define TIMER0_RELOAD_1MICROS 0xF0
+
 // we need to use the prescaler to allow both microsecond and millisecond timings
 // hex(0xFF - (10*10^-6)/(1/(16000000/96))) = 0xFD.55555555555555555555
 //#define TIMER1_RELOAD_10MICROS 0xFD

@@ -234,7 +234,7 @@ uint16_t countsToTime(const uint16_t counts)
     uint16_t duration;
     
     // equivalent to divide by two
-    duration = counts >> 2;
+    duration = counts >> 1;
     
     return duration;
 }
