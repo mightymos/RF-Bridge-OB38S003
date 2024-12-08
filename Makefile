@@ -69,7 +69,7 @@ else ifeq ($(TARGET_BOARD), OB38S003)
  MCU_FREQ_KHZ = 16000
 endif
 
-#
+# the EFM8BB1 has a lock byte and bootloader byte we may need to account for
 MEMORY_SIZES  = --iram-size 256 --xram-size 256 --code-size 8192
 MEMORY_MODEL  = --model-small
 HAS_DUAL_DPTR = n

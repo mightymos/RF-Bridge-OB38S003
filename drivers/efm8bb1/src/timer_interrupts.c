@@ -93,7 +93,7 @@ void set_timer3_reload(const uint16_t reload)
  * we use this generic naming as compared with Portisch because different timers are used depending on microcontroller
  * Init Timer 2 with microseconds interval, maximum is 65535micros.
  */
-void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
+void init_delay_timer_us(const uint16_t timeout)
 {
     //
     //set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
@@ -113,7 +113,7 @@ void init_delay_timer_us(const uint16_t interval, const uint16_t timeout)
 /*
  * Init Timer 3 with milliseconds interval, maximum is ~2.5ms.
  */
-void init_delay_timer_ms(const uint16_t interval, const uint16_t timeout)
+void init_delay_timer_ms(const uint16_t timeout)
 {    
     set_timer3_reload(TIMER3_RELOAD_1MILLIS);
 
