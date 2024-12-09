@@ -115,13 +115,9 @@ void uart_isr(void) __interrupt (UART0_VECTOR)
     }
 }
 
-// FIXME: it seems like a bad idea to have a possible infinite loop
-//   inside a function; better to return a flag?
-//void uart_wait_until_TX_finished(void)
-//{
-//  while(!gTXFinished);
-//}
 
+// we avoid the wait until finished loop of original portisch
+// but can achieve the same behavior with calling functions
 bool is_uart_tx_finished(void)
 {
     return gTXFinished;
@@ -192,7 +188,7 @@ void uart_put_command(const uint8_t command)
 {
     // in other words 0xAA, sonoff convention maybe?
     uart_putc(RF_CODE_START);
-    // defined here I think: https://github.com/Portisch/RF-Bridge-EFM8BB1/wiki/Commands
+    // defined here: https://github.com/Portisch/RF-Bridge-EFM8BB1/wiki/Commands
     uart_putc(command);
     // in other words 0x55
     uart_putc(RF_CODE_STOP);
