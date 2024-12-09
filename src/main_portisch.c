@@ -489,15 +489,18 @@ bool radio_state_machine(const uart_command_t command)
 	return completed;
 }
 
+// uses timer based delays so timer 0,1 must be setup before use
 void startup_blink(void)
 {
     // double blink
     led_on();
-    //delay1ms(1000);
+    init_delay_timer_ms(1000);
+    wait_delay_timer_ms_finished();
     led_off();
     
     led_on();
-    //delay1ms(1000);
+    init_delay_timer_ms(1000);
+    wait_delay_timer_ms_finished();
     led_off();
 }
 
@@ -548,9 +551,6 @@ void main (void)
     // so we do not want to use it for debugging unless buzzer has been removed
     //debug_pin01_off();
     
-    //
-    startup_blink();
-
     
 	// baud rate is 19200, 8 data bits, 1 stop bit, no parity
 	// polled version basically sets TI flag so putchar() does not get stuck in an infinite loop
@@ -599,6 +599,13 @@ void main (void)
 	// set desired sniffing type to PT2260
 	sniffing_mode = STANDARD;
     
+    
+	// enable global interrupts needs to happen prior to use of timer based delays (e.g., PCA0_Sniffing() uses delay)
+	enable_global_interrupts();
+    
+    // uses timer based delays so timer 0,1 must be setup before use
+    startup_blink();
+    
 #if 1
     //
 	//sniffing_mode = ADVANCED;
@@ -614,10 +621,7 @@ void main (void)
     PCA0_StopSniffing();
 #endif
 
-    // FIXME: we already enable this previously where portisch did
-    // so can do it here or above, does it matter?
-	// enable global interrupts
-	enable_global_interrupts();
+
     
     // FIXME: function empty on efm8bb1, because unknown if receiver has enable pin
     radio_receiver_on();
