@@ -83,7 +83,7 @@ int getchar(void)
     return SBUF;
 }
 
-void uart_write(uint8_t value)
+void uart_write(const uint8_t value)
 {
     SBUF = value;
 }
@@ -213,7 +213,7 @@ unsigned int uart_getc(void)
 //Input:    byte to be transmitted
 //Returns:  none
 //************************************************************************
-void uart_putc(uint8_t txdata)
+void uart_putc(const uint8_t txdata)
 {
     if (UART_TX_Buffer_Position == UART_TX_BUFFER_SIZE)
     {
@@ -225,7 +225,7 @@ void uart_putc(uint8_t txdata)
     UART_Buffer_Write_Len++;
 }
 
-void uart_put_command(uint8_t command)
+void uart_put_command(const uint8_t command)
 {
     // in other words 0xAA, sonoff convention maybe?
     uart_putc(RF_CODE_START);

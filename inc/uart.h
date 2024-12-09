@@ -11,13 +11,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-//-----------------------------------------------------------------------------
-// Global Constants
-//-----------------------------------------------------------------------------
-// FIXME: these are duplicated in portisch so may consolidate in the future
-//#define RF_CODE_START		0xAA
-//#define RF_CODE_STOP		0x55
-
 // FIXME: explain choice of size
 // portisch allocated TX=64 and RX=32
 #define UART_RX_BUFFER_SIZE 64
@@ -46,9 +39,9 @@ extern void uart_init_tx_polling(void);
 extern bool is_uart_tx_finished(void);
 extern bool is_uart_tx_buffer_empty(void);
 extern unsigned int uart_getc(void);
-extern void uart_putc(uint8_t txdata);
-extern void uart_write(uint8_t value);
-extern void uart_put_command(uint8_t command);
+extern void uart_putc(const uint8_t txdata);
+extern void uart_write(const uint8_t value);
+extern void uart_put_command(const uint8_t command);
 
 
 #endif // INC_UART_H_
