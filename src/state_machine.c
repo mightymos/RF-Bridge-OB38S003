@@ -419,28 +419,28 @@ void radio_rfin(void)
 
                     
     // packet start sequence
-    putchar(RF_CODE_START);
+    uart_putc(RF_CODE_START);
     // command
-    putchar(RF_CODE_RFIN);
+    uart_putc(RF_CODE_RFIN);
     
     // sync, low, high timings are the portisch 0xA4 order convention
-    putchar((buckets[0] >> 8) & 0xFF);
-    putchar(buckets[0] & 0xFF);
+    uart_putc((buckets[0] >> 8) & 0xFF);
+    uart_putc(buckets[0] & 0xFF);
 
 
-    putchar((buckets[1] >> 8) & 0xFF);
-    putchar( buckets[1] & 0xFF);
-    putchar((buckets[2] >> 8) & 0xFF);
-    putchar( buckets[2] & 0xFF);
+    uart_putc((buckets[1] >> 8) & 0xFF);
+    uart_putc( buckets[1] & 0xFF);
+    uart_putc((buckets[2] >> 8) & 0xFF);
+    uart_putc( buckets[2] & 0xFF);
     
     // data
     // FIXME: strange that shifting by ZERO works but omitting the shift does not
-    putchar((get_received_value() >> 16) & 0xFF);
-    putchar((get_received_value() >>  8) & 0xFF);
-    putchar((get_received_value() >>  0) & 0xFF);
+    uart_putc((get_received_value() >> 16) & 0xFF);
+    uart_putc((get_received_value() >>  8) & 0xFF);
+    uart_putc((get_received_value() >>  0) & 0xFF);
     
     // packet stop
-    putchar(RF_CODE_STOP);
+    uart_putc(RF_CODE_STOP);
 }
 
 
@@ -482,15 +482,15 @@ void radio_decode_timings(void)
     for (index = 0; index < get_received_bitlength() * 2; index++)
     {
         // packet start sequence
-        putchar(RF_CODE_START);
-        putchar(0xAF);
+        uart_putc(RF_CODE_START);
+        uart_putc(0xAF);
         
         // sync, low, high timings
-        putchar((timings[index] >> 8) & 0xFF);
-        putchar(timings[index] & 0xFF);
+        uart_putc((timings[index] >> 8) & 0xFF);
+        uart_putc(timings[index] & 0xFF);
     }
     
-    putchar(RF_CODE_STOP);
+    uart_putc(RF_CODE_STOP);
 }
 
 #endif

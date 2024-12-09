@@ -43,45 +43,8 @@ static volatile bool gTXFinished = true;
 //-----------------------------------------------------------------------------
 // UART ISR Callbacks
 //-----------------------------------------------------------------------------
-void uart_receiveCompleteCb(void)
-{
-    
-}
+// removed to save code space
 
-void uart_transmitCompleteCb(void)
-{
-    
-}
-
-#if 1
-    int putchar(int c)
-    {
-        // basically acts as wrapper to ring buffer
-        uart_putc(c);
-        
-        return c;
-    }
-
-#else
-    // for supporting printf() directly with no ring buffer
-    int putchar(int c)
-    {
-        // assumes a polled operation (i.e., no serial interrupt)
-        SBUF = c;
-        
-        // FIXME: should this be placed here or prior to SBUF write as in sdccman manual ?
-        while (!TI);
-        TI = 0;
-        
-        return c;
-    }
-
-#endif
-
-int getchar(void)
-{
-    return SBUF;
-}
 
 void uart_write(const uint8_t value)
 {
@@ -115,12 +78,12 @@ void uart_isr(void) __interrupt (UART0_VECTOR)
     
     //RI = 0;
     //TI = 0;
-        
+
     // receiving byte
     if (flags & 0x01)
     {        
         // store received data in buffer
-        UART_RX_Buffer[UART_RX_Buffer_Position] = getchar();
+        UART_RX_Buffer[UART_RX_Buffer_Position] = SBUF;
         UART_RX_Buffer_Position++;
 
         // set to beginning of buffer if end is reached
