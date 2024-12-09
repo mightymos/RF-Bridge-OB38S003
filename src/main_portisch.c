@@ -492,12 +492,7 @@ bool radio_state_machine(const uart_command_t command)
 // uses timer based delays so timer 0,1 must be setup before use
 void startup_blink(void)
 {
-    // double blink
-    led_on();
-    init_delay_timer_ms(1000);
-    wait_delay_timer_ms_finished();
-    led_off();
-    
+    // single blink
     led_on();
     init_delay_timer_ms(1000);
     wait_delay_timer_ms_finished();
