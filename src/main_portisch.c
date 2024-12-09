@@ -629,17 +629,9 @@ void main (void)
     //printf_tiny("startup...\r\n");
     //uart_put_command(RF_CODE_ACK);
 
-	// FIXME: this is essentially our watchdog timer initialization
-	//        but it needs to be done with the abstraction layer
-	// instead of the default divide by 8, we do divide by 1 so that low frequency oscillator is at 80 kHz
-	// sec. 20.4.1 WDTCN watchdog timer control
-	// e.g., (1/80000)*4^(5+3) = 0.8192
-	// so that watchdog timer will reset if not fed every 819 millisecs
-	//LFO0CN |= OSCLD__DIVIDE_BY_1;
 
 	// we disabled watchdog at startup in case external ram needs to be cleared etc.
 	// now we enable
-	//WDT0_start();
     enable_watchdog();
 	
 	while (true)
