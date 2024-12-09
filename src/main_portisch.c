@@ -56,8 +56,6 @@ static __xdata uint8_t packetLength = 0;
 // used for count down radio transmissions
 __xdata uint8_t tr_repeats = 0;
 
-// pointer
-uint16_t* buckets_pointer;
 
 // FIXME: comment on what this really does
 bool blockReadingUART = false;
@@ -334,20 +332,35 @@ void uart_state_machine(const unsigned int rxdata)
 						break;
 					case RF_CODE_RFOUT_BUCKET:
                         // conversion tool seems to show data length, then number of buckets, then number of repeats after 0xB0 command
-                        // FIXME: why plus ?
+                        // FIXME: why plus one?
 						tr_repeats = RF_DATA[1] + 1;
                         
                         uint8_t num_buckets = RF_DATA[0];
+                        
+                        
+                        uint8_t countIndex = 0;
                         uint8_t byteIndex = 0;
                         
-                        // this is a global variable with maximum size seven
-                        buckets_pointer = (uint16_t *)(RF_DATA + 2);
+                        uint8_t temp;
                         
-                        // because sdcc is little endian for 8051, we need to swap bucket values to access by pointer later
-                        while (byteIndex < num_buckets)
+                        
+                        // because sdcc is little endian for 8051, we need to swap bytes to access integer bucket values by pointer later
+                        while (countIndex < num_buckets)
                         {
-                            buckets_pointer[byteIndex] = ((buckets_pointer[byteIndex] << 8) | (buckets_pointer[byteIndex] >> 8));
-                            byteIndex++;
+                            //buckets_pointer[byteIndex] = ((buckets_pointer[byteIndex] << 8) | (buckets_pointer[byteIndex] >> 8));
+                            //byteIndex++;
+                            
+                            // the location of the zeroth (first) timing bucket in RF_DATA[] starts at byte 2
+                            byteIndex += 2;
+                            
+                            //
+                            temp  = RF_DATA[byteIndex];
+                            
+                            // swap
+                            RF_DATA[byteIndex]     = RF_DATA[byteIndex + 1];
+                            RF_DATA[byteIndex + 1] = temp;
+                            
+                            countIndex++;
                         }
                         
                         // DEBUG:
@@ -442,6 +455,10 @@ bool radio_state_machine(const uart_command_t command)
                     // subtract out two bytes for number of buckets and number of repeats
                     // then subtract out number of buckets multiplied by 2
                     uint8_t data_len = packetLength - 2 - (num_buckets << 1);
+
+                    // pointer
+                    // this is a global variable with maximum size seven
+                    uint16_t* buckets_pointer = (uint16_t *)(RF_DATA + 2);
 
                     // 0xB0 transmission using timings that generally would have been sniffed with 0xB1 mode
                     SendRFBuckets(buckets_pointer, rfdata, data_len);
