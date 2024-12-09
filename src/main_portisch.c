@@ -90,12 +90,15 @@ bool blockReadingUART = false;
     #error Please define TARGET_BOARD in makefile
 #endif
 
+#if 0
+
 //-----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 // This function is called immediately after reset, before the initialization
 // code (which runs before main() ). This is a
 // useful place to disable the watchdog timer, which is enabled by default
 // and may trigger before main() if for example external ram is cleared and takes too long
+// in practice this may not ultimately be necessary, we can exclude to save on code space
 //-----------------------------------------------------------------------------
 unsigned char __sdcc_external_startup(void)
 {
@@ -108,46 +111,13 @@ unsigned char __sdcc_external_startup(void)
     return 0;
 }
 
-
-#if 0
-
-void serial_loopback(void)
-{
-	volatile unsigned int rxdata = UART_NO_DATA;
-
-	// check if serial transmit buffer is empty
-	if(!is_uart_tx_buffer_empty())
-	{
-	    if (is_uart_tx_finished())
-	    {
-	        // if not empty, set TI, which triggers interrupt to actually transmit
-	        uart_init_tx_polling();
-	    }
-	}
-
-	// check if something got received by UART
-	// only read data from uart if idle
-	if (!is_uart_ignored())
-    {
-		rxdata = uart_getc();
-	} else {
-		rxdata = UART_NO_DATA;
-    }
-
-	if (rxdata == UART_NO_DATA)
-	{
-		led_on();
-	} else {
-		uart_putc(rxdata & 0xff);
-	}
-    
-}
-
 #endif
 
 
-
-void uart_state_machine(const unsigned int rxdata)
+// perform standard decoding, code sniffing, and transmission, etc. as per this byte format:
+// https://github.com/Portisch/RF-Bridge-EFM8BB1/wiki
+//void uart_state_machine(const unsigned int rxdata)
+void uart_state_machine(const uint8_t rxdataNoFlags)
 {
 	// tracks which byte we are currently receiving from uart
 	static uint8_t position = 0;
@@ -157,7 +127,7 @@ void uart_state_machine(const unsigned int rxdata)
 	{
 		// check if start sequence got received
 		case IDLE:
-			if ((rxdata & 0xFF) == RF_CODE_START)
+			if (rxdataNoFlags == RF_CODE_START)
             {
 				uart_state = SYNC_INIT;
             }
@@ -165,7 +135,7 @@ void uart_state_machine(const unsigned int rxdata)
 
 		// sync byte got received, read command
 		case SYNC_INIT:
-			uart_command = rxdata & 0xFF;
+			uart_command = rxdataNoFlags;
 			uart_state = SYNC_FINISH;
 
 			// check if some data needs to be received
@@ -274,7 +244,7 @@ void uart_state_machine(const unsigned int rxdata)
 		// Receiving UART data length
 		case RECEIVE_LENGTH:
 			position = 0;
-			packetLength = rxdata & 0xFF;
+			packetLength = rxdataNoFlags;
 			if (packetLength > 0)
 			{
 				// stop sniffing while handling received data
@@ -289,7 +259,7 @@ void uart_state_machine(const unsigned int rxdata)
 
 		// Receiving UART data
 		case RECEIVING:
-			RF_DATA[position] = rxdata & 0xFF;
+			RF_DATA[position] = rxdataNoFlags;
 
 			// DEBUG:
 			//puthex2(RF_DATA[position]);
@@ -310,7 +280,7 @@ void uart_state_machine(const unsigned int rxdata)
 
 		// wait and check for UART_SYNC_END
 		case SYNC_FINISH:
-			if ((rxdata & 0xFF) == RF_CODE_STOP)
+			if (rxdataNoFlags == RF_CODE_STOP)
 			{
 				uart_state = IDLE;
                 
@@ -494,7 +464,7 @@ void startup_blink(void)
 {
     // single blink
     led_on();
-    init_delay_timer_ms(1000);
+    init_delay_timer_ms(500);
     wait_delay_timer_ms_finished();
     led_off();
 }
@@ -511,6 +481,7 @@ void main (void)
 
 	// 
 	unsigned int rxdata = UART_NO_DATA;
+    uint8_t rxdataNoFlags;
 
 	// FIXME: add comment
     uint16_t bucket = 0;
@@ -701,7 +672,10 @@ void main (void)
 		}
 		else
 		{
-			uart_state_machine(rxdata);
+            // we save code space by passing byte instead of an integer
+            // and avoiding repeated masking
+            rxdataNoFlags = rxdata & 0xFF;
+            uart_state_machine(rxdataNoFlags);
 		}
 
 		/*------------------------------------------
