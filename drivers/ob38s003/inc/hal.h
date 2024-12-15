@@ -151,6 +151,34 @@ inline void disable_global_interrupts(void)
     EA = 0;
 }
 
+// this is necessary so that uart ring buffer logic operates correctly the first time it is used
+// i.e., appears that last character sent was completed, even though no previous character was actually sent
+inline void init_serial_interrupt(void)
+{
+    TI = 1;
+}
+
+inline void enable_serial_interrupt(void)
+{
+    // enable serial interrupt
+    ES = 1;
+}
+
+inline void disable_serial_interrupt(void)
+{
+    // enable serial interrupt
+    ES = 0;
+}
+
+inline void enable_capture_interrupt(void)
+{
+    CCCON |= 0x20;
+}
+
+inline void disable_capture_interrupt(void)
+{
+    CCCON &= ~0x20;
+}
 
 inline void enable_timer0_interrupt(void)
 {
@@ -194,34 +222,29 @@ inline void timer0_stop(void)
     TR0 = 0;
 }
 
-extern void set_clock_mode(void);
-extern void enable_watchdog(void);
-extern void disable_watchdog(void);
-extern void refresh_watchdog(void);
-extern void reset_mcu(void);
-extern void init_port_pins(void);
-extern void init_serial_interrupt(void);
-extern void init_uart(void);
-extern void init_timer0_8bit_autoreload(void);
-extern void init_timer1_8bit_autoreload(void);
-extern void init_timer2_as_capture(void);
+void set_clock_mode(void);
+void enable_watchdog(void);
+void disable_watchdog(void);
+void refresh_watchdog(void);
+void reset_mcu(void);
+void init_port_pins(void);
+void init_uart(void);
+void init_timer0_8bit_autoreload(void);
+void init_timer1_8bit_autoreload(void);
+void init_timer2_as_capture(void);
 
-extern void enable_capture_interrupt(void);
-extern void disable_capture_interrupt(void);
 uint8_t get_capture_flags(void);
 void    set_capture_flags(const uint8_t flags);
 
-extern void enable_serial_interrupt(void);
-extern void disable_serial_interrupt(void);
 
 void pca0_run(void);
 void pca0_halt(void);
 
-extern uint16_t get_capture_mode(void);
+uint16_t get_capture_mode(void);
 
-extern void clear_capture_flag(void);
+void clear_capture_flag(void);
 
-extern uint16_t countsToTime(const uint16_t duration);
+uint16_t countsToTime(const uint16_t duration);
 
 
 

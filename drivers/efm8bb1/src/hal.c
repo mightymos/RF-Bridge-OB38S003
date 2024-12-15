@@ -144,38 +144,6 @@ void init_uart(void)
     SCON0 = REN__RECEIVE_ENABLED | SMODE__8_BIT | MCE__MULTI_DISABLED;
 }
 
-// this is necessary so that uart ring buffer logic operates correctly the first time it is used
-// i.e., flag is set as though the last character sent was completed, even though no previous character was actually sent
-void init_serial_interrupt(void)
-{
-    TI = 1;
-}
-
-void enable_serial_interrupt(void)
-{
-    ES0 = 1;
-}
-
-void disable_serial_interrupt(void)
-{
-    ES0 = 0;
-}
-
-void enable_capture_interrupt(void)
-{
-    // channel 0 capture flag interrupt enable
-    PCA0CPM0 |= ECCF__ENABLED;
-    
-    // PCA0 interrupt enable
-    //EIE1     |= EPCA0__ENABLED;
-}
-
-void disable_capture_interrupt(void)
-{
-    PCA0CPM0 &= ~ECCF__ENABLED;
-    
-    //EIE1     &= ~EPCA0__ENABLED;
-}
 
 uint8_t get_capture_flags(void)
 {
@@ -187,11 +155,6 @@ void set_capture_flags(const uint8_t flags)
     PCA0CPM0 = flags;
 }
 
-void enable_pca0_interrupt(void)
-{
-    // PCA0 interrupt enable
-    EIE1 |= EPCA0__ENABLED;
-}
 
 // FIXME: it is inconsistent to set 16-bit value for timer0 and 8-bit value for timer1
 //        we need to change the function names so it is clear what they do

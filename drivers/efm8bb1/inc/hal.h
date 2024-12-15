@@ -182,6 +182,40 @@ inline void disable_timer3_interrupt(void)
     EIE1 |= ET3__DISABLED;
 }
 
+inline void enable_capture_interrupt(void)
+{
+    // channel 0 capture flag interrupt enable
+    PCA0CPM0 |= ECCF__ENABLED;
+}
+
+inline void disable_capture_interrupt(void)
+{
+    PCA0CPM0 &= ~ECCF__ENABLED;
+}
+
+inline void enable_pca0_interrupt(void)
+{
+    // PCA0 interrupt enable
+    EIE1 |= EPCA0__ENABLED;
+}
+
+// this is necessary so that uart ring buffer logic operates correctly the first time it is used
+// i.e., flag is set as though the last character sent was completed, even though no previous character was actually sent
+inline void init_serial_interrupt(void)
+{
+    TI = 1;
+}
+
+inline void enable_serial_interrupt(void)
+{
+    ES0 = 1;
+}
+
+inline void disable_serial_interrupt(void)
+{
+    ES0 = 0;
+}
+
 inline void timer0_run(void)
 {
     TR0 = 1;
@@ -224,35 +258,27 @@ inline void timer3_stop(void)
     TMR3CN0 &= ~TR3__RUN;
 }
 
-extern void set_clock_mode(void);
-extern void enable_watchdog(void);
-extern void disable_watchdog(void);
-extern void refresh_watchdog(void);
-extern void reset_mcu(void);
-extern void init_port_pins_for_passthrough(void);
-extern void init_port_pins_for_serial(void);
-extern void init_serial_interrupt(void);
-extern void init_uart(void);
-extern void init_timer0_8bit_autoreload(const uint8_t);
-extern void init_timer1_8bit_autoreload(const uint8_t);
+void set_clock_mode(void);
+void enable_watchdog(void);
+void disable_watchdog(void);
+void refresh_watchdog(void);
+void reset_mcu(void);
+void init_port_pins_for_passthrough(void);
+void init_port_pins_for_serial(void);
+void init_uart(void);
+void init_timer0_8bit_autoreload(const uint8_t);
+void init_timer1_8bit_autoreload(const uint8_t);
 
 
-extern void pca0_init(void);
-extern void pca0_run(void);
-extern void pca0_halt(void);
+void pca0_init(void);
+void pca0_run(void);
+void pca0_halt(void);
 
-void enable_pca0_interrupt(void);
-
-extern void enable_capture_interrupt(void);
-extern void disable_capture_interrupt(void);
 uint8_t get_capture_flags(void);
 void    set_capture_flags(const uint8_t flags);
 
-extern void enable_serial_interrupt(void);
-extern void disable_serial_interrupt(void);
-
 //extern void clear_capture_flag(void);
 
-extern uint16_t countsToTime(const uint16_t duration);
+uint16_t countsToTime(const uint16_t duration);
 
 #endif // INC_HAL_H_

@@ -122,36 +122,6 @@ void init_uart(void)
     SRELL = 0xcc;
 }
 
-
-// this is necessary so that uart ring buffer logic operates correctly the first time it is used
-// i.e., appears that last character sent was completed, even though no previous character was actually sent
-void init_serial_interrupt(void)
-{
-    TI = 1;
-}
-
-void enable_serial_interrupt(void)
-{
-    // enable serial interrupt
-    ES = 1;
-}
-
-void disable_serial_interrupt(void)
-{
-    // enable serial interrupt
-    ES = 0;
-}
-
-void enable_capture_interrupt(void)
-{
-    CCCON |= 0x20;
-}
-
-void disable_capture_interrupt(void)
-{
-    CCCON &= ~0x20;
-}
-
 uint8_t get_capture_flags(void)
 {
     return CCCON;
