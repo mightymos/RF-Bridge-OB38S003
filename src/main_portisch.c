@@ -247,8 +247,8 @@ void uart_state_machine(const uint8_t rxdataNoFlags)
 			packetLength = rxdataNoFlags;
 			if (packetLength > 0)
 			{
-				// stop sniffing while handling received data
-                // FIXME: comment on why
+				// we share a buffer for measuring timings with uart data
+                // so we stop sniffing while receiving uart data
 				PCA0_StopSniffing();
                 
 				uart_state = RECEIVING;
@@ -361,6 +361,7 @@ bool radio_state_machine(const uart_command_t command)
 
 			tr_repeats--;
 
+            //
 			PCA0_StopSniffing();
 
             // this chooses between the different transmission types
