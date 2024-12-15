@@ -300,9 +300,11 @@ void HandleRFBucket(uint16_t duration, bool high_low)
 					status[0].sync_status += 1;
 					SYNC_LOW = duration;
 
-                    //FIXME: change to eliminate divide and multiply
+                    //FIXME: change to eliminate divide and multiply if possible
 					buckets[0] = duration / 31;
-					buckets[1] = buckets[0] * 3;
+					//buckets[1] = buckets[0] * 3;
+                    // equivalent of multiply by three
+                    buckets[1] = (buckets[0] << 1) + buckets[0];
 					buckets[2] = duration;
 				}
 			}
@@ -436,8 +438,7 @@ void capture_handler(uint16_t current_capture_value)
 //last_sniffing_command = in;
 //return out;
 void PCA0_DoSniffing(void)
-{
-    // FIXME: possible to remove to save code size?
+{    
 	memset(status, 0, sizeof(PROTOCOL_STATUS) * NUM_OF_PROTOCOLS);
 
     // FIXME: need to understand if or when this was or is needed
