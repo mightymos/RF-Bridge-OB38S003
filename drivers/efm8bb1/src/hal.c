@@ -180,7 +180,7 @@ void disable_capture_interrupt(void)
 void init_timer0_8bit_autoreload(const uint8_t value)
 {
     // 16-bit
-    //TMOD |= T0M__MODE1;
+    //TMOD |= T0M__MODE2;
 
     //TH0 = (value >> 8) & 0xff;
     //TL0 = value & 0xff;

@@ -62,50 +62,15 @@ inline void radio_receiver_off(void)
     RF_ENABLE = 1;
 }
 
-
 inline void radio_receiver_on(void)
 {
     RF_ENABLE = 0;
-}
-
-inline bool get_radio_wake(void)
-{
-    return RF_ENABLE;
-}
-
-inline void soft_tx_pin_on(void)
-{
-    RESET_PIN = 1;
-}
-
-inline void soft_tx_pin_off(void)
-{
-    RESET_PIN = 0;
-}
-
-inline void soft_tx_pin_toggle(void)
-{
-    RESET_PIN = !RESET_PIN;
-}
-
-inline void set_soft_tx_pin(const bool state)
-{
-    RESET_PIN = state;
-}
-
-inline bool get_soft_rx_pin(void)
-{
-    // FIXME: undefined for now because no pins available
-    //        so force default of nothing received
-    //return BUZZER;
-    return true;
 }
 
 inline void tdata_on(void)
 {
     TDATA = 1;
 }
-
 
 inline void tdata_off(void)
 {

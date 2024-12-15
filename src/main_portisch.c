@@ -142,10 +142,10 @@ void uart_state_machine(const uint8_t rxdataNoFlags)
 			switch(uart_command)
 			{
 				case RF_CODE_LEARN:
-                    init_delay_timer_ms(50);
+                    init_second_delay_ms(50);
                     buzzer_on();
                     // wait until timer has finished
-                    wait_delay_timer_ms_finished();
+                    wait_second_delay_finished();
                     buzzer_off();
 
                     // set desired RF protocol PT2260
@@ -156,7 +156,7 @@ void uart_state_machine(const uint8_t rxdataNoFlags)
                     //uart_command = RF_CODE_LEARN;
 
                     // start timeout timer
-                    init_delay_timer_ms(30000);
+                    init_second_delay_ms(30000);
                     break;
 				case RF_CODE_RFOUT:
 					// stop sniffing while handling received data
@@ -208,10 +208,10 @@ void uart_state_machine(const uint8_t rxdataNoFlags)
 					//uart_command = RF_CODE_SNIFFING_ON_BUCKET;
 					break;
 				case RF_CODE_LEARN_NEW:
-                    init_delay_timer_ms(50);
+                    init_second_delay_ms(50);
                     buzzer_on();
                     // wait until timer has finished
-                    wait_delay_timer_ms_finished();
+                    wait_second_delay_finished();
                     buzzer_off();
 
                     // enable sniffing for all known protocols
@@ -222,7 +222,7 @@ void uart_state_machine(const uint8_t rxdataNoFlags)
                     //uart_command = RF_CODE_LEARN_NEW;
 
                     // start timeout timer
-                    init_delay_timer_ms(30000);
+                    init_second_delay_ms(30000);
                     break;
 				case RF_CODE_ACK:
                     // FIXME: I do not think this comment matches what happens in code, need to examine
@@ -305,32 +305,22 @@ void uart_state_machine(const uint8_t rxdataNoFlags)
                         // FIXME: why plus one?
 						tr_repeats = RF_DATA[1] + 1;
                         
-                        uint8_t num_buckets = RF_DATA[0];
+                        // number of timing buckets that need to have upper and lower bytes swapped
+                        const uint8_t num_buckets = RF_DATA[0];
                         
                         
-                        uint8_t countIndex = 0;
-                        uint8_t byteIndex = 0;
+                        // 
+                        uint8_t index = 0;
                         
-                        uint8_t temp;
                         
+                        uint16_t* buckets_pointer = (uint16_t *)(RF_DATA + 2);
                         
                         // because sdcc is little endian for 8051, we need to swap bytes to access integer bucket values by pointer later
-                        while (countIndex < num_buckets)
+                        while (index < num_buckets)
                         {
-                            //buckets_pointer[byteIndex] = ((buckets_pointer[byteIndex] << 8) | (buckets_pointer[byteIndex] >> 8));
-                            //byteIndex++;
+                            buckets_pointer[index] = ((buckets_pointer[index] << 8) | (buckets_pointer[index] >> 8));
+                            index++;
                             
-                            // the location of the zeroth (first) timing bucket in RF_DATA[] starts at byte 2
-                            byteIndex += 2;
-                            
-                            //
-                            temp  = RF_DATA[byteIndex];
-                            
-                            // swap
-                            RF_DATA[byteIndex]     = RF_DATA[byteIndex + 1];
-                            RF_DATA[byteIndex + 1] = temp;
-                            
-                            countIndex++;
                         }
                         
                         // DEBUG:
@@ -361,6 +351,7 @@ bool radio_state_machine(const uart_command_t command)
 	uint8_t bit1_size;
 	uint8_t end_size;
 	uint8_t bitcount;
+    
 
 	// do transmit of the data
 	switch(rf_state)
@@ -459,15 +450,21 @@ bool radio_state_machine(const uart_command_t command)
 	return completed;
 }
 
+#if 1
+
 // uses timer based delays so timer 0,1 must be setup before use
 void startup_blink(void)
 {
     // single blink
     led_on();
-    init_delay_timer_ms(500);
-    wait_delay_timer_ms_finished();
+    
+    init_first_delay_ms(1000);
+    wait_first_delay_finished();
+    
     led_off();
 }
+
+#endif
 
 //-----------------------------------------------------------------------------
 // main() Routine
@@ -557,24 +554,18 @@ void main (void)
     //FIXME: in rcswitch we did pca0_run() here, but it happens in DoSniffing() for portisch
 #endif
 
-    // FIXME: this is slightly different to rcswitch initialization, need to decide what makes the most sense
-    enable_capture_interrupt();
+    // this happens in PCA0_DoSniffing() so no need to repeat
+    //enable_capture_interrupt();
 
 
-	// start sniffing be default
-	// set desired sniffing type to PT2260
-	sniffing_mode = STANDARD;
-    
-    
 	// enable global interrupts needs to happen prior to use of timer based delays (e.g., PCA0_Sniffing() uses delay)
 	enable_global_interrupts();
     
-    // uses timer based delays so timer 0,1 must be setup before use
-    startup_blink();
     
 #if 1
-    //
-	//sniffing_mode = ADVANCED;
+	// start sniffing be default
+	// set desired sniffing type to PT2260
+	sniffing_mode = STANDARD;
 	PCA0_DoSniffing();
 
     // FIXME: double check if this comment is accurate
@@ -588,9 +579,10 @@ void main (void)
 #endif
 
 
-    
-    // FIXME: function empty on efm8bb1, because unknown if receiver has enable pin
+#if defined(TARGET_BOARD_OB38S003)
+    // FIXME: function not used on efm8bb1, because unknown if receiver has enable pin
     radio_receiver_on();
+#endif
 
     
     // DEBUG:
@@ -599,10 +591,12 @@ void main (void)
     //but good to check that polled uart is working
     //printf_tiny("startup...\r\n");
     //uart_put_command(RF_CODE_ACK);
+    
+    // uses timer based delays so timer 0,1, and global interrupt must be setup before use
+    startup_blink();
 
-
-	// we disabled watchdog at startup in case external ram needs to be cleared etc.
-	// now we enable
+	// we used to disable watchdog at startup in case external ram needs to be cleared etc.
+	// now we explicitly enable
     enable_watchdog();
 	
 	while (true)
@@ -693,10 +687,10 @@ void main (void)
 				// check if a RF signal got decoded
 				if ((RF_DATA_STATUS & RF_DATA_RECEIVED_MASK) != 0)
 				{
-					init_delay_timer_ms(200);
+					init_second_delay_ms(200);
 					buzzer_on();
 					// wait until timer has finished
-					wait_delay_timer_ms_finished();
+					wait_second_delay_finished();
 					buzzer_off();
 
 					switch(uart_command)
@@ -727,12 +721,12 @@ void main (void)
 					blockReadingUART = false;
 				}
 				// check for learning timeout
-				else if (is_delay_timer_ms_finished())
+				else if (is_second_delay_finished())
 				{
-					init_delay_timer_ms(1000);
+					init_second_delay_ms(1000);
 					buzzer_on();
 					// wait until timer has finished
-					wait_delay_timer_ms_finished();
+					wait_second_delay_finished();
 					buzzer_off();
 
 					// send not-acknowledge
@@ -894,10 +888,10 @@ void main (void)
                 bucket = (RF_DATA[0] << 8) | RF_DATA[1];
                 
                 
-                // we finally avoided nop based delays to save on code space
+                // we initially avoided nop based delays to save on code space
                 //delay1ms(bucket);
-                init_delay_timer_ms(bucket);
-                wait_delay_timer_ms_finished();
+                init_second_delay_ms(bucket);
+                wait_second_delay_finished();
 
                 
 				buzzer_off();
@@ -918,7 +912,7 @@ void main (void)
                 // we should never reach this because mcu should reset
                 while (1)
                 {
-                    startup_blink();
+                    //startup_blink();
                 }
 
                 break;

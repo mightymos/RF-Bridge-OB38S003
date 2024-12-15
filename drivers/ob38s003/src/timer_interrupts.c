@@ -78,10 +78,12 @@ void set_timer1_reload(const uint8_t reload)
 }
 
 
+#if 0
+
 /*
- * Init Timer 1 with microseconds interval, maximum is 65535micros.
+ * Init Timer 0 with microseconds interval, maximum is 65535micros.
  */
-void init_delay_timer_us(const uint16_t timeout)
+void init_first_delay_us(const uint16_t timeout)
 {
     //
     set_timer0_reload(TIMER0_RELOAD_10MICROS);
@@ -94,11 +96,42 @@ void init_delay_timer_us(const uint16_t timeout)
     TR0 = true;
 }
 
+#endif
 
 /*
  * Init Timer 1 with milliseconds interval, maximum is ~2.5ms.
  */
-void init_delay_timer_ms(const uint16_t timeout)
+void init_first_delay_ms(const uint16_t timeout)
+{
+    //
+    set_timer0_reload(TIMER1_RELOAD_1MILLIS);
+
+    gTimer0Timeout  = timeout;
+
+    // start timer
+    TR0 = true;
+}
+
+/*
+ * Init Timer 0 with microseconds interval, maximum is 65535micros.
+ */
+void init_second_delay_us(const uint16_t timeout)
+{
+    //
+    set_timer1_reload(TIMER0_RELOAD_10MICROS);
+    
+    // FIXME: portisch removed 65micros because of startup delay
+    //        but I do not see any information on this in ob38s003 datasheet
+    gTimer1Timeout  = timeout;
+
+    // start timer
+    TR1 = true;
+}
+
+/*
+ * Init Timer 1 with milliseconds interval, maximum is ~2.5ms.
+ */
+void init_second_delay_ms(const uint16_t timeout)
 {
     //
     set_timer1_reload(TIMER1_RELOAD_1MILLIS);
@@ -110,20 +143,20 @@ void init_delay_timer_ms(const uint16_t timeout)
 }
 
 
-void wait_delay_timer_us_finished(void)
+void wait_first_delay_finished(void)
 {
     // wait until timer has finished
     while(TR0);
 }
 
-void wait_delay_timer_ms_finished(void)
+void wait_second_delay_finished(void)
 {
     // wait until timer has finished
     while(TR1);
 }
 
 
-void stop_delay_timer_us(void)
+void stop_first_delay(void)
 {
     // stop timer
     TR0 = false;
@@ -132,7 +165,7 @@ void stop_delay_timer_us(void)
     TF0 = false;
 }
 
-void stop_delay_timer_ms(void)
+void stop_second_delay(void)
 {
     // stop timer
     TR1 = false;
@@ -141,12 +174,12 @@ void stop_delay_timer_ms(void)
     TF1 = false;
 }
 
-bool is_delay_timer_us_finished(void)
+bool is_first_delay_finished(void)
 {
     return !TR0;
 }
 
-bool is_delay_timer_ms_finished(void)
+bool is_second_delay_finished(void)
 {
     return !TR1;
 }

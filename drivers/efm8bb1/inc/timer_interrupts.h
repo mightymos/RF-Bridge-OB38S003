@@ -24,25 +24,36 @@
 // hex(0xFFFF - (1*10^-6)/(1/(24500000/12)))  = 0xFFFC.F5
 //
 
+// 10 microsecs
+// T2XCLK default is system clock divided by 12
 // hex(0xFFFF - (10*10^-6)/(1/24500000)) = 0xFF0A
 // hex(0xFFFF - (10*10^-6)/(1/(24500000/12))) = 0xFFEA.95
 //
 #define TIMER2_RELOAD_10MICROS  0xFFEB
+#define TIMER2_RELOAD_1MILLIS   0xF805
 
+// 1 milliseconds
+// T3XCLK default is system clock divided by 12
 // hex(0xFFFF - (1*10^-3)/(1/24500000))  = 0xA04B
 // hex(0xFFFF - (1*10^-3)/(1/(24500000/12)))  = 0xF805
 //
+#define TIMER3_RELOAD_10MICROS  0xFFEB
 #define TIMER3_RELOAD_1MILLIS   0xF805
 
+//
+//void init_first_delay_us(const uint16_t timeout);
+void init_first_delay_ms(const uint16_t timeout);
+void init_second_delay_us(const uint16_t timeout);
+void init_second_delay_ms(const uint16_t timeout);
 
-void init_delay_timer_us(const uint16_t timeout);
-void init_delay_timer_ms(const uint16_t timeout);
-void wait_delay_timer_us_finished(void);
-void wait_delay_timer_ms_finished(void);
-void stop_delay_timer_us(void);
-void stop_delay_timer_ms(void);
-bool is_delay_timer_us_finished(void);
-bool is_delay_timer_ms_finished(void);
+void wait_first_delay_finished(void);
+void wait_second_delay_finished(void);
+
+void stop_first_delay(void);
+void stop_second_delay(void);
+
+bool is_first_delay_finished(void);
+bool is_second_delay_finished(void);
 
 void clear_interrupt_flags_pca(void);
 void clear_pca_counter(void);

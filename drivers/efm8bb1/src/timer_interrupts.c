@@ -68,9 +68,10 @@ void clear_pca_counter(void)
 // Portisch favored this approach to timer delay
 void set_timer2_reload(const uint16_t reload)
 {
-    // we need to initialize timer registers and setup reload values next
-    TMR2H = ((reload >> 8) & 0xFF);
-    TMR2L = (reload & 0xFF);
+    // original portisch does not
+    // seems we should initialize timer registers and setup reload values next
+    //TMR2H = ((reload >> 8) & 0xFF);
+    //TMR2L = (reload & 0xFF);
     
     // these are the reload values (placed into actual timer registers on overflow)
     TMR2RLH = ((reload >> 8) & 0xFF);
@@ -79,9 +80,10 @@ void set_timer2_reload(const uint16_t reload)
 
 void set_timer3_reload(const uint16_t reload)
 {
-    // we need to initialize timer registers and setup reload values next
-    TMR3H = ((reload >> 8) & 0xFF);
-    TMR3L = (reload & 0xFF);
+    // original portisch does not
+    // seems we should initialize timer registers and setup reload values next
+    //TMR3H = ((reload >> 8) & 0xFF);
+    //TMR3L = (reload & 0xFF);
     
     // these are the reload values (placed into actual timer registers on overflow)
     TMR3RLH = ((reload >> 8) & 0xFF);
@@ -89,18 +91,20 @@ void set_timer3_reload(const uint16_t reload)
 }
 
 
+#if 0
+
 /*
  * we use this generic naming as compared with Portisch because different timers are used depending on microcontroller
  * Init Timer 2 with microseconds interval, maximum is 65535micros.
  */
-void init_delay_timer_us(const uint16_t timeout)
+void init_first_delay_us(const uint16_t timeout)
 {
     //
     //set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
     set_timer2_reload(TIMER2_RELOAD_10MICROS);
     
     // remove 65micros because of startup delay
-    gTimer2Timeout  = timeout;
+    gTimer2Timeout = timeout;
     
     // we removed the interval variable because we only ever need a 10 microsecond count
     // and the interrupt logic to handle decrementing by an interval made the transmission timing inaccurate
@@ -109,28 +113,61 @@ void init_delay_timer_us(const uint16_t timeout)
     TR2 = true;
 }
 
+#endif
+
+void init_first_delay_ms(const uint16_t timeout)
+{
+    //
+    //set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
+    set_timer2_reload(TIMER2_RELOAD_1MILLIS);
+    
+    // remove 65micros because of startup delay
+    gTimer2Timeout = timeout;
+    
+    // we removed the interval variable because we only ever need a 10 microsecond count
+    // and the interrupt logic to handle decrementing by an interval made the transmission timing inaccurate
+
+    // start timer
+    TR2 = true;
+}
+
+void init_second_delay_us(const uint16_t timeout)
+{
+    //
+    //set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
+    set_timer3_reload(TIMER3_RELOAD_10MICROS);
+    
+    // remove 65micros because of startup delay
+    gTimer3Timeout = timeout;
+    
+    // we removed the interval variable because we only ever need a 10 microsecond count
+    // and the interrupt logic to handle decrementing by an interval made the transmission timing inaccurate
+
+    // start timer
+    TMR3CN0 |= TR3__RUN;
+}
 
 /*
  * Init Timer 3 with milliseconds interval, maximum is ~2.5ms.
  */
-void init_delay_timer_ms(const uint16_t timeout)
+void init_second_delay_ms(const uint16_t timeout)
 {    
     set_timer3_reload(TIMER3_RELOAD_1MILLIS);
 
-    gTimer3Timeout  = timeout;
+    gTimer3Timeout = timeout;
 
     // start timer
     TMR3CN0 |= TR3__RUN;
 }
 
 
-void wait_delay_timer_us_finished(void)
+void wait_first_delay_finished(void)
 {
     // wait until timer has finished
     while(TR2);
 }
 
-void wait_delay_timer_ms_finished(void)
+void wait_second_delay_finished(void)
 {
     // wait until timer has finished
     // FIXME: compare to TR3__RUN as portisch did?
@@ -138,7 +175,7 @@ void wait_delay_timer_ms_finished(void)
 }
 
 
-void stop_delay_timer_us(void)
+void stop_first_delay(void)
 {
     // stop timer
     TR2 = false;
@@ -147,7 +184,7 @@ void stop_delay_timer_us(void)
     TF2 = false;
 }
 
-void stop_delay_timer_ms(void)
+void stop_second_delay(void)
 {
     // stop timer
     TMR3CN0 &= ~TR3__RUN;
@@ -156,12 +193,12 @@ void stop_delay_timer_ms(void)
     TMR3CN0 &= ~TF3H__SET;
 }
 
-bool is_delay_timer_us_finished(void)
+bool is_first_delay_finished(void)
 {
     return !TR2;
 }
 
-bool is_delay_timer_ms_finished(void)
+bool is_second_delay_finished(void)
 {
     return ((TMR3CN0 & TR3__BMASK) != TR3__RUN);
 }

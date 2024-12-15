@@ -223,7 +223,7 @@ bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses,
 	if (status[i].bit_count >= bit_count)
 	{
 		// check if timeout timer for crc is finished
-		if (is_delay_timer_ms_finished())
+		if (is_first_delay_finished())
 		{
 			old_crc = 0;
 		}
@@ -232,13 +232,13 @@ bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses,
 		if (crc != old_crc)
 		{
 			// new data, restart crc timeout
-			stop_delay_timer_ms();
-			init_delay_timer_ms(800);
+			stop_first_delay();
+			init_first_delay_ms(800);
 			old_crc = crc;
 
 			// FIXME: it can be confusing to bury things like this in functions
 			// disable interrupt for RF receiving while uart transfer
-			//PCA0CPM0 &= ~PCA0CPM0_ECCF__ENABLED;
+			disable_capture_interrupt();
 
 			// set status
 			RF_DATA_STATUS = i;
@@ -383,7 +383,7 @@ bool buffer_out(uint16_t* bucket)
 	}
 
 	// disable interrupt for RF receiving while reading buffer
-	//PCA0CPM0 &= ~PCA0CPM0_ECCF__ENABLED;
+	disable_capture_interrupt();
 
 
 	*bucket = buffer_buckets[buffer_buckets_read];
@@ -409,7 +409,6 @@ void capture_handler(uint16_t current_capture_value)
     //FIXME: make hardware abstraction
 	//uint16_t current_capture_value = get_capture_value();
     //current_capture_value = current_capture_value / 2;
-    // FIXME: this function expects a long type, so need to see if that matters or not
     current_capture_value = countsToTime(current_capture_value);
 
     clear_pca_counter();
@@ -452,8 +451,8 @@ void PCA0_DoSniffing(void)
 
 	// 
 	// wait until timer has finished
-    init_delay_timer_ms(10);
-    wait_delay_timer_ms_finished();
+    init_second_delay_ms(10);
+    wait_second_delay_finished();
 	//delay1ms(10);
 
     // FIXME: add comment
@@ -476,7 +475,7 @@ void PCA0_StopSniffing(void)
 	disable_capture_interrupt();
 
 	// be sure the timeout timer is stopped
-	stop_delay_timer_us();
+	stop_first_delay();
     
     // FIXME: eventually move setting radio outside outside of function
     rf_state = RF_IDLE;
@@ -497,8 +496,8 @@ bool SendSingleBucket(const bool high_low, uint16_t bucket_time)
 	// but bucket timings measured at receiver are inaccurate due to delay_us inaccuracy
 	//efm8_delay_us(bucket_time);
 	// FIXME: so maybe just use timer delays instead
-	init_delay_timer_us(bucket_time / 10);
-	wait_delay_timer_us_finished();
+	init_second_delay_us(bucket_time / 10);
+	wait_second_delay_finished();
 
 	return !high_low;
 }
@@ -647,6 +646,7 @@ bool findBucket(uint16_t duration, uint8_t *index)
 	return false;
 }
 
+// this is for sniffing on bucket (0xB1 command)
 void Bucket_Received(const uint16_t duration, const bool high_low)
 {
 	uint8_t bucket_index;
@@ -763,7 +763,7 @@ void Bucket_Received(const uint16_t duration, const bool high_low)
 			else if (matchesFooter(duration, high_low))
 			{
 				// check if timeout timer for crc is finished
-				if (is_delay_timer_ms_finished())
+				if (is_first_delay_finished())
                 {
 					old_crc = 0;
                 }
@@ -772,13 +772,13 @@ void Bucket_Received(const uint16_t duration, const bool high_low)
 				if (crc != old_crc)
 				{
 					// new data, restart crc timeout
-					stop_delay_timer_ms();
-					init_delay_timer_ms(800);
+					stop_first_delay();
+					init_first_delay_ms(800);
 					old_crc = crc;
 
 					// disable interrupt for RF receiving while uart transfer
 					//FIXME: want to move outside of buried function
-					//PCA0CPM0 &= ~PCA0CPM0_ECCF__ENABLED;
+					disable_capture_interrupt();
 
 					// add sync bucket number to data
 					RF_DATA[0] |= ((bucket_count << 4) | ((bucket_sync & 0x8000) >> 8));

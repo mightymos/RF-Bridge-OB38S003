@@ -63,16 +63,6 @@ inline void set_led(const bool state)
     LED = state;
 }
 
-inline void radio_receiver_off(void)
-{
-    //FIXME: do not know if this hardware has radio enable pin requirement or not
-}
-
-
-inline void radio_receiver_on(void)
-{
-    //FIXME: do not know if this hardware has radio enable pin requirement or not
-}
 
 inline void tdata_on(void)
 {
@@ -120,34 +110,6 @@ inline void uart_rx_enabled(void)
 inline void uart_rx_disabled(void)
 {
     SCON0 &= ~REN__RECEIVE_ENABLED;
-}
-
-inline void soft_tx_pin_on(void)
-{
-    SOFT_TX_PIN = 1;
-}
-
-inline void soft_tx_pin_off(void)
-{
-    SOFT_TX_PIN = 0;
-}
-
-inline void set_soft_tx_pin(const bool state)
-{
-    SOFT_TX_PIN = state;
-}
-
-inline void soft_tx_pin_toggle(void)
-{
-    SOFT_TX_PIN = !SOFT_TX_PIN;
-}
-
-inline bool get_soft_rx_pin(void)
-{
-    // FIXME: undefined for now because no pins available
-    //        so force default of nothing received
-    //return BUZZER;
-    return 1;
 }
 
 inline void debug_pin01_on(void)

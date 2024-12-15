@@ -113,9 +113,10 @@ int main (void)
     
     uart_tx_pin_off();
 
-    
+#if defined(TARGET_BOARD_OB38S003)
     // enable radio receiver
     radio_receiver_on();
+#endif
     
     //startup_beep();
     //startup_debug(stackStart);
