@@ -280,9 +280,10 @@ int main (void)
     // enable interrupts
     enable_global_interrupts();
  
-    
+#if defined(TARGET_BOARD_OB38S003)
     // FIXME: function empty on efm8bb1, because unknown if receiver has enable pin
     radio_receiver_on();
+#endif
     
     //startup_beep();
     //startup_debug(stackStart);

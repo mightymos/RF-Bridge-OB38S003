@@ -440,6 +440,7 @@ void PCA0_DoSniffing(void)
     // FIXME: possible to remove to save code size?
 	memset(status, 0, sizeof(PROTOCOL_STATUS) * NUM_OF_PROTOCOLS);
 
+    // FIXME: need to understand if or when this was or is needed
 	// restore timer to 100000Hz, 10µs interval
 	//SetTimer0Overflow(0x0B);
 
@@ -451,9 +452,10 @@ void PCA0_DoSniffing(void)
 
 	// 
 	// wait until timer has finished
+	//delay1ms(10);
     init_second_delay_ms(10);
     wait_second_delay_finished();
-	//delay1ms(10);
+
 
     // FIXME: add comment
     // FIXME: eventually move setting radio outside outside of function
