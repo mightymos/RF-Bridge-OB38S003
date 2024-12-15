@@ -205,8 +205,12 @@ extern void init_uart(void);
 extern void init_timer0_8bit_autoreload(void);
 extern void init_timer1_8bit_autoreload(void);
 extern void init_timer2_as_capture(void);
+
 extern void enable_capture_interrupt(void);
 extern void disable_capture_interrupt(void);
+uint8_t get_capture_flags(void);
+void    set_capture_flags(const uint8_t flags);
+
 extern void enable_serial_interrupt(void);
 extern void disable_serial_interrupt(void);
 

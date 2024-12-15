@@ -165,14 +165,32 @@ void enable_capture_interrupt(void)
 {
     // channel 0 capture flag interrupt enable
     PCA0CPM0 |= ECCF__ENABLED;
+    
     // PCA0 interrupt enable
-    EIE1     |= EPCA0__ENABLED;
+    //EIE1     |= EPCA0__ENABLED;
 }
 
 void disable_capture_interrupt(void)
 {
     PCA0CPM0 &= ~ECCF__ENABLED;
-    EIE1     &= ~EPCA0__ENABLED;
+    
+    //EIE1     &= ~EPCA0__ENABLED;
+}
+
+uint8_t get_capture_flags(void)
+{
+    return PCA0CPM0;
+}
+
+void set_capture_flags(const uint8_t flags)
+{
+    PCA0CPM0 = flags;
+}
+
+void enable_pca0_interrupt(void)
+{
+    // PCA0 interrupt enable
+    EIE1 |= EPCA0__ENABLED;
 }
 
 // FIXME: it is inconsistent to set 16-bit value for timer0 and 8-bit value for timer1

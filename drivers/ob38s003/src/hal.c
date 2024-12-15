@@ -152,6 +152,16 @@ void disable_capture_interrupt(void)
     CCCON &= ~0x20;
 }
 
+uint8_t get_capture_flags(void)
+{
+    return CCCON;
+}
+
+void set_capture_flags(const uint8_t flags)
+{
+    CCCON = flags;
+}
+
 void init_timer0_8bit_autoreload(void)
 {
     // 16-bit mode

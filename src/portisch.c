@@ -376,7 +376,7 @@ void buffer_in(uint16_t bucket)
 bool buffer_out(uint16_t* bucket)
 {
 	//FIXME: may need to do this type of save outside of function call
-	//uint8_t backup_PCA0CPM0 = PCA0CPM0;
+	uint8_t backup_Flags = get_capture_flags();
 
 	// check if buffer is empty
 	if (buffer_buckets_write == buffer_buckets_read)
@@ -398,7 +398,7 @@ bool buffer_out(uint16_t* bucket)
 	}
 
 	// reset register
-	//PCA0CPM0 = backup_PCA0CPM0;
+	set_capture_flags(backup_Flags);
 
 	return true;
 }
@@ -780,7 +780,7 @@ void Bucket_Received(const uint16_t duration, const bool high_low)
 					old_crc = crc;
 
 					// disable interrupt for RF receiving while uart transfer
-					//FIXME: want to move outside of buried function
+					//FIXME: want to move outside of buried function eventually?
 					disable_capture_interrupt();
 
 					// add sync bucket number to data
