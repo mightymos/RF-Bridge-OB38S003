@@ -531,7 +531,8 @@ void main (void)
     enable_serial_interrupt();
     
 #if defined(TARGET_BOARD_OB38S003)
-    // supports microseconds and milliseconds delays respectively
+    // supports microseconds and milliseconds delays
+    // using autoreload because of concern if manually reloading counters results in timer inaccuracies
     init_timer0_8bit_autoreload();
     init_timer1_8bit_autoreload();
     // pca like capture
@@ -540,12 +541,17 @@ void main (void)
     enable_timer0_interrupt();
     enable_timer1_interrupt();
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
-    // pca used timer0 on portisch, we just use the pca counter itself now
+    // pca used timer0 as timebase on original portisch, we could use the pca counter itself but it is less accurate for microseconds
+    //init_timer0_8bit_autoreload(TIMER0_PCA0);
     // uart with 19200 baud, uart must use timer1 on efm8bb1
     init_timer1_8bit_autoreload(TIMER1_UART0);
+    
+    
+    //timer0_run();
     timer1_run();
     
     // sets positive and negative going edge trigger enabled
+    // user timer0 as timebase
     pca0_init();
     
     // there are two interrupts required enabled to perform edge capture

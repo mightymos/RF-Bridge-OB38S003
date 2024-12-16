@@ -141,7 +141,7 @@ void init_timer0_8bit_autoreload(void)
     
     // FIXME: this would not clear bits if other than reset value, so bad HAL practice
     // FIXME: T0PS bits = 0b01 so prescale is Fosc
-    PFCON |= 0x01;
+    //PFCON |= 0x01;
 }
 
 void init_timer1_8bit_autoreload(void)
@@ -156,7 +156,7 @@ void init_timer1_8bit_autoreload(void)
     // b01 = FOCS
     //PFCON |= 0x04;
     // b10 = FOCS / 96
-    PFCON |= 0x08;
+    //PFCON |= 0x08;
 }
 
 

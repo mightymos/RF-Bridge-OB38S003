@@ -36,22 +36,36 @@ inline bool rdata_level(void)
     return RDATA;
 }
 
-// setter prototypes
-inline void led_on(void)
-{
-    // sonoff bridge
-    //LED = 1;
-    // EFM8BB1LCK board
-    LED = 0;
-}
+#if defined(TARGET_BOARD_EFM8BB1LCB)
+    // setter prototypes
+    inline void led_on(void)
+    {
+        // EFM8BB1LCK board
+        // i.e., led "on" is inverted from pin state
+        LED = 0;
+    }
 
-inline void led_off(void)
-{
-    // sonoff bridge
-    //LED = 0;
-    // EFM8BB1LCK board
-    LED = 1;
-}
+    inline void led_off(void)
+    {
+        // EFM8BB1LCK board
+        LED = 1;
+    }
+#elif defined(TARGET_BOARD_EFM8BB1)
+    // setter prototypes
+    inline void led_on(void)
+    {
+        // sonoff bridge
+        LED = 1;
+    }
+
+    inline void led_off(void)
+    {
+        // sonoff bridge
+        LED = 0;
+    }
+#else
+    #error Please define TARGET_BOARD in makefile
+#endif
 
 inline void led_toggle(void)
 {

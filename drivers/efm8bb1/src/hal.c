@@ -31,6 +31,10 @@ void set_clock_mode(void)
     // controls the timer 0/1 prescale, deefaults is system clocked divided by 12
     //CKCON0 |= SCA__SYSCLK_DIV_12;
     
+    // as explained in timer_interrupts.hal
+    // 1/((24500000)/(256-0x0B)) = 0.00001 seconds
+    CKCON0 |= T0M__SYSCLK;
+    
     // FIXME: this is only applicable for split 8-bit timer mode, need to double check
     // FIXME: used for portisch
     //CKCON0 |= T2ML__SYSCLK;
@@ -156,15 +160,14 @@ void set_capture_flags(const uint8_t flags)
 }
 
 
-// FIXME: it is inconsistent to set 16-bit value for timer0 and 8-bit value for timer1
-//        we need to change the function names so it is clear what they do
+//
 void init_timer0_8bit_autoreload(const uint8_t value)
 {
-    // 16-bit
-    //TMOD |= T0M__MODE2;
+    // 8-bit with auto-reload
+    TMOD |= T0M__MODE2;
 
-    //TH0 = (value >> 8) & 0xff;
-    //TL0 = value & 0xff;
+    TH0 = value;
+    TL0 = value;
 
 }
 
@@ -182,9 +185,10 @@ void init_timer1_8bit_autoreload(const uint8_t value)
 void pca0_init(void)
 {
     // default pca acts normally when controller is idle
-    // default source is system clock divided by 12
+    // default timebase is system clock divided by 12
     // default pca CF overflow is disabled
-    //PCA0MD &= ~CPS__SYSCLK_DIV_12;
+    // use timer0 as pca count timebase because we can obtain exactly 1 microsecond time
+    //PCA0MD |= CPS__T0_OVERFLOW;
     
     // enable both positive and negative edge triggers
     PCA0CPM0 |= CAPP__ENABLED;
@@ -193,6 +197,7 @@ void pca0_init(void)
 
 void pca0_run(void)
 {
+    // enables the PCA counter/timer
     CR = 1;
 }
 
@@ -220,6 +225,8 @@ uint16_t countsToTime(const uint16_t counts)
     // this only saves two code bytes on ob38s003 apparently
     // equivalent to divide by two
     duration = counts >> 1;
+    
+    //duration = counts;
     
     return duration;
 }
