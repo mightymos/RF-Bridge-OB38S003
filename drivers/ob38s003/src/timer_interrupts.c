@@ -85,6 +85,10 @@ void set_timer1_reload(const uint8_t reload)
  */
 void init_first_delay_us(const uint16_t timeout)
 {
+    // clock source is fosc
+    PFCON &= ~0x03;
+    PFCON |=  0x01;
+    
     //
     set_timer0_reload(TIMER0_RELOAD_10MICROS);
     
@@ -103,8 +107,12 @@ void init_first_delay_us(const uint16_t timeout)
  */
 void init_first_delay_ms(const uint16_t timeout)
 {
+    // clock source is fosc / 96 to allow millisecond durations
+    PFCON &= ~0x03;
+    PFCON |=  0x02;
+    
     //
-    set_timer0_reload(TIMER1_RELOAD_1MILLIS);
+    set_timer0_reload(TIMER0_RELOAD_1MILLIS);
 
     gTimer0Timeout  = timeout;
 
@@ -117,8 +125,12 @@ void init_first_delay_ms(const uint16_t timeout)
  */
 void init_second_delay_us(const uint16_t timeout)
 {
+    // clock source is fosc
+    PFCON &= ~0x0C;
+    PFCON |=  0x04;
+    
     //
-    set_timer1_reload(TIMER0_RELOAD_10MICROS);
+    set_timer1_reload(TIMER1_RELOAD_10MICROS);
     
     // FIXME: portisch removed 65micros because of startup delay
     //        but I do not see any information on this in ob38s003 datasheet
@@ -133,6 +145,10 @@ void init_second_delay_us(const uint16_t timeout)
  */
 void init_second_delay_ms(const uint16_t timeout)
 {
+    // clock source is fosc / 96 to allow millisecond durations
+    PFCON &= ~0x0C;
+    PFCON |=  0x08;
+    
     //
     set_timer1_reload(TIMER1_RELOAD_1MILLIS);
 

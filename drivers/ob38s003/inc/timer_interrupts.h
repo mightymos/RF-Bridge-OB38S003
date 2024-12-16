@@ -9,18 +9,17 @@
 #define INC_TIMER_INTERRUPT_H_
 
 
-// use separate defines to avoid any kind of bit manipulation for speed
-// hex(0xFFFF - (10*10^-6)/(1/16000000)) = 65375 (0xFF5F)
-//#define TIMER1_RELOAD_10MICROS  0xFFEA
+// use separate defines to avoid any need for bit manipulation for speed
+
 //hex(0xFF - (10*10^-6)/(1/16000000)) = 0x5F
 #define TIMER0_RELOAD_10MICROS 0x5F
 
-//hex(0xFF - (1*10^-6)/(1/16000000)) = 0xEF
-//#define TIMER0_RELOAD_1MICROS 0xF0
+//hex(0xFF - (1*10^-3)/(1/(16000000/96))) = 0x58.55555555555555555555
+#define TIMER0_RELOAD_1MILLIS 0x58
 
 // we need to use the prescaler to allow both microsecond and millisecond timings
-// hex(0xFF - (10*10^-6)/(1/(16000000/96))) = 0xFD.55555555555555555555
-//#define TIMER1_RELOAD_10MICROS 0xFD
+//hex(0xFF - (10*10^-6)/(1/16000000)) = 0x5F
+#define TIMER1_RELOAD_10MICROS 0x5F
 
 //hex(0xFF - (1*10^-3)/(1/(16000000/96))) = 0x58.55555555555555555555
 #define TIMER1_RELOAD_1MILLIS 0x58
