@@ -33,7 +33,7 @@ void set_clock_mode(void)
     
     // as explained in timer_interrupts.hal
     // 1/((24500000)/(256-0x0B)) = 0.00001 seconds
-    CKCON0 |= T0M__SYSCLK;
+    //CKCON0 |= T0M__SYSCLK;
     
     // FIXME: this is only applicable for split 8-bit timer mode, need to double check
     // FIXME: used for portisch
@@ -206,7 +206,7 @@ void pca0_halt(void)
     CR = 0;
 }
 
-
+// as I recall, we were double clearing this flag
 //void clear_capture_flag(void)
 //{
 //    // overflow flag
@@ -214,19 +214,16 @@ void pca0_halt(void)
 //    CF = 0;
 //}
 
-// the time constant is explained in the rcswitch.c file
 
+// time conversion is explained in the rcswitch.c file
 uint16_t countsToTime(const uint16_t counts)
 {
     uint16_t duration;
-    
-    //duration = counts / 2;
-    
+        
     // this only saves two code bytes on ob38s003 apparently
     // equivalent to divide by two
+    //duration = counts / 2;
     duration = counts >> 1;
-    
-    //duration = counts;
     
     return duration;
 }

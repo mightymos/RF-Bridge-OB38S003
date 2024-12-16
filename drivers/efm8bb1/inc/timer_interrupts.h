@@ -14,6 +14,9 @@
 // original portisch used 0xA0 which seems incorrect (they used 0x0B later)
 // and 0x0B value makes more sense:
 // 1/((24500000)/(256-0x0B)) = 0.00001
+// for 1 microsecond
+// hex(256 - (1*10^-6)/(1/(24500000))) = 0xE7.8
+//#define TIMER0_PCA0  0xE8
 #define TIMER0_PCA0  0x0B
 
 // 19200 baud, same on portisch

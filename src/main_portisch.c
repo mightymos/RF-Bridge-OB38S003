@@ -541,7 +541,7 @@ void main (void)
     enable_timer0_interrupt();
     enable_timer1_interrupt();
 #elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
-    // pca used timer0 as timebase on original portisch, we could use the pca counter itself but it is less accurate for microseconds
+    // pca used timer0 as timebase on original portisch, though we could use the pca counter itself
     //init_timer0_8bit_autoreload(TIMER0_PCA0);
     // uart with 19200 baud, uart must use timer1 on efm8bb1
     init_timer1_8bit_autoreload(TIMER1_UART0);
