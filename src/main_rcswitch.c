@@ -267,6 +267,9 @@ int main (void)
     //enable_timer1_interrupt();
     enable_timer2_interrupt();
     
+    // there are two interrupts required enabled to perform edge capture
+    enable_pca0_interrupt();
+    
     // pca0 clock source was timer 0 on portisch
     // however we use system clock divided by 12 as source here
     pca0_init();
