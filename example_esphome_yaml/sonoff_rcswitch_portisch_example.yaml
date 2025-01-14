@@ -38,17 +38,17 @@ api:
     key: !secret api_key
 
   services:
-  #Code can be sent as int or as a hex. I've chosen integer. Most people use hex.
+  # code can be sent as integer or as a hex. not clear what difference it makes
     - service: send_rf_code
       variables:
         sync: int
-        low: int
+        low:  int
         high: int
         code: int
       then:
         - rf_bridge.send_code:
             sync: !lambda 'return sync;'
-            low: !lambda 'return low;'
+            low:  !lambda 'return low;'
             high: !lambda 'return high;'
             code: !lambda 'return code;'
     - service: send_rf_code_raw
@@ -63,26 +63,39 @@ api:
 
 
 rf_bridge:
-#code can also be recieved (sniffed) as hex or as integer or both. Dealer's choice!
+  # mainly provides output in logs to observe received codes
   on_code_received:
     then:
-      - homeassistant.event:
-          event: esphome.rf_code_received
-          data:
-            sync: !lambda 'return format_hex(data.sync);'
-            low: !lambda 'return format_hex(data.low);'
-            high: !lambda 'return format_hex(data.high);'
-            code: !lambda 'return format_hex(data.code);'
-            
-      - homeassistant.event:
-          event: esphome.rf_code_received
-          data:
-            sync: !lambda 'return int(data.sync);'
-            low: !lambda 'return int(data.low);'
-            high: !lambda 'return int(data.high);'
-            code: !lambda 'return int(data.code);'
-  
-  on_advanced_code_received: #Portisch only, doesnt do anything on RCswitch firmware
+        - homeassistant.event:
+            event: esphome.rf_code_received
+            data:
+              # we use hex but int() can be used alternatively
+              sync: !lambda 'return format_hex(data.sync);'
+              low:  !lambda 'return format_hex(data.low);'
+              high: !lambda 'return format_hex(data.high);'
+              code: !lambda 'return format_hex(data.code);'
+                
+        # door sensor (example)
+        # syntax shown here: https://esphome.io/automations/actions.html
+        - if:
+            condition:
+              # change the string here for your particular door sensor
+              lambda: "return data.code == 0x35720A;"
+            then:
+              - binary_sensor.template.publish: 
+                  id: door_sensor_example
+                  state: ON
+        - if:
+            condition:
+              lambda: "return data.code == 0x35720E;"
+            then:
+              - binary_sensor.template.publish: 
+                  id: door_sensor_example
+                  state: OFF
+
+
+  # Portisch only, does not do anything on RCswitch firmware
+  on_advanced_code_received:
     then:
       - homeassistant.event:
           event: esphome.rf_advanced_code_received
@@ -94,10 +107,12 @@ rf_bridge:
 
 
 button:
-  # Restart the ESP
+  # Restart the ESP8285 wifi chip
   - platform: restart
     name: "Restart"
   
+  # places portisch flashed microcontroller into various modes
+  # commands are defined here: https://github.com/Portisch/RF-Bridge-EFM8BB1/wiki
   - platform: template
     name: Advanced sniffing start
     id: AS_start
@@ -144,7 +159,7 @@ button:
       then:
       - rf_bridge.learn  
 
-# Sensors for ESP version and WIFI information
+# Sensors for ESPHome version and WIFI information
 text_sensor:
   # ESPHome version
   - platform: version
@@ -158,6 +173,7 @@ text_sensor:
     ssid:
       name: "Connected SSID"
       icon: mdi:wifi-strength-2
+      
 sensor:
   # WiFi signal
   - platform: wifi_signal
@@ -165,10 +181,19 @@ sensor:
     update_interval: 120s
   - platform: uptime
     name: Sonoff RF Bridge Uptime
+    
 binary_sensor:
   - platform: status
     name: Sonoff RF Bridge Status
+    
+# door sensor
+  - platform: template
+    name: "Door Sensor (example)"
+    id: door_sensor_example
+    device_class: door
+    publish_initial_state : true
 
+# allows toggling the wifi status LED
 light:
   - platform: status_led
     name: "Status LED"
@@ -176,7 +201,7 @@ light:
       number: GPIO13
       inverted: true
 
-#Example LED strip using standard protocol. Works on RCswitch and Portisch firmwares.
+# example LED strip using standard protocol. Works on RCswitch and Portisch firmwares.
 switch:
   - platform: template
     id: range
@@ -202,9 +227,9 @@ switch:
     # sync low = 0x2, bit 0 = 0x81, bit 1 = 0x90, sync high = 0x8
     # modify to send 0xDEADBE = 0b11011110 10101101 10111110
     # rfraw AA B0 21 03 08 0138 03B7 277C 29 09 08 19 09 09 09 08 19 08 19 08 19 09 08 19 09 08 19 09 09 09 09 08 18 55
-    # the other codes is 0x35720A or 0x35720E which is what my real door sensor sends
+    # the other codes are 0x35720A or 0x35720E which is what my real door sensor sends
     id: sim_door_sensor
-    name: "Simulated door sensor"
+    name: "Door sensor (simulated)"
     optimistic: true
     turn_on_action:
       - rf_bridge.send_raw:
@@ -212,8 +237,9 @@ switch:
     turn_off_action:
       - rf_bridge.send_raw:
           raw: 'AAB0210308013803B7277C2909081909090908190819081909081909081909090909081855'
+          
 
-#Example window blinds using Bitbucket sending. Works on Portisch firmware only.
+# example window blinds using Bitbucket sending. Works on Portisch firmware only.
 cover:
   - platform: time_based
     name: "Living room blinds"
