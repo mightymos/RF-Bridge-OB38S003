@@ -204,8 +204,7 @@ void uart_state_machine(const uint8_t rxdataNoFlags)
 					break;
 				case RF_CODE_SNIFFING_ON_BUCKET:
 					PCA0_DoSniffing();
-                    // redundant
-					//uart_command = RF_CODE_SNIFFING_ON_BUCKET;
+					last_sniffing_command = RF_CODE_SNIFFING_ON_BUCKET;
 					break;
 				case RF_CODE_LEARN_NEW:
                     init_second_delay_ms(50);
