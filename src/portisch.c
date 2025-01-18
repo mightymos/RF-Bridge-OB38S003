@@ -133,7 +133,7 @@ bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses,
 	if (CheckRFSyncBucket(duration, pulses[bit0[status[i].bit0_status] & 0x07]))
 	{
 		// decode only if high/low does match
-		if (((bit0[status[i].bit0_status] & 0x08) >> 3) == high_low)
+		if ((bool)((bit0[status[i].bit0_status] & 0x08) >> 3) == high_low)
 		{
 			if (status[i].bit0_status == 0)
 				BIT_LOW = duration;
@@ -151,7 +151,7 @@ bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses,
 	if (CheckRFSyncBucket(duration, pulses[bit1[status[i].bit1_status] & 0x07]))
 	{
 		// decode only if high/low does match
-		if (((bit1[status[i].bit1_status] & 0x08) >> 3) == high_low)
+		if ((bool)((bit1[status[i].bit1_status] & 0x08) >> 3) == high_low)
 		{
 			if (status[i].bit1_status == 0)
 			{
@@ -290,7 +290,7 @@ void HandleRFBucket(uint16_t duration, bool high_low)
 			if (status[0].sync_status == 0)
 			{
 				// if PT226x standard sniffing calculate the pulse time by the longer sync bucket
-				// this will enable receive PT226x in a range of PT226x_SYNC_MIN <-> 32767µs
+				// this will enable receive PT226x in a range of PT226x_SYNC_MIN <-> 32767ï¿½s
 				if (duration > PT226x_SYNC_MIN && !high_low) // && (duration < PT226x_SYNC_MAX))
 				{
 					// increment start because of the skipped first high bucket
@@ -324,7 +324,7 @@ void HandleRFBucket(uint16_t duration, bool high_low)
 				if (status[i].sync_status < PROTOCOL_DATA[i].start.size)
 				{
 					// check if sync bucket high/low is matching
-					if (((PROTOCOL_DATA[i].start.dat[status[i].sync_status] & 0x08) >> 3) != high_low)
+					if ((bool)((PROTOCOL_DATA[i].start.dat[status[i].sync_status] & 0x08) >> 3) != high_low)
 						continue;
 
 					if (CheckRFSyncBucket(duration, PROTOCOL_DATA[i].buckets.dat[PROTOCOL_DATA[i].start.dat[status[i].sync_status] & 0x07]))
@@ -442,7 +442,7 @@ void PCA0_DoSniffing(void)
 	memset(status, 0, sizeof(PROTOCOL_STATUS) * NUM_OF_PROTOCOLS);
 
     // FIXME: need to understand if or when this was or is needed
-	// restore timer to 100000Hz, 10µs interval
+	// restore timer to 100000Hz, 10ï¿½s interval
 	//SetTimer0Overflow(0x0B);
 
 	// enable interrupt for RF receiving
