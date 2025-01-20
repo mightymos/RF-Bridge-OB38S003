@@ -118,6 +118,7 @@ bool CheckRFSyncBucket(uint16_t duration, uint16_t bucket)
 bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses, uint8_t* bit0, uint8_t bit0_size, uint8_t* bit1, uint8_t bit1_size, uint8_t bit_count)
 {
 	uint8_t last_bit = 0;
+    bool status_bit;
 
 	// do init before first bit received
 	if (status[i].bit_count == 0)
@@ -133,7 +134,8 @@ bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses,
 	if (CheckRFSyncBucket(duration, pulses[bit0[status[i].bit0_status] & 0x07]))
 	{
 		// decode only if high/low does match
-		if ((bool)((bit0[status[i].bit0_status] & 0x08) >> 3) == high_low)
+        status_bit = (bit0[status[i].bit0_status] & 0x08) >> 3;
+		if (status_bit == high_low)
 		{
 			if (status[i].bit0_status == 0)
 				BIT_LOW = duration;
@@ -151,7 +153,8 @@ bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses,
 	if (CheckRFSyncBucket(duration, pulses[bit1[status[i].bit1_status] & 0x07]))
 	{
 		// decode only if high/low does match
-		if ((bool)((bit1[status[i].bit1_status] & 0x08) >> 3) == high_low)
+        status_bit = (bit1[status[i].bit1_status] & 0x08) >> 3;
+		if (status_bit == high_low)
 		{
 			if (status[i].bit1_status == 0)
 			{
@@ -263,6 +266,7 @@ bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses,
 void HandleRFBucket(uint16_t duration, bool high_low)
 {
 	uint8_t i = 0;
+    bool sync_bit;
 
 	// if noise got received stop all running decodings
 	if (duration < MIN_BUCKET_LENGTH)
@@ -300,7 +304,7 @@ void HandleRFBucket(uint16_t duration, bool high_low)
 					status[0].sync_status += 1;
 					SYNC_LOW = duration;
 
-                    //FIXME: change to eliminate divide and multiply if possible
+                    //FIXME: change to eliminate divides and multiplies if possible
 					buckets[0] = duration / 31;
 					//buckets[1] = buckets[0] * 3;
                     // equivalent of multiply by three
@@ -324,7 +328,8 @@ void HandleRFBucket(uint16_t duration, bool high_low)
 				if (status[i].sync_status < PROTOCOL_DATA[i].start.size)
 				{
 					// check if sync bucket high/low is matching
-					if ((bool)((PROTOCOL_DATA[i].start.dat[status[i].sync_status] & 0x08) >> 3) != high_low)
+                    sync_bit = (PROTOCOL_DATA[i].start.dat[status[i].sync_status] & 0x08) >> 3;
+					if (sync_bit != high_low)
 						continue;
 
 					if (CheckRFSyncBucket(duration, PROTOCOL_DATA[i].buckets.dat[PROTOCOL_DATA[i].start.dat[status[i].sync_status] & 0x07]))

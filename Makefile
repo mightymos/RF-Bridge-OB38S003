@@ -47,11 +47,11 @@
 # FIXME: build all targets without need to modify makefile
 # FIXME: it is possible to uncomment more than one line and it reassigns TARGET_BOARD which might confuse person
 # sonoff black box
-TARGET_BOARD = EFM8BB1
+#TARGET_BOARD = EFM8BB1
 # low cost development board
 #TARGET_BOARD = EFM8BB1LCB
 # sonoff white box
-#TARGET_BOARD = OB38S003
+TARGET_BOARD = OB38S003
 
 # catches undefined
 ifndef TARGET_BOARD
