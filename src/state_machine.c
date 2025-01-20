@@ -235,8 +235,10 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
                             break;
                         case RF_DO_BEEP:
                         
-                            //
-                            delay = *(uint16_t *)&uartPacket[0];
+                            // remember SDCC is little ending for 8051 while data is send as big endian
+                            //delay = *(uint16_t *)&uartPacket[0];
+                            delay = (uartPacket[0] << 8) | uartPacket[1];
+                            
                             
                             // FIXME: will blocking trip watchdog timer? 
                             buzzer_on();
