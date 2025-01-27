@@ -38,6 +38,20 @@
 // got this output from the tool:
 // rfraw AA B0 21 03 08 0138 03B7 277C 28 18 19 09 08 19 08 19 08 19 09 09 08 18 19 08 18 18 18 18 19 08 19 08 18 55
 
+// 0xA5 (standard transmit) examples
+// PT226X
+// rfraw AA A5 2A 62 01 5E 04 1A D0 03 58 55
+// 
+// HT6P20X
+// rfraw AA A5 28 6E 01 C2 03 84 D0 03 58 55
+
+// 0xA8 (advanced transmit) examples
+// PT226X
+// rfraw AA A8 04 00 D0 F9 32 55
+//
+// HT6P20X
+// rfraw AA A8 04 01 D0 F9 32 55
+
 // converter tool for raw byte format
 // https://jonajona.nl/convertB1.html
 
