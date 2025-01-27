@@ -49,9 +49,9 @@
 # sonoff black box
 #TARGET_BOARD = EFM8BB1
 # low cost development board
-#TARGET_BOARD = EFM8BB1LCB
+TARGET_BOARD = EFM8BB1LCB
 # sonoff white box
-TARGET_BOARD = OB38S003
+#TARGET_BOARD = OB38S003
 
 # catches undefined
 ifndef TARGET_BOARD
@@ -103,8 +103,7 @@ OBJECT_DIR = object
 # final location of built firmware
 BUILD_DIR  = build
 
-# FIXME: pca_0 and wdt_0 are exclusively for portisch EFM8BB1
-# so hardware abstraction from other hardware needs to be used eventually
+
 # list of source files
 SOURCES = \
  $(SOURCE_DIR)/main_passthrough.c     \

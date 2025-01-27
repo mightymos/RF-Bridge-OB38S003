@@ -618,194 +618,198 @@ void SendBucketsByIndex(uint8_t index, uint8_t* rfdata)
 }
 
 
-// probablyFooter(), matchesFooter(), findBucket(), and Bucket_Received()
-// are all related to bucket sniffing feature
-bool probablyFooter(uint16_t duration)
-{
-	return duration >= MIN_FOOTER_LENGTH;
-}
+#if defined(BUCKET_SNIFFING_INCLUDED)
 
-bool matchesFooter(uint16_t duration, bool high_low)
-{
-	if (!((bucket_sync & 0x8000) >> 15) && high_low)
-		return false;
+    // probablyFooter(), matchesFooter(), findBucket(), and Bucket_Received() are all related to bucket sniffing feature
+    bool probablyFooter(uint16_t duration)
+    {
+        return duration >= MIN_FOOTER_LENGTH;
+    }
 
-	return CheckRFSyncBucket(duration, bucket_sync & 0x7FFF);
-}
+    bool matchesFooter(uint16_t duration, bool high_low)
+    {
+        if (!((bucket_sync & 0x8000) >> 15) && high_low)
+            return false;
 
-bool findBucket(uint16_t duration, uint8_t *index)
-{
-	uint8_t i;
-	uint16_t delta;
+        return CheckRFSyncBucket(duration, bucket_sync & 0x7FFF);
+    }
 
-	for (i = 0; i < bucket_count; i++)
-	{
-		// calculate delta by the current duration and check if the new duration fits into
-		delta = ((duration >> 2) + (duration >> 3));
-		delta = delta > buckets[i] ? buckets[i] : delta;
+    bool findBucket(uint16_t duration, uint8_t *index)
+    {
+        uint8_t i;
+        uint16_t delta;
 
-		if (CheckRFBucket(duration, buckets[i], delta))
-		{
-			*index = i;
-			return true;
-		}
-	}
+        for (i = 0; i < bucket_count; i++)
+        {
+            // calculate delta by the current duration and check if the new duration fits into
+            delta = ((duration >> 2) + (duration >> 3));
+            delta = delta > buckets[i] ? buckets[i] : delta;
 
-	return false;
-}
+            if (CheckRFBucket(duration, buckets[i], delta))
+            {
+                *index = i;
+                return true;
+            }
+        }
 
-// this is for sniffing on bucket (0xB1 command)
-void Bucket_Received(const uint16_t duration, const bool high_low)
-{
-	uint8_t bucket_index;
+        return false;
+    }
 
-	// if pulse is too short reset status
-	if (duration < MIN_BUCKET_LENGTH)
-	{
-		rf_state = RF_IDLE;
-		return;
-	}
+    // this is for sniffing on bucket (0xB1 command)
+    void Bucket_Received(const uint16_t duration, const bool high_low)
+    {
+        uint8_t bucket_index;
 
-	switch (rf_state)
-	{
-		// check if we maybe receive a sync
-		case RF_IDLE:
-			led_off();
+        // if pulse is too short reset status
+        if (duration < MIN_BUCKET_LENGTH)
+        {
+            rf_state = RF_IDLE;
+            return;
+        }
 
-			if (probablyFooter(duration))
-			{
-				bucket_sync = duration | ((uint16_t)high_low << 15);
-				bucket_count_sync_1 = 0;
-				rf_state = RF_BUCKET_REPEAT;
-			}
-			break;
+        switch (rf_state)
+        {
+            // check if we maybe receive a sync
+            case RF_IDLE:
+                led_off();
 
-		// check if the same bucket gets received
-		case RF_BUCKET_REPEAT:
-			if (matchesFooter(duration, high_low))
-			{
-				// check if a minimum of buckets where between two sync pulses
-				if (bucket_count_sync_1 > 4)
-				{
-					led_on();
-					bucket_count = 0;
-					actual_byte = 0;
-					actual_byte_high_nibble = false;
-					bucket_count_sync_2 = 0;
-					crc = 0x00;
-					RF_DATA[0] = 0;
-					rf_state = RF_BUCKET_IN_SYNC;
-				}
-				else
-				{
-					rf_state = RF_IDLE;
-				}
-			}
-			// check if duration is longer than sync bucket restart
-			else if (duration > (bucket_sync & 0x7FFF))
-			{
-				// this bucket looks like the sync bucket
-				bucket_sync = duration | ((uint16_t)high_low << 15);
-				bucket_count_sync_1 = 0;
-			}
-			else
-			{
-				bucket_count_sync_1++;
-			}
-
-			// no more buckets are possible, reset
-			if (bucket_count_sync_1 >= RF_DATA_BUFFERSIZE << 1)
-			{
-				rf_state = RF_IDLE;
-			}
-
-			break;
-
-		// same sync bucket got received, filter buckets
-		case RF_BUCKET_IN_SYNC:
-			bucket_count_sync_2++;
-
-			// check if all buckets got received
-			if (bucket_count_sync_2 <= bucket_count_sync_1)
-			{
-				// check if bucket was already received
-				if (!findBucket(duration, &bucket_index))
-				{
-					// new bucket received, add to array
-					buckets[bucket_count] = duration;
-					bucket_index = bucket_count;
-					bucket_count++;
-
-					// check if maximum of array got reached
-					if (bucket_count > ARRAY_LENGTH(buckets))
-					{
-						// restart sync
-						rf_state = RF_IDLE;
-					}
-				}
-
-				// fill rf data with the current bucket number
-				if (actual_byte_high_nibble)
-				{
-					RF_DATA[actual_byte] = (bucket_index << 4) | ((uint8_t)high_low << 7);
-				}
-				else
-				{
-					RF_DATA[actual_byte] |= (bucket_index | ((uint8_t)high_low << 3));
-
-					crc = Compute_CRC8_Simple_OneByte(crc ^ RF_DATA[actual_byte]);
-
-					actual_byte++;
-
-					// check if maximum of array got reached
-					if (actual_byte > RF_DATA_BUFFERSIZE)
-					{
-						// restart sync
-						rf_state = RF_IDLE;
-					}
-				}
-
-				actual_byte_high_nibble = !actual_byte_high_nibble;
-			}
-			// next bucket after data have to be a sync bucket
-			else if (matchesFooter(duration, high_low))
-			{
-				// check if timeout timer for crc is finished
-				if (is_first_delay_finished())
+                if (probablyFooter(duration))
                 {
-					old_crc = 0;
+                    bucket_sync = duration | ((uint16_t)high_low << 15);
+                    bucket_count_sync_1 = 0;
+                    rf_state = RF_BUCKET_REPEAT;
+                }
+                break;
+
+            // check if the same bucket gets received
+            case RF_BUCKET_REPEAT:
+                if (matchesFooter(duration, high_low))
+                {
+                    // check if a minimum of buckets where between two sync pulses
+                    if (bucket_count_sync_1 > 4)
+                    {
+                        led_on();
+                        bucket_count = 0;
+                        actual_byte = 0;
+                        actual_byte_high_nibble = false;
+                        bucket_count_sync_2 = 0;
+                        crc = 0x00;
+                        RF_DATA[0] = 0;
+                        rf_state = RF_BUCKET_IN_SYNC;
+                    }
+                    else
+                    {
+                        rf_state = RF_IDLE;
+                    }
+                }
+                // check if duration is longer than sync bucket restart
+                else if (duration > (bucket_sync & 0x7FFF))
+                {
+                    // this bucket looks like the sync bucket
+                    bucket_sync = duration | ((uint16_t)high_low << 15);
+                    bucket_count_sync_1 = 0;
+                }
+                else
+                {
+                    bucket_count_sync_1++;
                 }
 
-				// check new crc on last received data for debounce
-				if (crc != old_crc)
-				{
-					// new data, restart crc timeout
-					stop_first_delay();
-					init_first_delay_ms(800);
-					old_crc = crc;
+                // no more buckets are possible, reset
+                if (bucket_count_sync_1 >= RF_DATA_BUFFERSIZE << 1)
+                {
+                    rf_state = RF_IDLE;
+                }
 
-					// disable interrupt for RF receiving while uart transfer
-					//FIXME: want to move outside of buried function eventually?
-					disable_capture_interrupt();
+                break;
 
-					// add sync bucket number to data
-					RF_DATA[0] |= ((bucket_count << 4) | ((bucket_sync & 0x8000) >> 8));
+            // same sync bucket got received, filter buckets
+            case RF_BUCKET_IN_SYNC:
+                bucket_count_sync_2++;
 
-					// clear high/low flag
-					bucket_sync &= 0x7FFF;
+                // check if all buckets got received
+                if (bucket_count_sync_2 <= bucket_count_sync_1)
+                {
+                    // check if bucket was already received
+                    if (!findBucket(duration, &bucket_index))
+                    {
+                        // new bucket received, add to array
+                        buckets[bucket_count] = duration;
+                        bucket_index = bucket_count;
+                        bucket_count++;
 
-					RF_DATA_STATUS |= RF_DATA_RECEIVED_MASK;
-				}
+                        // check if maximum of array got reached
+                        if (bucket_count > ARRAY_LENGTH(buckets))
+                        {
+                            // restart sync
+                            rf_state = RF_IDLE;
+                        }
+                    }
 
-				led_off();
-				rf_state = RF_IDLE;
-			}
-			// next bucket after receiving all data buckets was not a sync bucket, restart
-			else
-			{
-				// restart sync
-				rf_state = RF_IDLE;
-			}
-			break;
-	}
-}
+                    // fill rf data with the current bucket number
+                    if (actual_byte_high_nibble)
+                    {
+                        RF_DATA[actual_byte] = (bucket_index << 4) | ((uint8_t)high_low << 7);
+                    }
+                    else
+                    {
+                        RF_DATA[actual_byte] |= (bucket_index | ((uint8_t)high_low << 3));
+
+                        crc = Compute_CRC8_Simple_OneByte(crc ^ RF_DATA[actual_byte]);
+
+                        actual_byte++;
+
+                        // check if maximum of array got reached
+                        if (actual_byte > RF_DATA_BUFFERSIZE)
+                        {
+                            // restart sync
+                            rf_state = RF_IDLE;
+                        }
+                    }
+
+                    actual_byte_high_nibble = !actual_byte_high_nibble;
+                }
+                // next bucket after data have to be a sync bucket
+                else if (matchesFooter(duration, high_low))
+                {
+                    // check if timeout timer for crc is finished
+                    if (is_first_delay_finished())
+                    {
+                        old_crc = 0;
+                    }
+
+                    // check new crc on last received data for debounce
+                    if (crc != old_crc)
+                    {
+                        // new data, restart crc timeout
+                        stop_first_delay();
+                        init_first_delay_ms(800);
+                        old_crc = crc;
+
+                        // disable interrupt for RF receiving while uart transfer
+                        //FIXME: want to move outside of buried function eventually?
+                        disable_capture_interrupt();
+
+                        // add sync bucket number to data
+                        RF_DATA[0] |= ((bucket_count << 4) | ((bucket_sync & 0x8000) >> 8));
+
+                        // clear high/low flag
+                        bucket_sync &= 0x7FFF;
+
+                        RF_DATA_STATUS |= RF_DATA_RECEIVED_MASK;
+                    }
+
+                    led_off();
+                    rf_state = RF_IDLE;
+                }
+                // next bucket after receiving all data buckets was not a sync bucket, restart
+                else
+                {
+                    // restart sync
+                    rf_state = RF_IDLE;
+                }
+                break;
+        }
+    }
+
+
+#endif

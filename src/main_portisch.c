@@ -853,6 +853,8 @@ void main (void)
 			}
 			case RF_CODE_SNIFFING_ON_BUCKET:
 
+#if defined(BUCKET_SNIFFING_INCLUDED)
+
 				// check if a RF signal got decoded
 				if ((RF_DATA_STATUS & RF_DATA_RECEIVED_MASK) != 0)
 				{
@@ -877,6 +879,8 @@ void main (void)
 						Bucket_Received(bucket & 0x7FFF, (bool)((bucket & 0x8000) >> 15));
 					}
 				}
+                
+#endif
 
 			break;
 

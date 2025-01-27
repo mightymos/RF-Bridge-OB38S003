@@ -24,9 +24,13 @@
 //    #define RF_DATA_BUFFERSIZE		64
 //#endif
 
-// FIXME: calculated how many bytes we really need
-// FIXME: this is as many as we can squeeze out for now
-#define RF_DATA_BUFFERSIZE 96
+#if defined(BUCKET_SNIFFING_INCLUDED)
+    // FIXME: calculate how many bytes we really need
+    // FIXME: this is as many as we can squeeze out for now
+    #define RF_DATA_BUFFERSIZE 96
+#else
+    #define RF_DATA_BUFFERSIZE 64
+#endif
 
 typedef enum
 {
