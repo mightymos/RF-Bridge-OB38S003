@@ -49,13 +49,21 @@
 # sonoff black box
 #TARGET_BOARD = EFM8BB1
 # low cost development board
-TARGET_BOARD = EFM8BB1LCB
+#TARGET_BOARD = EFM8BB1LCB
 # sonoff white box
-#TARGET_BOARD = OB38S003
+TARGET_BOARD = OB38S003
+
+# uncomment only one
+SELECT_FEATURE = BUCKET_SNIFFING_INCLUDED
+#SELECT_FEATURE = MULTI_PROTOCOLS_INCLUDED
 
 # catches undefined
 ifndef TARGET_BOARD
  $(error Please define TARGET_BOARD in makefile)
+endif
+
+ifndef SELECT_FEATURE
+ $(error Please define SELECT_FEATURE in makefile)
 endif
 
 # these are the maximum clock speeds
@@ -149,7 +157,7 @@ OBJECTS_PORTISCH = \
 # firmware names
 TARGET_PASSTHROUGH  = $(BUILD_DIR)/main_passthrough_$(TARGET_BOARD).ihx
 TARGET_RCSWITCH     = $(BUILD_DIR)/main_rcswitch_$(TARGET_BOARD).ihx
-TARGET_PORTISCH     = $(BUILD_DIR)/main_portisch_$(TARGET_BOARD).ihx
+TARGET_PORTISCH     = $(BUILD_DIR)/main_portisch_$(TARGET_BOARD)_$(SELECT_FEATURE).ihx
 
 
 ###########################################################
@@ -161,7 +169,7 @@ TARGET_ARCH = -mmcs51
 AS       = sdas8051
 CC       = sdcc
 ASFLAGS  = -plosgffw
-CPPFLAGS = $(PROJECT_FLAGS) -DTARGET_BOARD_$(TARGET_BOARD) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIR) -I$(DRIVER_DIR)
+CPPFLAGS = $(PROJECT_FLAGS) -DTARGET_BOARD_$(TARGET_BOARD) -D$(SELECT_FEATURE) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIR) -I$(DRIVER_DIR)
 CFLAGS   = $(TARGET_ARCH) $(MEMORY_MODEL) $(CPPFLAGS)
 LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 
