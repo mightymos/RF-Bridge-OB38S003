@@ -39,7 +39,7 @@ api:
     key: !secret api_key
     
   # this was reported to stop "freezing" issues but needs to be tested
-  reboot_timeout: 0s
+  #reboot_timeout: 0s
 
   services:
   # code can be sent as integer or as a hex. not clear what difference it makes
