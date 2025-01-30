@@ -489,6 +489,9 @@ void PCA0_StopSniffing(void)
     rf_state = RF_IDLE;
 }
 
+// defined in Makefile
+#if defined(RX_TX_INCLUDED)
+
 // returns the inverted bit of what was passed in to high_low
 bool SendSingleBucket(const bool high_low, uint16_t bucket_time)
 {
@@ -617,7 +620,10 @@ void SendBucketsByIndex(uint8_t index, uint8_t* rfdata)
 	SendBuckets(PROTOCOL_DATA[index].buckets.dat, PROTOCOL_DATA[index].start.dat, start_size, PROTOCOL_DATA[index].bit0.dat, bit0_size, PROTOCOL_DATA[index].bit1.dat, bit1_size, PROTOCOL_DATA[index].end.dat, end_size, bitcount, rfdata);
 }
 
+#endif
 
+
+// defined in Makefile
 #if defined(BUCKET_SNIFFING_INCLUDED)
 
     // probablyFooter(), matchesFooter(), findBucket(), and Bucket_Received() are all related to bucket sniffing feature

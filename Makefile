@@ -49,21 +49,29 @@
 # sonoff black box
 #TARGET_BOARD = EFM8BB1
 # low cost development board
-#TARGET_BOARD = EFM8BB1LCB
+TARGET_BOARD = EFM8BB1LCB
 # sonoff white box
-TARGET_BOARD = OB38S003
+#TARGET_BOARD = OB38S003
 
 # uncomment only one
-SELECT_FEATURE = BUCKET_SNIFFING_INCLUDED
-#SELECT_FEATURE = MULTI_PROTOCOLS_INCLUDED
+RF_RX_FEATURE = BUCKET_SNIFFING_INCLUDED
+#RF_RX_FEATURE = MULTI_PROTOCOLS_INCLUDED
+
+# uncomment or comment to include/exclude respectively
+#RF_TX_FEATURE = RF_TX_INCLUDED
+
+# we do this so the variable is defined to something
+ifndef RF_TX_FEATURE
+ RX_TX_FEATURE = RF_TX_EXCLUDED
+endif
 
 # catches undefined
 ifndef TARGET_BOARD
  $(error Please define TARGET_BOARD in makefile)
 endif
 
-ifndef SELECT_FEATURE
- $(error Please define SELECT_FEATURE in makefile)
+ifndef RF_RX_FEATURE
+ $(error Please define RF_RX_FEATURE in makefile)
 endif
 
 # these are the maximum clock speeds
@@ -114,10 +122,10 @@ BUILD_DIR  = build
 
 # list of source files
 SOURCES = \
- $(SOURCE_DIR)/main_passthrough.c     \
- $(SOURCE_DIR)/main_portisch.c        \
- $(SOURCE_DIR)/main_rcswitch.c        \
- $(SOURCE_DIR)/portisch.c             \
+ $(SOURCE_DIR)/passthrough_main.c     \
+ $(SOURCE_DIR)/portisch_main.c        \
+ $(SOURCE_DIR)/rcswitch_main.c        \
+ $(SOURCE_DIR)/portisch_rf_handling.c \
  $(SOURCE_DIR)/portisch_serial.c      \
  $(SOURCE_DIR)/rcswitch.c             \
  $(SOURCE_DIR)/state_machine.c        \
@@ -133,12 +141,12 @@ OBJECTS = \
 
 # intermediate object files
 OBJECTS_PASSTHROUGH = \
- $(OBJECT_DIR)/main_passthrough.rel \
+ $(OBJECT_DIR)/passthrough_main.rel \
  $(OBJECT_DIR)/delay.rel            \
  $(OBJECT_DIR)/hal.rel
                         
 OBJECTS_RCSWITCH = \
- $(OBJECT_DIR)/main_rcswitch.rel    \
+ $(OBJECT_DIR)/rcswitch_main.rel    \
  $(OBJECT_DIR)/rcswitch.rel         \
  $(OBJECT_DIR)/state_machine.rel    \
  $(OBJECT_DIR)/uart.rel             \
@@ -147,17 +155,17 @@ OBJECTS_RCSWITCH = \
  $(OBJECT_DIR)/timer_interrupts.rel
                         
 OBJECTS_PORTISCH = \
- $(OBJECT_DIR)/main_portisch.rel    \
- $(OBJECT_DIR)/portisch.rel         \
- $(OBJECT_DIR)/portisch_serial.rel  \
- $(OBJECT_DIR)/timer_interrupts.rel \
- $(OBJECT_DIR)/uart.rel             \
+ $(OBJECT_DIR)/portisch_main.rel        \
+ $(OBJECT_DIR)/portisch_rf_handling.rel \
+ $(OBJECT_DIR)/portisch_serial.rel      \
+ $(OBJECT_DIR)/timer_interrupts.rel     \
+ $(OBJECT_DIR)/uart.rel                 \
  $(OBJECT_DIR)/hal.rel
 
 # firmware names
-TARGET_PASSTHROUGH  = $(BUILD_DIR)/main_passthrough_$(TARGET_BOARD).ihx
-TARGET_RCSWITCH     = $(BUILD_DIR)/main_rcswitch_$(TARGET_BOARD).ihx
-TARGET_PORTISCH     = $(BUILD_DIR)/main_portisch_$(TARGET_BOARD)_$(SELECT_FEATURE).ihx
+TARGET_PASSTHROUGH  = $(BUILD_DIR)/passthrough_main_$(TARGET_BOARD).ihx
+TARGET_RCSWITCH     = $(BUILD_DIR)/rcswitch_main_$(TARGET_BOARD).ihx
+TARGET_PORTISCH     = $(BUILD_DIR)/portisch_main_$(TARGET_BOARD)_$(RF_RX_FEATURE).ihx
 
 
 ###########################################################
@@ -169,7 +177,7 @@ TARGET_ARCH = -mmcs51
 AS       = sdas8051
 CC       = sdcc
 ASFLAGS  = -plosgffw
-CPPFLAGS = $(PROJECT_FLAGS) -DTARGET_BOARD_$(TARGET_BOARD) -D$(SELECT_FEATURE) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIR) -I$(DRIVER_DIR)
+CPPFLAGS = $(PROJECT_FLAGS) -DTARGET_BOARD_$(TARGET_BOARD) -D$(RF_RX_FEATURE) -D$(RX_TX_FEATURE) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIR) -I$(DRIVER_DIR)
 CFLAGS   = $(TARGET_ARCH) $(MEMORY_MODEL) $(CPPFLAGS)
 LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 

@@ -27,11 +27,8 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _PROJECT_DEFS_H
-#define _PROJECT_DEFS_H
 
-// support STC15W10X microcontroller, with X = 1 in my case
-// another door sensor purchased is X = 4 with more flash space and tamper switch
-#include <STC/15W10x/DIP8.h>
+// this type of file is usually a good place for project wide constants
+// there might be constants that would work for this
 
 #endif // _PROJECT_DEFS_H

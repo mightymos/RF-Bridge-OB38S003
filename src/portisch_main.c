@@ -346,7 +346,12 @@ void uart_state_machine(const uint8_t rxdataNoFlags)
 	}
 }
 
-bool radio_state_machine(const uart_command_t command)
+
+
+// defined (or not) in Makefile
+#if defined(RX_TX_INCLUDED)
+
+bool radio_tx_state_machine(const uart_command_t command)
 {
 	bool completed = false;
 
@@ -463,6 +468,10 @@ bool radio_state_machine(const uart_command_t command)
 
 	return completed;
 }
+
+#endif
+
+
 
 #if 1
 
@@ -843,13 +852,15 @@ void main (void)
 			case RF_CODE_RFOUT_NEW:
 			case RF_CODE_RFOUT_BUCKET:
 			{
+                
+#if defined(RF_TX_INCLUDED)
 				// only do the job if all data got received by UART
 				if (uart_state != IDLE)
 					break;
 
 				// if statement allows repeat transmissions
                 // and pass in the type of transmission to the state machine (e.g. 0xA5 by timing, 0xA8 by protocol, or 0xB0 by sniffed bucket timing)
-				if (radio_state_machine(uart_command))
+				if (radio_tx_state_machine(uart_command))
 				{
 					// indicate completed all transmissions
 					uart_put_command(RF_CODE_ACK);
@@ -863,8 +874,12 @@ void main (void)
 					// change back to previous command (i.e., not rfout)
 					uart_command = last_sniffing_command;
 				}
+                
+#endif
 				break;
 			}
+
+            
 			case RF_CODE_SNIFFING_ON_BUCKET:
 
 #if defined(BUCKET_SNIFFING_INCLUDED)
