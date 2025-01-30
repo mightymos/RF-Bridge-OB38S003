@@ -27,6 +27,8 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _PROJECT_DEFS_H
+#define _PROJECT_DEFS_H
 
 // this type of file is usually a good place for project wide constants
 // there might be constants that would work for this
