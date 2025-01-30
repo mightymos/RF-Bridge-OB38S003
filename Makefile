@@ -57,13 +57,9 @@ TARGET_BOARD = EFM8BB1LCB
 RF_RX_FEATURE = BUCKET_SNIFFING_INCLUDED
 #RF_RX_FEATURE = MULTI_PROTOCOLS_INCLUDED
 
-# uncomment or comment to include/exclude respectively
+# only uncomment one line, but has to be defined
 #RF_TX_FEATURE = RF_TX_INCLUDED
-
-# we do this so the variable is defined to something
-ifndef RF_TX_FEATURE
- RX_TX_FEATURE = RF_TX_EXCLUDED
-endif
+RF_TX_FEATURE = RF_TX_EXCLUDED
 
 # catches undefined
 ifndef TARGET_BOARD
@@ -72,6 +68,10 @@ endif
 
 ifndef RF_RX_FEATURE
  $(error Please define RF_RX_FEATURE in makefile)
+endif
+
+ifndef RF_TX_FEATURE
+ $(error Please define RF_TX_FEATURE in makefile)
 endif
 
 # these are the maximum clock speeds
@@ -132,7 +132,8 @@ SOURCES = \
  $(SOURCE_DIR)/uart.c                 \
  $(DRIVER_SRC_DIR)/delay.c            \
  $(DRIVER_SRC_DIR)/hal.c              \
- $(DRIVER_SRC_DIR)/timer_interrupts.c
+ $(DRIVER_SRC_DIR)/timer_interrupts.c \
+ $(DRIVER_SRC_DIR)/smb_0.c
 
 OBJECT_NAMES = \
  $(notdir $(SOURCES:.c=.rel))
@@ -160,7 +161,8 @@ OBJECTS_PORTISCH = \
  $(OBJECT_DIR)/portisch_serial.rel      \
  $(OBJECT_DIR)/timer_interrupts.rel     \
  $(OBJECT_DIR)/uart.rel                 \
- $(OBJECT_DIR)/hal.rel
+ $(OBJECT_DIR)/hal.rel                  \
+ $(OBJECT_DIR)/smb_0.rel
 
 # firmware names
 TARGET_PASSTHROUGH  = $(BUILD_DIR)/passthrough_main_$(TARGET_BOARD).ihx
@@ -177,7 +179,7 @@ TARGET_ARCH = -mmcs51
 AS       = sdas8051
 CC       = sdcc
 ASFLAGS  = -plosgffw
-CPPFLAGS = $(PROJECT_FLAGS) -DTARGET_BOARD_$(TARGET_BOARD) -D$(RF_RX_FEATURE) -D$(RX_TX_FEATURE) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIR) -I$(DRIVER_DIR)
+CPPFLAGS = $(PROJECT_FLAGS) -DTARGET_BOARD_$(TARGET_BOARD) -D$(RF_RX_FEATURE) -D$(RF_TX_FEATURE) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIR) -I$(DRIVER_DIR)
 CFLAGS   = $(TARGET_ARCH) $(MEMORY_MODEL) $(CPPFLAGS)
 LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 

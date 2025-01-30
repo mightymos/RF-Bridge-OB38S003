@@ -7,29 +7,24 @@
 #include "smb_0.h"
 #include "assert.h"
 
-#define ALL_FLAGS  SMB0_TXMODE_SF \
-                   | SMB0_START_SF \
-                   | SMB0_STOP_SF \
-                   | SMB0_ACKREQ_SF \
-                   | SMB0_ARBLOST_SF \
-                   | SMB0_ACK_SF
+#define ALL_FLAGS  SMB0_TXMODE_SF | SMB0_START_SF | SMB0_STOP_SF | SMB0_ACKREQ_SF | SMB0_ARBLOST_SF | SMB0_ACK_SF
 
-bool SMB0_getIntFlag()
+bool SMB0_getIntFlag(void)
 {
-  return SMB0CN0_SI;
+  return SI;
 }
 
-void SMB0_clearIntFlag()
+void SMB0_clearIntFlag(void)
 {
-  SMB0CN0_SI = 0;
+  SI = 0;
 }
 
-SI_REENTRANT_FUNCTION(SMB0_getStatusFlag, uint8_t, (uint8_t flag))
+uint8_t SMB0_getStatusFlag(uint8_t flag) __reentrant
 {
   return SMB0CN0 & flag;
 }
 
-SI_REENTRANT_FUNCTION(SMB0_setStatusFlag, void, (uint8_t flag, uint8_t state))
+void SMB0_setStatusFlag(uint8_t flag, uint8_t state) __reentrant
 {
   if (state)
   {
@@ -41,7 +36,7 @@ SI_REENTRANT_FUNCTION(SMB0_setStatusFlag, void, (uint8_t flag, uint8_t state))
   }
 }
 
-uint8_t SMB0_read()
+uint8_t SMB0_read(void)
 {
   return SMB0DAT;
 }
@@ -51,57 +46,52 @@ void SMB0_write(uint8_t value)
   SMB0DAT = value;
 }
 
-void SMB0_abort()
+void SMB0_abort(void)
 {
-  SMB0CF &= ~SMB0CF_ENSMB__BMASK;
-  SMB0CF |= SMB0CF_ENSMB__BMASK;
-  SMB0CN0 &= ~(SMB0CN0_STA__BMASK
-      | SMB0CN0_STO__BMASK
-      | SMB0CN0_ACKRQ__BMASK);
+  SMB0CF &= ~ENSMB__BMASK;
+  SMB0CF |= ENSMB__BMASK;
+  SMB0CN0 &= ~(STA__BMASK | STO__BMASK | ACKRQ__BMASK);
 }
 
 void SMB0_ack(bool ack)
 {
-  SMB0CN0_ACK = ack;
+  ACKRQ = ack;
 }
 
-void SMB0_start()
+void SMB0_start(void)
 {
-  SMB0CN0_STA = 1;
+  STA = 1;
 }
 
-void SMB0_stop()
+void SMB0_stop(void)
 {
-  SMB0CN0_STO = 1;
+  STO = 1;
 }
 
 void SMB0_init(SMB0_Timebase_t timebase, bool sclLow) {
-  SMB0CF &= ~(SMB0CF_SMBCS__FMASK | SMB0CF_SMBTOE__BMASK);
-  SMB0CF |= timebase
-            | SMB0CF_ENSMB__ENABLED
-            | SMB0CF_INH__SLAVE_DISABLED
-            | SMB0CF_SMBFTE__FREE_TO_ENABLED
-            | (uint8_t) sclLow << SMB0CF_SMBTOE__SHIFT;
-  SMB0ADM |= SMB0ADM_EHACK__ADR_ACK_AUTOMATIC;
+  SMB0CF &= ~(SMBCS__FMASK | SMBTOE__BMASK);
+  SMB0CF |= timebase | ENSMB__ENABLED | INH__SLAVE_DISABLED | SMBFTE__FREE_TO_ENABLED | (uint8_t) sclLow << SMBTOE__SHIFT;
+  SMB0ADM |= EHACK__ADR_ACK_AUTOMATIC;
 }
 
 void SMB0_initSlaveAddress(uint8_t address, uint8_t mask) {
-  SMB0CF  &= ~SMB0CF_INH__BMASK;
+  SMB0CF  &= ~INH__BMASK;
   SMB0ADR = address;
-  SMB0ADM = mask | SMB0ADM_EHACK__BMASK;
+  SMB0ADM = mask | EHACK__BMASK;
 }
 
-void SMB0_reset() {
+void SMB0_reset(void)
+{
   SMB0CF  = 0x0;
   SMB0TC  = 0x0;
-  SMB0CN0  = 0x0;
+  SMB0CN0 = 0x0;
   SMB0ADR = 0x0;
   SMB0ADM = 0x0;
 }
 
 #if EFM8PDL_SMB0_USE_STATEMACHINE == 1
-SI_INTERRUPT_PROTO(SMB0_ISR, SMBUS0_IRQn);
-SI_INTERRUPT(SMB0_ISR, SMBUS0_IRQn)
+
+void SMB0_ISR(void) __interrupt (SMBUS0_VECTOR)
 {
   if(SMB0CN0_ARBLOST) {
     SMB0_arbLostCb(SMB0CN0 & 0xF0);
@@ -168,32 +158,25 @@ SI_INTERRUPT(SMB0_ISR, SMBUS0_IRQn)
 
 #if EFM8PDL_SMB0_USE_BUFFER == 1
 
-SI_SEGMENT_VARIABLE(mAddress, uint8_t, SI_SEG_XDATA);
-SI_SEGMENT_VARIABLE(mTxCount, uint8_t, SI_SEG_XDATA);
-SI_SEGMENT_VARIABLE(mRxCount, uint8_t, SI_SEG_XDATA);
-SI_SEGMENT_VARIABLE_SEGMENT_POINTER(mTxBuffer, uint8_t, EFM8PDL_SMB0_RX_BUFTYPE,
-    SI_SEG_XDATA);
-SI_SEGMENT_VARIABLE_SEGMENT_POINTER(mRxBuffer, uint8_t, EFM8PDL_SMB0_TX_BUFTYPE,
-    SI_SEG_XDATA);
+__xdata uint8_t mAddress;
+__xdata uint8_t mTxCount;
+__xdata uint8_t mRxCount;
+__xdata uint8_t* mTxBuffer;
+__xdata uint8_t* mRxBuffer;
 
-SI_SEGMENT_VARIABLE(sRxSize, uint8_t, SI_SEG_XDATA);
-SI_SEGMENT_VARIABLE(sRxCount, uint8_t, SI_SEG_XDATA);
-SI_SEGMENT_VARIABLE(sTxCount, uint8_t, SI_SEG_XDATA);
-SI_SEGMENT_VARIABLE_SEGMENT_POINTER(sRxBuffer, uint8_t, EFM8PDL_SMB0_RX_BUFTYPE,
-    SI_SEG_XDATA);
-SI_SEGMENT_VARIABLE_SEGMENT_POINTER(sTxBuffer, uint8_t, EFM8PDL_SMB0_TX_BUFTYPE,
-    SI_SEG_XDATA);
+__xdata uint8_t sRxSize;
+__xdata uint8_t sRxCount;
+__xdata uint8_t sTxCount;
+__xdata uint8_t* sRxBuffer;
+__xdata uint8_t* sTxBuffer;
 
-SI_SEGMENT_VARIABLE(smbBusy, bool, SI_SEG_IDATA);
-SI_SEGMENT_VARIABLE(smbReq, bool, SI_SEG_IDATA);
-SI_SEGMENT_VARIABLE(smbReceive, bool, SI_SEG_IDATA);
-SI_SEGMENT_VARIABLE(mRetries, uint8_t, SI_SEG_XDATA);
+bool smbBusy;
+bool smbReq;
+bool smbReceive;
+__xdata uint8_t mRetries;
 
-void SMB0_transfer(uint8_t address,
-    SI_VARIABLE_SEGMENT_POINTER(txBuffer, uint8_t, EFM8PDL_SMB0_TX_BUFTYPE),
-    SI_VARIABLE_SEGMENT_POINTER(rxBuffer, uint8_t, EFM8PDL_SMB0_RX_BUFTYPE),
-    uint8_t tx_len, uint8_t rx_len) {
-
+void SMB0_transfer(uint8_t address, __xdata uint8_t* txBuffer, __xdata uint8_t* rxBuffer, uint8_t tx_len, uint8_t rx_len)
+{
   //Setup transfer
   mAddress = address;
   mTxBuffer = txBuffer;
@@ -206,11 +189,12 @@ void SMB0_transfer(uint8_t address,
     smbReq = true;
   } else {
     //Start transfer
-    SMB0CN0_STA = 1;
+    STA = 1;
   }
 }
 
-void SMB0_abortTransfer(){
+void SMB0_abortTransfer(void)
+{
   mTxCount = 0;
   mRxCount = 0;
   sTxCount = 0;
@@ -219,38 +203,40 @@ void SMB0_abortTransfer(){
   smbReq = false;
 }
 
-uint8_t SMB0_txBytesRemaining() {
+uint8_t SMB0_txBytesRemaining(void)
+{
   return mTxCount;
 }
 
-uint8_t SMB0_rxBytesRemaining() {
+uint8_t SMB0_rxBytesRemaining(void)
+{
   return mRxCount;
 }
 
-void SMB0_initSlave(uint8_t address,
-                    SI_VARIABLE_SEGMENT_POINTER(commandBuffer, uint8_t, EFM8PDL_SMB0_RX_BUFTYPE), uint8_t length) {
-  SMB0CF  &= ~SMB0CF_INH__BMASK;
+void SMB0_initSlave(uint8_t address, __xdata uint8_t* commandBuffer, uint8_t length)
+{
+  SMB0CF  &= ~INH__BMASK;
   SMB0ADR = address;
-  SMB0ADM = 0xFF | SMB0ADM_EHACK__BMASK;
+  SMB0ADM = 0xFF | EHACK__BMASK;
   sRxBuffer = commandBuffer;
   sRxSize = length;
   sRxCount = 0;
 }
 
-uint8_t SMB0_getCommandLength() {
+uint8_t SMB0_getCommandLength(void)
+{
   return sRxCount;
 }
 
-void SMB0_sendResponse(
-    SI_VARIABLE_SEGMENT_POINTER(dataBuffer, uint8_t, EFM8PDL_SMB0_TX_BUFTYPE),
-    uint8_t length) {
+void SMB0_sendResponse(__xdata uint8_t* dataBuffer, uint8_t length)
+{
   sTxBuffer = dataBuffer;
   sTxCount = length;
 }
 
-SI_INTERRUPT_PROTO(SMB0_ISR, SMBUS0_IRQn);
+//SI_INTERRUPT_PROTO(SMB0_ISR, SMBUS0_IRQn);
 
-SI_INTERRUPT(SMB0_ISR, SMBUS0_IRQn)
+void SMB0_ISR(void) __interrupt (SMBUS0_VECTOR)
 {
 
   // Jump to status vector handler
@@ -267,20 +253,20 @@ SI_INTERRUPT(SMB0_ISR, SMBUS0_IRQn)
     smbReceive = SMB0DAT & 0x01;
 
     //tailchain: clear_start;
-    SMB0CN0_STA = 0;
+    STA = 0;
     smbBusy = true;
     break;
 
   // Master Transmitter: Data byte transmitted
   case SMB0_MASTER_TXDATA:
-    if (SMB0CN0_ACK)
+    if (ACK)
     {
       if (smbReceive)
       {
         //Handle read transfer
         if(!--mRxCount)
         {
-          SMB0CN0_ACK = 0; //ack for first data received byte
+          ACK = 0; //ack for first data received byte
         }
         //ACK = 1 by default so no need to set it
       }
@@ -299,15 +285,15 @@ SI_INTERRUPT(SMB0_ISR, SMBUS0_IRQn)
           if (mRxCount)
           {
             //if tx done and rx remaining do repeated start
-            SMB0CN0_STA = 1;
+            STA = 1;
           }
           else
           {
             //if tx done and no rx then stop
             //tailchain: stop_seq
             SMB0_transferCompleteCb();
-            SMB0CN0_STO = 1;
-            SMB0CN0_STA = smbReq;
+            STO = 1;
+            STA = smbReq;
             smbReq = false;
             smbBusy = false;
           } // if rxCount else
@@ -320,8 +306,8 @@ SI_INTERRUPT(SMB0_ISR, SMBUS0_IRQn)
       SMB0_errorCb(SMB0_NACK_ERROR);
 
       //tailchain: stop_seq
-      SMB0CN0_STO = 1;
-      SMB0CN0_STA = smbReq; //necessary for tailchain
+      STO = 1;
+      STA = smbReq; //necessary for tailchain
       smbReq = false; //necessary for tailchain
       smbBusy = false;
     }
@@ -338,19 +324,19 @@ SI_INTERRUPT(SMB0_ISR, SMBUS0_IRQn)
       //NACK if the byte we are about to read is our last
       if (!--mRxCount)
       {
-        SMB0CN0_ACK = 0;
+        ACK = 0;
       }
       //ACK =1  by default so no need to set it.
     }
     else
     {
-      SMB0CN0_ACK = 0;
+      ACK = 0;
 
       // If no bytes remain notify user xfer complete and issue stop.
       //tailchain: stop_seq
       SMB0_transferCompleteCb();
-      SMB0CN0_STO = 1;
-      SMB0CN0_STA = smbReq;
+      STO = 1;
+      STA = smbReq;
       smbReq = false;
       smbBusy = false;
     }
@@ -358,7 +344,7 @@ SI_INTERRUPT(SMB0_ISR, SMBUS0_IRQn)
 
   // Slave Transmitter: Data byte transmitted
   case SMB0_SLAVE_TXDATA:
-    if(SMB0CN0_ACK)
+    if(ACK)
     {
       if(--sTxCount)
       {
@@ -373,7 +359,7 @@ SI_INTERRUPT(SMB0_ISR, SMBUS0_IRQn)
 
   // Slave Receiver: Start+Address received
   case SMB0_SLAVE_ADDRESS:
-    if(SMB0CN0_ARBLOST)
+    if(ARBLOST)
     {
       if(mRetries--)
       {
@@ -411,7 +397,7 @@ SI_INTERRUPT(SMB0_ISR, SMBUS0_IRQn)
     }
 
     //tailchain: clear_start
-    SMB0CN0_STA = 0;
+    STA = 0;
     smbBusy = true;
     break;
 
@@ -440,11 +426,11 @@ SI_INTERRUPT(SMB0_ISR, SMBUS0_IRQn)
     }
 
     //clear stop
-    SMB0CN0_STO = 0;
+    STO = 0;
 
     //If master request pending send a start.
     //tailchain: stop_seq
-    SMB0CN0_STA = smbReq;
+    STA = smbReq;
     smbReq = false;
     smbBusy = false;
     break;
@@ -456,7 +442,7 @@ SI_INTERRUPT(SMB0_ISR, SMBUS0_IRQn)
   } // end switch
 
   //Clear interrupt flag
-  SMB0CN0_SI = 0;
+  SI = 0;
 
 }
 
