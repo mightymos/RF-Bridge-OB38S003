@@ -8,12 +8,12 @@
 #ifndef INC_HAL_H_
 #define INC_HAL_H_
 
-#if defined(TARGET_BOARD_EFM8BB1LCB)
+#if defined(TARGET_MCU_EFM8BB1LCB)
     #include "efm8bb1lck_pins.h"
-#elif defined(TARGET_BOARD_EFM8BB1)
+#elif defined(TARGET_MCU_EFM8BB1)
     #include "sonoffr20_pins.h"
 #else
-    #error Please define TARGET_BOARD in makefile
+    #error Please define TARGET_MCU in makefile
 #endif
 
 #include <stdbool.h>
@@ -36,7 +36,7 @@ inline bool rdata_level(void)
     return RDATA;
 }
 
-#if defined(TARGET_BOARD_EFM8BB1LCB)
+#if defined(TARGET_MCU_EFM8BB1LCB)
     // setter prototypes
     inline void led_on(void)
     {
@@ -50,7 +50,7 @@ inline bool rdata_level(void)
         // EFM8BB1LCK board
         LED = 1;
     }
-#elif defined(TARGET_BOARD_EFM8BB1)
+#elif defined(TARGET_MCU_EFM8BB1)
     // setter prototypes
     inline void led_on(void)
     {
@@ -64,7 +64,7 @@ inline bool rdata_level(void)
         LED = 0;
     }
 #else
-    #error Please define TARGET_BOARD in makefile
+    #error Please define TARGET_MCU in makefile
 #endif
 
 inline void led_toggle(void)

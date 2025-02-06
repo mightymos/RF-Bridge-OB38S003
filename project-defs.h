@@ -31,6 +31,8 @@
 #define _PROJECT_DEFS_H
 
 // this type of file is usually a good place for project wide constants
-// there might be constants that would work for this
+// option to exclude radio transmission to save on code space
+#define RF_TX_INCLUDED
+
 
 #endif // _PROJECT_DEFS_H

@@ -6,9 +6,9 @@
 
 #include "hal.h"
 
-#if defined(TARGET_BOARD_OB38S003)
+#if defined(TARGET_MCU_OB38S003)
     #include "OB38S003.h"
-#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
     // these are just a difference in naming convention
     #define SBUF SBUF0
     #define SCON SCON0
@@ -60,9 +60,9 @@ void uart_init_tx_polling(void)
 
 //=========================================================
 //=========================================================
-#if defined(TARGET_BOARD_OB38S003)
+#if defined(TARGET_MCU_OB38S003)
 void uart_isr(void) __interrupt (d_UART0_Vector)
-#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
 void uart_isr(void) __interrupt (UART0_VECTOR)
 #endif
 {

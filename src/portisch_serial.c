@@ -1,4 +1,4 @@
-#include "portisch.h"
+#include "portisch_rf_handling.h"
 #include "portisch_command_format.h"
 #include "portisch_protocols.h"
 #include "portisch_serial.h"

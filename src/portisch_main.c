@@ -6,8 +6,8 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#if !defined(TARGET_BOARD_EFM8BB1) && !defined(TARGET_BOARD_OB38S003) && !defined(TARGET_BOARD_EFM8BB1LCB)
-    #error Please define TARGET_BOARD in makefile
+#if !defined(TARGET_MCU_EFM8BB1) && !defined(TARGET_MCU_OB38S003) && !defined(TARGET_MCU_EFM8BB1LCB)
+    #error Please define TARGET_MCU in makefile
 #endif
 
 //-----------------------------------------------------------------------------
@@ -21,7 +21,8 @@
 
 #include "delay.h"
 #include "hal.h"
-#include "portisch.h"
+#include "project-defs.h"
+#include "portisch_rf_handling.h"
 #include "portisch_command_format.h"
 #include "portisch_protocols.h"
 #include "portisch_serial.h"
@@ -79,7 +80,7 @@ bool blockReadingUART = false;
 // sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
 // it is probably more proper to achieve this through include files but also easy to omit
 // and then things just will not work with no clear reason why, even though compilation is succcessful
-#if defined(TARGET_BOARD_OB38S003)
+#if defined(TARGET_MCU_OB38S003)
     // supports tens of microseconds delays
     void timer0_isr(void) __interrupt (d_T0_Vector);
     // supports  milliseconds delays
@@ -89,7 +90,7 @@ bool blockReadingUART = false;
     // hardware uart
     void uart_isr(void)   __interrupt (d_UART0_Vector);
 
-#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
     // timer0 was used for PCA in portisch, instead just use system clock
     // timer1 must be used for uart on this controller
     void uart_isr(void) __interrupt (UART0_VECTOR);
@@ -101,7 +102,7 @@ bool blockReadingUART = false;
     void pca0_isr(void) __interrupt (PCA0_VECTOR);
 
 #else
-    #error Please define TARGET_BOARD in makefile
+    #error Please define TARGET_MCU in makefile
 #endif
 
 #if 0
@@ -349,7 +350,7 @@ void uart_state_machine(const uint8_t rxdataNoFlags)
 
 
 // defined (or not) in Makefile
-#if defined(RX_TX_INCLUDED)
+#if defined(RF_TX_INCLUDED)
 
 bool radio_tx_state_machine(const uart_command_t command)
 {
@@ -518,13 +519,13 @@ void main (void)
     set_clock_mode();
 
 	// call hardware initialization routine
-#if defined(TARGET_BOARD_OB38S003)
+#if defined(TARGET_MCU_OB38S003)
     init_port_pins();
-#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
     // the crossbar on this microcontroller makes initialization more complicated
     init_port_pins_for_serial();
 #else
-    #error Please define TARGET_BOARD in makefile
+    #error Please define TARGET_MCU in makefile
 #endif
 
 	// set default pin states
@@ -552,7 +553,7 @@ void main (void)
     // enable actual interrupt
     enable_serial_interrupt();
     
-#if defined(TARGET_BOARD_OB38S003)
+#if defined(TARGET_MCU_OB38S003)
     // supports microseconds and milliseconds delays
     // using autoreload because of concern if manually reloading counters results in timer inaccuracies
     init_timer0_8bit_autoreload();
@@ -562,7 +563,7 @@ void main (void)
     // enable for eventually use once timer(s) are enabled for a delay
     enable_timer0_interrupt();
     enable_timer1_interrupt();
-#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
     // pca used timer0 as timebase on original portisch, though we could use the pca counter itself
     //init_timer0_8bit_autoreload(TIMER0_PCA0);
     // uart with 19200 baud, uart must use timer1 on efm8bb1
@@ -611,7 +612,7 @@ void main (void)
 #endif
 
 
-#if defined(TARGET_BOARD_OB38S003)
+#if defined(TARGET_MCU_OB38S003)
     // FIXME: function not used on efm8bb1, because unknown if receiver has enable pin
     radio_receiver_on();
 #endif

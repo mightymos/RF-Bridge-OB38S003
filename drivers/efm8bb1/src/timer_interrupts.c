@@ -10,9 +10,9 @@
 //#if defined(TARGET_RCSWITCH)
 //    #include "rcswitch.h"
 //#elif defined(TARGET_PORTISCH)
-    #include "portisch.h"
+    #include "portisch_rf_handling.h"
 //#else
-//    #error Please define TARGET_BOARD in makefile
+//    #error Please define TARGET_MCU in makefile
 //#endif
 
 #include "timer_interrupts.h"

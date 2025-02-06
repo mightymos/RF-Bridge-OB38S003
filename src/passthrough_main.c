@@ -32,8 +32,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 
-#if !defined(TARGET_BOARD_EFM8BB1) && !defined(TARGET_BOARD_OB38S003) && !defined(TARGET_BOARD_EFM8BB1LCB)
-    #error Please define TARGET_BOARD in makefile
+#if !defined(TARGET_MCU_EFM8BB1) && !defined(TARGET_MCU_OB38S003) && !defined(TARGET_MCU_EFM8BB1LCB)
+    #error Please define TARGET_MCU in makefile
 #endif
 
 
@@ -97,13 +97,13 @@ int main (void)
     // hardware initialization
     set_clock_mode();
     
-#if defined(TARGET_BOARD_OB38S003)
+#if defined(TARGET_MCU_OB38S003)
     init_port_pins();
-#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
     // the crossbar on this microcontroller makes initialization more complicated
     init_port_pins_for_passthrough();
 #else
-    #error Please define TARGET_BOARD in makefile
+    #error Please define TARGET_MCU in makefile
 #endif
 
     // set default pin levels
@@ -113,7 +113,7 @@ int main (void)
     
     uart_tx_pin_off();
 
-#if defined(TARGET_BOARD_OB38S003)
+#if defined(TARGET_MCU_OB38S003)
     // enable radio receiver
     radio_receiver_on();
 #endif

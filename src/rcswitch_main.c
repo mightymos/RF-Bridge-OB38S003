@@ -31,8 +31,8 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#if !defined(TARGET_BOARD_EFM8BB1) && !defined(TARGET_BOARD_OB38S003) && !defined(TARGET_BOARD_EFM8BB1LCB)
-    #error Please define TARGET_BOARD in makefile
+#if !defined(TARGET_MCU_EFM8BB1) && !defined(TARGET_MCU_OB38S003) && !defined(TARGET_MCU_EFM8BB1LCB)
+    #error Please define TARGET_MCU in makefile
 #endif
 
 // printf() requires a decent amount of code space and ram which we would like to avoid
@@ -77,7 +77,7 @@
 // sdccman sec. 3.8.1 indicates isr prototype must appear or be included in the file containing main
 // it is probably more proper to achieve this through include files but also easy to omit
 // and then things just will not work with no clear reason why, even though compilation is succcessful
-#if defined(TARGET_BOARD_OB38S003)
+#if defined(TARGET_MCU_OB38S003)
     // for software uart
     // FIXME: if reset pin is set to reset function, instead of gpio, does this interfere with anything (e.g., software serial?)
     //extern void tm0(void)        __interrupt (d_T0_Vector);
@@ -88,7 +88,7 @@
     // hardware uart
     extern void uart_isr(void)   __interrupt (d_UART0_Vector);
 
-#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
 
     // software uart
     //extern void tm0(void)        __interrupt (TIMER0_VECTOR);
@@ -116,7 +116,7 @@
     //}
 
 #else
-    #error Please define TARGET_BOARD in makefile
+    #error Please define TARGET_MCU in makefile
 #endif
 
 //-----------------------------------------------------------------------------
@@ -190,13 +190,13 @@ int main (void)
     // hardware initialization
     set_clock_mode();
     
-#if defined(TARGET_BOARD_OB38S003)
+#if defined(TARGET_MCU_OB38S003)
     init_port_pins();
-#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
     // the crossbar on this microcontroller makes initialization more complicated
     init_port_pins_for_serial();
 #else
-    #error Please define TARGET_BOARD in makefile
+    #error Please define TARGET_MCU in makefile
 #endif
     
     // set default pin levels
@@ -232,7 +232,7 @@ int main (void)
 #endif
 
     
-#if defined(TARGET_BOARD_OB38S003)
+#if defined(TARGET_MCU_OB38S003)
     // timer 0 provides one millisecond tick or supports software uart
     // at various times during development timer 0 has been used to support software uart
     //init_timer0(SOFT_BAUD);
@@ -249,7 +249,7 @@ int main (void)
     enable_timer0_interrupt();
     //enable_timer1_interrupt();
     //enable_timer2_interrupt();
-#elif defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
     // pca used timer0 in stock portisch (why?), however rcswitch can use dedicated pca counters
     // at various times during development timer 0 has been used to support software uart
     //init_timer0(SOFT_BAUD);
@@ -283,7 +283,7 @@ int main (void)
     // enable interrupts
     enable_global_interrupts();
  
-#if defined(TARGET_BOARD_OB38S003)
+#if defined(TARGET_MCU_OB38S003)
     // FIXME: function empty on efm8bb1, because unknown if receiver has enable pin
     radio_receiver_on();
 #endif
@@ -306,7 +306,7 @@ int main (void)
 #endif
 
 
-//#if defined(TARGET_BOARD_EFM8BB1) || defined(TARGET_BOARD_EFM8BB1LCB)
+//#if defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
 //  putstring("uid:");
 //  startup_uid();
 //  putstring("\r\n");

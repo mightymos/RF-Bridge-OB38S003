@@ -45,42 +45,38 @@
 # Target MCU settings --------------------------------------------------
 # uncomment only one target board
 # FIXME: build all targets without need to modify makefile
-# FIXME: it is possible to uncomment more than one line and it reassigns TARGET_BOARD which might confuse person
+# FIXME: it is possible to uncomment more than one line and it reassigns TARGET_MCU which might confuse person
+# FIXME: really microcontroller and board are different variables
 # sonoff black box
-#TARGET_BOARD = EFM8BB1
+#TARGET_MCU = EFM8BB1
 # low cost development board
-TARGET_BOARD = EFM8BB1LCB
+#TARGET_MCU = EFM8BB1LCB
 # sonoff white box
-#TARGET_BOARD = OB38S003
+TARGET_MCU = OB38S003
 
+# defined here so result can be included in file name
 # uncomment only one
 RF_RX_FEATURE = BUCKET_SNIFFING_INCLUDED
 #RF_RX_FEATURE = MULTI_PROTOCOLS_INCLUDED
 
-# only uncomment one line, but has to be defined
-#RF_TX_FEATURE = RF_TX_INCLUDED
-RF_TX_FEATURE = RF_TX_EXCLUDED
 
 # catches undefined
-ifndef TARGET_BOARD
- $(error Please define TARGET_BOARD in makefile)
+ifndef TARGET_MCU
+ $(error Please define TARGET_MCU in makefile)
 endif
 
 ifndef RF_RX_FEATURE
  $(error Please define RF_RX_FEATURE in makefile)
 endif
 
-ifndef RF_TX_FEATURE
- $(error Please define RF_TX_FEATURE in makefile)
-endif
 
 # these are the maximum clock speeds
-ifeq ($(TARGET_BOARD), EFM8BB1)
+ifeq ($(TARGET_MCU), EFM8BB1)
  # for EFM8BB1 in Sonoff v2.0 receivers (black color box)
  MCU_FREQ_KHZ = 24500
-else ifeq ($(TARGET_BOARD), EFM8BB1LCB)
+else ifeq ($(TARGET_MCU), EFM8BB1LCB)
  MCU_FREQ_KHZ = 24500
-else ifeq ($(TARGET_BOARD), OB38S003)
+else ifeq ($(TARGET_MCU), OB38S003)
 # for OB38S003 used in Sonoff v2.2 receivers (white color box)
  MCU_FREQ_KHZ = 16000
 endif
@@ -94,11 +90,11 @@ HAS_DUAL_DPTR = n
 SOURCE_DIR = src
 
 # target specific sources
-ifeq ($(TARGET_BOARD), EFM8BB1)
+ifeq ($(TARGET_MCU), EFM8BB1)
  DRIVER_SRC_DIR = drivers/efm8bb1/src
-else ifeq ($(TARGET_BOARD), EFM8BB1LCB)
+else ifeq ($(TARGET_MCU), EFM8BB1LCB)
  DRIVER_SRC_DIR = drivers/efm8bb1/src
-else ifeq ($(TARGET_BOARD), OB38S003)
+else ifeq ($(TARGET_MCU), OB38S003)
  DRIVER_SRC_DIR = drivers/ob38s003/src
 endif
 
@@ -106,11 +102,11 @@ endif
 INCLUDE_DIR = inc/
 
 # target specific includes
-ifeq ($(TARGET_BOARD), EFM8BB1)
+ifeq ($(TARGET_MCU), EFM8BB1)
  DRIVER_DIR = drivers/efm8bb1/inc
-else ifeq ($(TARGET_BOARD), EFM8BB1LCB)
+else ifeq ($(TARGET_MCU), EFM8BB1LCB)
  DRIVER_DIR = drivers/efm8bb1/inc
-else ifeq ($(TARGET_BOARD), OB38S003)
+else ifeq ($(TARGET_MCU), OB38S003)
  DRIVER_DIR = drivers/ob38s003/inc
 endif
 
@@ -132,8 +128,9 @@ SOURCES = \
  $(SOURCE_DIR)/uart.c                 \
  $(DRIVER_SRC_DIR)/delay.c            \
  $(DRIVER_SRC_DIR)/hal.c              \
- $(DRIVER_SRC_DIR)/timer_interrupts.c \
- $(DRIVER_SRC_DIR)/smb_0.c
+ $(DRIVER_SRC_DIR)/timer_interrupts.c
+ 
+ 
 
 OBJECT_NAMES = \
  $(notdir $(SOURCES:.c=.rel))
@@ -161,13 +158,12 @@ OBJECTS_PORTISCH = \
  $(OBJECT_DIR)/portisch_serial.rel      \
  $(OBJECT_DIR)/timer_interrupts.rel     \
  $(OBJECT_DIR)/uart.rel                 \
- $(OBJECT_DIR)/hal.rel                  \
- $(OBJECT_DIR)/smb_0.rel
+ $(OBJECT_DIR)/hal.rel
 
 # firmware names
-TARGET_PASSTHROUGH  = $(BUILD_DIR)/passthrough_main_$(TARGET_BOARD).ihx
-TARGET_RCSWITCH     = $(BUILD_DIR)/rcswitch_main_$(TARGET_BOARD).ihx
-TARGET_PORTISCH     = $(BUILD_DIR)/portisch_main_$(TARGET_BOARD)_$(RF_RX_FEATURE).ihx
+TARGET_PASSTHROUGH  = $(BUILD_DIR)/passthrough_main_$(TARGET_MCU).ihx
+TARGET_RCSWITCH     = $(BUILD_DIR)/rcswitch_main_$(TARGET_MCU).ihx
+TARGET_PORTISCH     = $(BUILD_DIR)/portisch_main_$(TARGET_MCU)_$(RF_RX_FEATURE).ihx
 
 
 ###########################################################
@@ -179,7 +175,7 @@ TARGET_ARCH = -mmcs51
 AS       = sdas8051
 CC       = sdcc
 ASFLAGS  = -plosgffw
-CPPFLAGS = $(PROJECT_FLAGS) -DTARGET_BOARD_$(TARGET_BOARD) -D$(RF_RX_FEATURE) -D$(RF_TX_FEATURE) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I$(INCLUDE_DIR) -I$(DRIVER_DIR)
+CPPFLAGS = $(PROJECT_FLAGS) -DTARGET_MCU_$(TARGET_MCU) -D$(RF_RX_FEATURE) -DMCU_FREQ=$(MCU_FREQ_KHZ)000UL -I. -I$(INCLUDE_DIR) -I$(DRIVER_DIR)
 CFLAGS   = $(TARGET_ARCH) $(MEMORY_MODEL) $(CPPFLAGS)
 LDFLAGS  = $(TARGET_ARCH) $(MEMORY_MODEL) $(MEMORY_SIZES)
 

@@ -11,8 +11,9 @@
 //#include "capture_interrupt.h"
 #include "delay.h"
 #include "hal.h"
-#include "portisch.h"
+#include "portisch_rf_handling.h"
 #include "portisch_protocols.h"
+#include "project-defs.h"
 #include "timer_interrupts.h"
 //#include "pca_0.h"
 //#include "timers.h"
@@ -490,7 +491,7 @@ void PCA0_StopSniffing(void)
 }
 
 // defined in Makefile
-#if defined(RX_TX_INCLUDED)
+#if defined(RF_TX_INCLUDED)
 
 // returns the inverted bit of what was passed in to high_low
 bool SendSingleBucket(const bool high_low, uint16_t bucket_time)
