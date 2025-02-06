@@ -371,6 +371,11 @@ bool radio_tx_state_machine(const uart_command_t command)
 	uint8_t end_size;
 	uint8_t bitcount;
     
+    //
+    uint8_t num_buckets;
+    uint8_t* rfdata;
+    uint8_t data_len;
+    uint16_t* buckets_pointer;
 
 	// do transmit of the data
 	switch(rf_state)
@@ -420,7 +425,7 @@ bool radio_tx_state_machine(const uart_command_t command)
                     SendBucketsByIndex(RF_DATA[0], &RF_DATA[1]);
                     break;
                 case RF_CODE_RFOUT_BUCKET:
-                    uint8_t num_buckets = RF_DATA[0];
+                    num_buckets = RF_DATA[0];
                     
                     // FIXME: I do not know what format this is, does it match 0xB0 on the wiki?
                     // byte 0:				number of buckets: k
@@ -431,15 +436,15 @@ bool radio_tx_state_machine(const uart_command_t command)
                     //uint16_t* buckets = (uint16_t *)(RF_DATA + 2);
                     
                     // find the start of the data by skipping over the number of buckets times two and two bytes for numbers of buckets and number of repeats
-                    uint8_t* rfdata = RF_DATA + (num_buckets << 1) + 2;
+                    rfdata = RF_DATA + (num_buckets << 1) + 2;
                     
                     // subtract out two bytes for number of buckets and number of repeats
                     // then subtract out number of buckets multiplied by 2
-                    uint8_t data_len = packetLength - 2 - (num_buckets << 1);
+                    data_len = packetLength - 2 - (num_buckets << 1);
 
                     // pointer
                     // this is a global variable with maximum size seven
-                    uint16_t* buckets_pointer = (uint16_t *)(RF_DATA + 2);
+                    buckets_pointer = (uint16_t *)(RF_DATA + 2);
 
                     // 0xB0 transmission using timings that generally would have been sniffed with 0xB1 mode
                     SendRFBuckets(buckets_pointer, rfdata, data_len);
