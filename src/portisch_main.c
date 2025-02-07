@@ -6,7 +6,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#if !defined(TARGET_MCU_EFM8BB1) && !defined(TARGET_MCU_OB38S003) && !defined(TARGET_MCU_EFM8BB1LCB)
+#if !defined(TARGET_MCU_EFM8BB1) && !defined(TARGET_MCU_OB38S003) && !defined(TARGET_MCU_EFM8BB1LCB) && !defined(TARGET_MCU_EFM8BB52)
     #error Please define TARGET_MCU in makefile
 #endif
 
@@ -100,7 +100,16 @@ bool blockReadingUART = false;
     void timer3_isr(void) __interrupt (TIMER3_VECTOR);
     // programmable counter for measuring time between edge transitions of radio pulses
     void pca0_isr(void) __interrupt (PCA0_VECTOR);
-
+#elif defined(TARGET_MCU_EFM8BB52)
+    // timer0 was used for PCA in portisch, instead just use system clock
+    // timer1 must be used for uart on this controller
+    void uart_isr(void) __interrupt (UART0_IRQn);
+    // timer2 is used on demand to provide tens of microseconds delays
+    void timer2_isr(void) __interrupt (TIMER2_IRQn);
+    // timer3 is used on demand to provide milliseconds delays
+    void timer3_isr(void) __interrupt (TIMER3_IRQn);
+    // programmable counter for measuring time between edge transitions of radio pulses
+    void pca0_isr(void) __interrupt (PCA0_IRQn);
 #else
     #error Please define TARGET_MCU in makefile
 #endif
@@ -526,7 +535,7 @@ void main (void)
 	// call hardware initialization routine
 #if defined(TARGET_MCU_OB38S003)
     init_port_pins();
-#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB) || defined(TARGET_MCU_EFM8BB52)
     // the crossbar on this microcontroller makes initialization more complicated
     init_port_pins_for_serial();
 #else
@@ -568,7 +577,7 @@ void main (void)
     // enable for eventually use once timer(s) are enabled for a delay
     enable_timer0_interrupt();
     enable_timer1_interrupt();
-#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB) || defined(TARGET_MCU_EFM8BB52)
     // pca used timer0 as timebase on original portisch, though we could use the pca counter itself
     //init_timer0_8bit_autoreload(TIMER0_PCA0);
     // uart with 19200 baud, uart must use timer1 on efm8bb1

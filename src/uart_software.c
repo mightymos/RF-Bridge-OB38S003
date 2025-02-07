@@ -25,7 +25,7 @@ unsigned char TBIT,RBIT;
 //-----------------------------------------
 #if defined(TARGET_MCU_OB38S003)
 void tm0(void) __interrupt (d_T0_Vector)
-#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB) || defined(TARGET_MCU_EFM8BB52)
 void tm0(void) __interrupt (TIMER0_VECTOR)
 #endif
 {    

@@ -52,12 +52,28 @@
 # low cost development board
 #TARGET_MCU = EFM8BB1LCB
 # sonoff white box
-TARGET_MCU = OB38S003
+#TARGET_MCU = OB38S003
+# BB52 Explorer Kit
+TARGET_MCU = EFM8BB52
 
 # defined here so result can be included in file name
 # uncomment only one
 RF_RX_FEATURE = BUCKET_SNIFFING_INCLUDED
 #RF_RX_FEATURE = MULTI_PROTOCOLS_INCLUDED
+
+# these are the maximum clock speeds
+ifeq ($(TARGET_MCU), EFM8BB1)
+ # for EFM8BB1 in Sonoff v2.0 receivers (black color box)
+ MCU_FREQ_KHZ = 24500
+else ifeq ($(TARGET_MCU), EFM8BB1LCB)
+ MCU_FREQ_KHZ = 24500
+else ifeq ($(TARGET_MCU), OB38S003)
+# for OB38S003 used in Sonoff v2.2 receivers (white color box)
+ MCU_FREQ_KHZ = 16000
+else ifeq ($(TARGET_MCU), EFM8BB52)
+# for BB52 Explorer Kit
+ MCU_FREQ_KHZ = 24500
+endif
 
 
 # catches undefined
@@ -69,16 +85,8 @@ ifndef RF_RX_FEATURE
  $(error Please define RF_RX_FEATURE in makefile)
 endif
 
-
-# these are the maximum clock speeds
-ifeq ($(TARGET_MCU), EFM8BB1)
- # for EFM8BB1 in Sonoff v2.0 receivers (black color box)
- MCU_FREQ_KHZ = 24500
-else ifeq ($(TARGET_MCU), EFM8BB1LCB)
- MCU_FREQ_KHZ = 24500
-else ifeq ($(TARGET_MCU), OB38S003)
-# for OB38S003 used in Sonoff v2.2 receivers (white color box)
- MCU_FREQ_KHZ = 16000
+ifndef MCU_FREQ_KHZ
+ $(error Please define MCU_FREQ_KHZ in makefile)
 endif
 
 # the EFM8BB1 has a lock byte and bootloader byte we may need to account for
@@ -92,23 +100,26 @@ SOURCE_DIR = src
 # target specific sources
 ifeq ($(TARGET_MCU), EFM8BB1)
  DRIVER_SRC_DIR = drivers/efm8bb1/src
+ DRIVER_DIR = drivers/efm8bb1/inc
 else ifeq ($(TARGET_MCU), EFM8BB1LCB)
  DRIVER_SRC_DIR = drivers/efm8bb1/src
+ DRIVER_DIR = drivers/efm8bb1/inc
 else ifeq ($(TARGET_MCU), OB38S003)
  DRIVER_SRC_DIR = drivers/ob38s003/src
+ DRIVER_DIR = drivers/ob38s003/inc
+else ifeq ($(TARGET_MCU), EFM8BB52)
+ DRIVER_SRC_DIR = drivers/efm8bb52/src
+ DRIVER_DIR = drivers/efm8bb52/inc
 endif
 
 # generic includes
 INCLUDE_DIR = inc/
 
 # target specific includes
-ifeq ($(TARGET_MCU), EFM8BB1)
- DRIVER_DIR = drivers/efm8bb1/inc
-else ifeq ($(TARGET_MCU), EFM8BB1LCB)
- DRIVER_DIR = drivers/efm8bb1/inc
-else ifeq ($(TARGET_MCU), OB38S003)
- DRIVER_DIR = drivers/ob38s003/inc
-endif
+#ifeq ($(TARGET_MCU), EFM8BB1)
+#else ifeq ($(TARGET_MCU), EFM8BB1LCB)
+#else ifeq ($(TARGET_MCU), OB38S003)
+#endif
 
 # place intermediate build files here so other directories are not cluttered
 OBJECT_DIR = object

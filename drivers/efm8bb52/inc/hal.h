@@ -8,17 +8,16 @@
 #ifndef INC_HAL_H_
 #define INC_HAL_H_
 
-#if defined(TARGET_MCU_EFM8BB1LCB)
-    #include "efm8bb1lck_pins.h"
-#elif defined(TARGET_MCU_EFM8BB1)
-    #include "sonoffr20_pins.h"
+#if defined(TARGET_MCU_EFM8BB52)
+    #include "efm8bb52_brd2701a_pins.h"
 #else
-    #error TARGET_MCU is not defined in makefile or is not consistent with board type
+    #error TARGET_MCU is undefined in makefile or inconsistent with board type
 #endif
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <EFM8BB1.h>
+
+#include "SI_EFM8BB52_Register_Enums.h"
 
 
 inline void buzzer_on(void)
@@ -36,36 +35,21 @@ inline bool rdata_level(void)
     return RDATA;
 }
 
-#if defined(TARGET_MCU_EFM8BB1LCB)
-    // setter prototypes
-    inline void led_on(void)
-    {
-        // EFM8BB1LCK board
-        // i.e., led "on" is inverted from pin state
-        LED = 0;
-    }
 
-    inline void led_off(void)
-    {
-        // EFM8BB1LCK board
-        LED = 1;
-    }
-#elif defined(TARGET_MCU_EFM8BB1)
-    // setter prototypes
-    inline void led_on(void)
-    {
-        // sonoff bridge
-        LED = 1;
-    }
+// setter prototypes
+inline void led_on(void)
+{
+    // EFM8BB1LCK board
+    // i.e., led "on" is inverted from pin state
+    LED = 0;
+}
 
-    inline void led_off(void)
-    {
-        // sonoff bridge
-        LED = 0;
-    }
-#else
-    #error Please define TARGET_MCU in makefile
-#endif
+inline void led_off(void)
+{
+    // EFM8BB1LCK board
+    LED = 1;
+}
+
 
 inline void led_toggle(void)
 {
@@ -118,12 +102,12 @@ inline bool uart_rx_pin_level(void)
 inline void uart_rx_enabled(void)
 {
     // uart reception enabled
-    SCON0 |= REN__RECEIVE_ENABLED;
+    SCON0 |= SCON0_REN__RECEIVE_ENABLED;
 }
 
 inline void uart_rx_disabled(void)
 {
-    SCON0 &= ~REN__RECEIVE_ENABLED;
+    SCON0 &= ~SCON0_REN__RECEIVE_ENABLED;
 }
 
 inline void debug_pin01_on(void)
@@ -148,128 +132,128 @@ inline void debug_pin01_toggle(void)
 
 inline void enable_global_interrupts(void)
 {
-    EA = 1;
+    IE_EA = 1;
 }
 
 inline void disable_global_interrupts(void)
 {
-    EA = 0;
+    IE_EA = 0;
 }
 
 inline void enable_timer0_interrupt(void)
 {
-    ET0 = 1;
+    IE_ET0 = 1;
 }
 
 inline void disable_timer0_interrupt(void)
 {
-    ET0 = 0;
+    IE_ET0 = 0;
 }
 
 inline void enable_timer1_interrupt(void)
 {
-    ET1 = 1;
+    IE_ET1 = 1;
 }
 
 inline void disable_timer1_interrupt(void)
 {
-    ET1 = 0;
+    IE_ET1 = 0;
 }
 
 inline void enable_timer2_interrupt(void)
 {
-    ET2 = 1;
+    IE_ET2 = 1;
 }
 
 inline void disable_timer2_interrupt(void)
 {
-    ET2 = 0;
+    IE_ET2 = 0;
 }
 
 inline void enable_timer3_interrupt(void)
 {
-    EIE1 |= ET3__ENABLED;
+    EIE1 |= EIE1_ET3__ENABLED;
 }
 
 inline void disable_timer3_interrupt(void)
 {
-    EIE1 &= ~ET3__ENABLED;
+    EIE1 &= ~EIE1_ET3__ENABLED;
 }
 
 inline void enable_capture_interrupt(void)
 {
     // channel 0 capture flag interrupt enable
-    PCA0CPM0 |= ECCF__ENABLED;
+    PCA0CPM0 |= PCA0CPM0_ECCF__ENABLED;
 }
 
 inline void disable_capture_interrupt(void)
 {
-    PCA0CPM0 &= ~ECCF__ENABLED;
+    PCA0CPM0 &= ~PCA0CPM0_ECCF__ENABLED;
 }
 
 inline void enable_pca0_interrupt(void)
 {
     // PCA0 interrupt enable
-    EIE1 |= EPCA0__ENABLED;
+    EIE1 |= EIE1_EPCA0__ENABLED;
 }
 
 // this is necessary so that uart ring buffer logic operates correctly the first time it is used
 // i.e., flag is set as though the last character sent was completed, even though no previous character was actually sent
 inline void init_serial_interrupt(void)
 {
-    TI = 1;
+    SCON0_TI = 1;
 }
 
 inline void enable_serial_interrupt(void)
 {
-    ES0 = 1;
+    IE_ES0 = 1;
 }
 
 inline void disable_serial_interrupt(void)
 {
-    ES0 = 0;
+    IE_ES0 = 0;
 }
 
 inline void timer0_run(void)
 {
-    TR0 = 1;
+    TCON_TR0 = 1;
 }
 
 inline void timer0_stop(void)
 {
-    TR0 = 0;
+    TCON_TR0 = 0;
 }
 
 inline void timer1_run(void)
 {
-    TR1 = 1;
+    TCON_TR1 = 1;
 }
 
 inline void timer1_stop(void)
 {
-    TR1 = 0;
+    TCON_TR1 = 0;
 }
 
 inline void timer2_run(void)
 {
-    TR2 = 1;
+    TMR2CN0_TR2 = 1;
 }
 
 inline void timer2_stop(void)
 {
-    TR2 = 0;
+    TMR2CN0_TR2 = 0;
 }
 
 inline void timer3_run(void)
 {
     // timer 3 on
-    TMR3CN0 |= TR3__RUN;
+    TMR3CN0 |= TMR3CN0_TR3__RUN;
 }
 
 inline void timer3_stop(void)
 {
     // timer 3 stop
-    TMR3CN0 &= ~TR3__RUN;
+    TMR3CN0 &= ~TMR3CN0_TR3__RUN;
 }
 
 void set_clock_mode(void);

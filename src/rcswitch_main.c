@@ -31,7 +31,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#if !defined(TARGET_MCU_EFM8BB1) && !defined(TARGET_MCU_OB38S003) && !defined(TARGET_MCU_EFM8BB1LCB)
+#if !defined(TARGET_MCU_EFM8BB1) && !defined(TARGET_MCU_OB38S003) && !defined(TARGET_MCU_EFM8BB1LCB) && !defined(TARGET_MCU_EFM8BB52)
     #error Please define TARGET_MCU in makefile
 #endif
 
@@ -114,7 +114,15 @@
     //  puthex2(*((__xdata unsigned char*) ID2_ADDR_RAM));
     //  puthex2(*((__xdata unsigned char*) ID3_ADDR_RAM));
     //}
-
+#elif defined(TARGET_MCU_EFM8BB52)
+    // software uart
+    //extern void tm0(void)        __interrupt (TIMER0_VECTOR);
+    // supports timeout
+    extern void timer2_isr(void) __interrupt (TIMER2_IRQn);
+    // hardware uart (uses timer 1)
+    extern void uart_isr(void)   __interrupt (UART0_IRQn);
+    // radio decoding
+    extern void pca0_isr(void)   __interrupt (PCA0_IRQn);
 #else
     #error Please define TARGET_MCU in makefile
 #endif
@@ -192,7 +200,7 @@ int main (void)
     
 #if defined(TARGET_MCU_OB38S003)
     init_port_pins();
-#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB) || defined(TARGET_MCU_EFM8BB52)
     // the crossbar on this microcontroller makes initialization more complicated
     init_port_pins_for_serial();
 #else
@@ -249,7 +257,7 @@ int main (void)
     enable_timer0_interrupt();
     //enable_timer1_interrupt();
     //enable_timer2_interrupt();
-#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB) || defined(TARGET_MCU_EFM8BB52)
     // pca used timer0 in stock portisch (why?), however rcswitch can use dedicated pca counters
     // at various times during development timer 0 has been used to support software uart
     //init_timer0(SOFT_BAUD);

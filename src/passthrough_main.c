@@ -32,7 +32,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 
-#if !defined(TARGET_MCU_EFM8BB1) && !defined(TARGET_MCU_OB38S003) && !defined(TARGET_MCU_EFM8BB1LCB)
+#if !defined(TARGET_MCU_EFM8BB1) && !defined(TARGET_MCU_OB38S003) && !defined(TARGET_MCU_EFM8BB1LCB) && !defined(TARGET_MCU_EFM8BB52)
     #error Please define TARGET_MCU in makefile
 #endif
 
@@ -99,7 +99,7 @@ int main (void)
     
 #if defined(TARGET_MCU_OB38S003)
     init_port_pins();
-#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
+#elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB) || defined(TARGET_MCU_EFM8BB52)
     // the crossbar on this microcontroller makes initialization more complicated
     init_port_pins_for_passthrough();
 #else

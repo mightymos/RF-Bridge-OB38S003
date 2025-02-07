@@ -12,6 +12,11 @@
     // these are just a difference in naming convention
     #define SBUF SBUF0
     #define SCON SCON0
+#elif defined(TARGET_MCU_EFM8BB52)
+    // this microcontroller does have two uarts
+    #define SBUF SBUF0
+    #define SCON SCON0
+    #define TI SCON0_TI
 #endif
 
 #include "portisch_command_format.h"
@@ -64,6 +69,8 @@ void uart_init_tx_polling(void)
 void uart_isr(void) __interrupt (d_UART0_Vector)
 #elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
 void uart_isr(void) __interrupt (UART0_VECTOR)
+#elif defined(TARGET_MCU_EFM8BB52)
+void uart_isr(void) __interrupt (UART0_IRQn)
 #endif
 {
     // FIXME: not sure if it is a good idea to clear both flags together
