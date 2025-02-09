@@ -42,6 +42,9 @@ void set_clock_mode(void)
     
     // default is timer 1 uses the clock defined by the prescale field sca
     //CKCON0 |= T1M__PRESCALE;
+    
+    // allows 115200 baud rate on UART0 with TIMER1
+    CKCON0 |= CKCON0_SCA__SYSCLK_DIV_4;
 }
 
 
@@ -139,8 +142,8 @@ void init_port_pins_for_serial(void)
     XBR1 |= XBR1_PCA0ME__CEX0;
     
     // default is weak pullups enabled (makes sure input pins always have a known state even if externally disconnected) 
-    // crossbar enabled
     //XBR2 |= WEAKPUD__PULL_UPS_ENABLED;
+    // crossbar enabled
     XBR2 |= XBR2_XBARE__ENABLED;
     
 }

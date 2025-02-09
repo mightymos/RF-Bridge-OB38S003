@@ -239,8 +239,9 @@ void timer3_isr(void) __interrupt (TIMER3_IRQn)
 void pca0_isr(void) __interrupt (PCA0_IRQn)
 {
     // this was originally PCA0CP0 * 10 on original portisch which used timer 0 overflow instead of the dedicated PCA counter
-    //uint16_t currentCapture = PCA0CP0;
-    uint16_t currentCapture = (PCA0CPH0 << 8) | PCA0CPL0;
+    uint16_t currentCapture = PCA0CP0;
+    //uint16_t currentCapture = (PCA0CPH0 << 8) | PCA0CPL0;
+    //uint16_t currentCapture = 350;
     
     // save and clear flags
     uint8_t flags = PCA0CN0 & (PCA0CN0_CF__BMASK | PCA0CN0_CCF0__BMASK | PCA0CN0_CCF1__BMASK | PCA0CN0_CCF2__BMASK);

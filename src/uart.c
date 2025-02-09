@@ -7,6 +7,7 @@
 #include "hal.h"
 
 #if defined(TARGET_MCU_OB38S003)
+    // for access to SBUF definition
     #include "OB38S003.h"
 #elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB)
     // these are just a difference in naming convention

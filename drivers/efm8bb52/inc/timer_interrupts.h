@@ -20,7 +20,14 @@
 #define TIMER0_PCA0  0x0B
 
 // 19200 baud, same on portisch
-#define TIMER1_UART0 0xCB
+//(24500000/12)/(256-0xCB)/2 = 19261.00628930817610062893
+// note: this assumes the default system clock divided by 12
+//#define TIMER1_UART0 0xCB
+
+// 115200 baud
+//(24500000/4)/(256-0xE5)/2 = 113425.92592592592592592593
+// note: this requires system clock divided by 4
+#define TIMER1_UART0 0xE5
 
 // 1 microsec
 // hex(0xFFFF - (1*10^-6)/(1/24500000))  = 0xFFE6.8

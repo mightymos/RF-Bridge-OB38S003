@@ -39,15 +39,15 @@ inline bool rdata_level(void)
 // setter prototypes
 inline void led_on(void)
 {
-    // EFM8BB1LCK board
-    // i.e., led "on" is inverted from pin state
-    LED = 0;
+    // BB52 Explorer Kit
+    // schematic: https://www.silabs.com/documents/public/schematic-files/BRD2701A-A01-schematic.pdf
+    LED = 1;
 }
 
 inline void led_off(void)
 {
-    // EFM8BB1LCK board
-    LED = 1;
+    // BB52 Explorer Kit
+    LED = 0;
 }
 
 

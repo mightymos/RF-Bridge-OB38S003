@@ -675,7 +675,7 @@ void main (void)
     enable_watchdog();
 	
     
-#if 1
+#if 0
     // DEBUG: infinite loop to echo back serial characters
     while (true)
     {
