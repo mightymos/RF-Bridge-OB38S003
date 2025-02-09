@@ -493,16 +493,25 @@ bool radio_tx_state_machine(const uart_command_t command)
 // uses timer based delays so timer 0,1 must be setup before use
 void startup_blink(void)
 {
-    // single blink
-    led_on();
+    uint8_t index;
     
-    init_first_delay_ms(1000);
-    wait_first_delay_finished();
-    
-    led_off();
+    for (index = 0; index < 2; index++)
+    {
+        // single blink
+        led_on();
+        
+        init_first_delay_ms(1000);
+        wait_first_delay_finished();
+        
+        led_off();
+        
+        init_first_delay_ms(1000);
+        wait_first_delay_finished();
+    }
 }
 
 #endif
+
 
 //-----------------------------------------------------------------------------
 // main() Routine
@@ -641,24 +650,66 @@ void main (void)
     
     // uses timer based delays so timer 0,1, and global interrupt must be setup before use
     startup_blink();
+    
+#if 0
+
+    // DEBUG: infinite blink
+    while(1)
+    {
+        // single blink
+        led_on();
+        
+        init_first_delay_ms(1000);
+        wait_first_delay_finished();
+        
+        led_off();
+        
+        init_first_delay_ms(1000);
+        wait_first_delay_finished();
+    }
+    
+#endif
 
 	// we used to disable watchdog at startup in case external ram needs to be cleared etc.
 	// now we explicitly enable
     enable_watchdog();
 	
+    
+#if 1
+    // DEBUG: infinite loop to echo back serial characters
+    while (true)
+    {
+        rxdata = uart_getc();
+        
+        if (rxdata != UART_NO_DATA)
+        {
+            // we save code space by passing byte instead of an integer
+            // and avoiding repeated masking
+            rxdataNoFlags = rxdata & 0xFF;
+            
+            // echo received character
+            uart_putc(rxdataNoFlags);
+        }
+    
+        // check if serial transmit buffer is empty
+        if(!is_uart_tx_buffer_empty())
+        {
+            if (is_uart_tx_finished())
+            {
+                // if not empty, set TI, which triggers interrupt to actually transmit
+                uart_init_tx_polling();
+            }
+        }
+    }
+#endif
+    
+    
+    // main loop
 	while (true)
 	{
 		// reset Watch Dog Timer
 		refresh_watchdog();
-
-
-#if 0
-		// DEBUG: infinite loop to echo back serial characters
-		while (true)
-		{
-			serial_loopback();
-		}
-#endif
+        
 
 #if 1
 		// check if something got received by UART

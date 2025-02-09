@@ -105,7 +105,7 @@ void init_port_pins_for_passthrough(void)
     //XBR2 &= ~WEAKPUD__BMASK;
     
     // FIXME: why does enabling the crossbar allow passthrough to work?
-    XBR2 |= XBR2_XBARE__BMASK;
+    XBR2 |= XBR2_XBARE__ENABLED;
 }
 
 void init_port_pins_for_serial(void)
@@ -118,6 +118,10 @@ void init_port_pins_for_serial(void)
     // FIXME: correctly handle LED on sonoff different from LED on EFM8BB1LCK board
     P0MDOUT = P0MDOUT_B0__PUSH_PULL | P0MDOUT_B1__OPEN_DRAIN | P0MDOUT_B2__OPEN_DRAIN | P0MDOUT_B3__OPEN_DRAIN | P0MDOUT_B4__PUSH_PULL | P0MDOUT_B5__OPEN_DRAIN | P0MDOUT_B6__OPEN_DRAIN | P0MDOUT_B7__OPEN_DRAIN;
     P1MDOUT = P1MDOUT_B0__PUSH_PULL | P1MDOUT_B1__OPEN_DRAIN | P1MDOUT_B2__OPEN_DRAIN | P1MDOUT_B3__OPEN_DRAIN | P1MDOUT_B4__PUSH_PULL | P1MDOUT_B5__PUSH_PULL  | P1MDOUT_B6__PUSH_PULL  | P1MDOUT_B7__PUSH_PULL;
+    
+    // this is different from efm8bb1 which is digital mode by default
+    P0MDIN = P0MDIN_B0__DIGITAL | P0MDIN_B1__ANALOG | P0MDIN_B2__ANALOG | P0MDIN_B3__ANALOG | P0MDIN_B4__DIGITAL | P0MDIN_B5__DIGITAL | P0MDIN_B6__ANALOG | P0MDIN_B7__ANALOG;
+    P1MDIN = P1MDIN_B0__ANALOG | P1MDIN_B1__ANALOG | P1MDIN_B2__ANALOG | P1MDIN_B3__DIGITAL | P1MDIN_B4__DIGITAL | P1MDIN_B5__ANALOG | P1MDIN_B6__DIGITAL | P1MDIN_B7__ANALOG;
     
     // disables high side driver so uart rx is used as input
     // disables high side driver so radio receive is used as input
