@@ -13,15 +13,23 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-// SFR declarations
+
+// holds conditional compilation options (others are defined in Makefile and influence firmware filename)
+#include "project-defs.h"
+
+
+// type definitions
 #include <stdint.h>
 
-// for printf_tiny()
-//#include <stdio.h>
+#if defined(UART_LOGGING)
+
+    // for printf_tiny()
+    #include <stdio.h>
+
+#endif
 
 #include "delay.h"
 #include "hal.h"
-#include "project-defs.h"
 #include "portisch_rf_handling.h"
 #include "portisch_command_format.h"
 #include "portisch_protocols.h"
@@ -640,16 +648,23 @@ void main (void)
     radio_receiver_on();
 #endif
 
-    
+    // uses timer based delays so timer 0,1, and global interrupt must be setup before use
+    startup_blink();
+
+
+#if defined(UART_LOGGING)
+
     // DEBUG:
     // startup
     //requires code and memory space, which is in short supply
     //but good to check that polled uart is working
-    //printf_tiny("startup...\r\n");
-    //uart_put_command(RF_CODE_ACK);
+    init_uart1();
     
-    // uses timer based delays so timer 0,1, and global interrupt must be setup before use
-    startup_blink();
+    printf_tiny("boot:\r\n");
+    //uart_put_command(RF_CODE_ACK);
+    //putchar(0x4a);
+    
+#endif
     
 #if 0
 

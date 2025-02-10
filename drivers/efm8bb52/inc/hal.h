@@ -264,6 +264,7 @@ void reset_mcu(void);
 void init_port_pins_for_passthrough(void);
 void init_port_pins_for_serial(void);
 void init_uart(void);
+void init_uart1(void);
 void init_timer0_8bit_autoreload(const uint8_t);
 void init_timer1_8bit_autoreload(const uint8_t);
 

@@ -17,6 +17,9 @@ void set_clock_mode(void)
     //*****************************************
     CLKSEL = CLKSEL_CLKSL__HFOSC0_clk24p5 | CLKSEL_CLKDIV__SYSCLK_DIV_1;
     
+    // from example code
+    while ((CLKSEL & CLKSEL_DIVRDY__BMASK) == CLKSEL_DIVRDY__NOT_READY);
+    
     //**********************************************************************
     // - System clock divided by 12
     // - Counter/Timer 0 uses the system clock
@@ -113,6 +116,9 @@ void init_port_pins_for_passthrough(void)
 
 void init_port_pins_for_serial(void)
 {
+    // need to save and later restore page because P2MDIN, P2SKIP are on page 0x20
+    uint8_t SFRPAGE_save = SFRPAGE;
+    
     // FIXME: add comment to explain pin functions
     // sec 11.3.1 Port I/O Modes of Operation
     // P0MDIN is configured as digital i/o by default
@@ -121,7 +127,8 @@ void init_port_pins_for_serial(void)
     // FIXME: correctly handle LED on sonoff different from LED on EFM8BB1LCK board
     P0MDOUT = P0MDOUT_B0__PUSH_PULL | P0MDOUT_B1__OPEN_DRAIN | P0MDOUT_B2__OPEN_DRAIN | P0MDOUT_B3__OPEN_DRAIN | P0MDOUT_B4__PUSH_PULL | P0MDOUT_B5__OPEN_DRAIN | P0MDOUT_B6__OPEN_DRAIN | P0MDOUT_B7__OPEN_DRAIN;
     P1MDOUT = P1MDOUT_B0__PUSH_PULL | P1MDOUT_B1__OPEN_DRAIN | P1MDOUT_B2__OPEN_DRAIN | P1MDOUT_B3__OPEN_DRAIN | P1MDOUT_B4__PUSH_PULL | P1MDOUT_B5__PUSH_PULL  | P1MDOUT_B6__PUSH_PULL  | P1MDOUT_B7__PUSH_PULL;
-    
+    P2MDOUT = P2MDOUT_B0__OPEN_DRAIN | P2MDOUT_B1__OPEN_DRAIN | P2MDOUT_B2__PUSH_PULL | P2MDOUT_B3__OPEN_DRAIN | P2MDOUT_B4__OPEN_DRAIN | P2MDOUT_B5__OPEN_DRAIN  | P2MDOUT_B6__OPEN_DRAIN  | P2MDOUT_B7__OPEN_DRAIN;
+        
     // this is different from efm8bb1 which is digital mode by default
     P0MDIN = P0MDIN_B0__DIGITAL | P0MDIN_B1__ANALOG | P0MDIN_B2__ANALOG | P0MDIN_B3__ANALOG | P0MDIN_B4__DIGITAL | P0MDIN_B5__DIGITAL | P0MDIN_B6__ANALOG | P0MDIN_B7__ANALOG;
     P1MDIN = P1MDIN_B0__ANALOG | P1MDIN_B1__ANALOG | P1MDIN_B2__ANALOG | P1MDIN_B3__DIGITAL | P1MDIN_B4__DIGITAL | P1MDIN_B5__ANALOG | P1MDIN_B6__DIGITAL | P1MDIN_B7__ANALOG;
@@ -135,6 +142,15 @@ void init_port_pins_for_serial(void)
     P0SKIP = P0SKIP_B0__SKIPPED | P0SKIP_B1__SKIPPED | P0SKIP_B2__SKIPPED | P0SKIP_B3__SKIPPED | P0SKIP_B4__NOT_SKIPPED | P0SKIP_B5__NOT_SKIPPED | P0SKIP_B6__SKIPPED | P0SKIP_B7__SKIPPED;
     P1SKIP = P1SKIP_B0__SKIPPED | P1SKIP_B1__SKIPPED | P1SKIP_B2__SKIPPED | P1SKIP_B3__NOT_SKIPPED | P1SKIP_B4__SKIPPED | P1SKIP_B5__SKIPPED | P1SKIP_B6__SKIPPED | P1SKIP_B7__SKIPPED;
     
+    
+    // basically we are just supporting UART1 for debugging output
+    SFRPAGE = 0x20;
+
+    P2MDIN  = P2MDIN_B0__ANALOG | P2MDIN_B1__ANALOG | P2MDIN_B2__DIGITAL | P2MDIN_B3__DIGITAL | P2MDIN_B4__ANALOG | P2MDIN_B5__ANALOG | P2MDIN_B6__ANALOG | P2MDIN_B7__ANALOG;
+    P2SKIP  = P2SKIP_B0__SKIPPED | P2SKIP_B1__SKIPPED | P2SKIP_B2__NOT_SKIPPED | P2SKIP_B3__NOT_SKIPPED | P2SKIP_B4__SKIPPED | P2SKIP_B5__SKIPPED | P2SKIP_B6__SKIPPED | P2SKIP_B7__SKIPPED;
+    
+    SFRPAGE = 0x00;
+    
     // UART TX, RX routed to Port pins P0.4 and P0.5
     XBR0 |= XBR0_URT0E__ENABLED;
     
@@ -143,15 +159,52 @@ void init_port_pins_for_serial(void)
     
     // default is weak pullups enabled (makes sure input pins always have a known state even if externally disconnected) 
     //XBR2 |= WEAKPUD__PULL_UPS_ENABLED;
+    // enable uart1
+    XBR2 |= XBR2_URT1E__ENABLED;
+    
     // crossbar enabled
     XBR2 |= XBR2_XBARE__ENABLED;
+
     
+    // restore
+    SFRPAGE = SFRPAGE_save;
 }
 
+// FIXME: consider naming convention
 void init_uart(void)
 {   
     SCON0 &= ~(SCON0_SMODE__BMASK | SCON0_MCE__BMASK | SCON0_REN__BMASK);
     SCON0 = SCON0_REN__RECEIVE_ENABLED | SCON0_SMODE__8_BIT | SCON0_MCE__MULTI_DISABLED;
+}
+
+// FIXME: consider naming convention
+void init_uart1(void)
+{   
+    // need to save and later restore page because SCON1 is on page 0x20
+    uint8_t SFRPAGE_save = SFRPAGE;
+    
+    SFRPAGE = 0x20;
+    
+    // default prescaler is divide by 12
+    // (24500000/ (65536 - 0xFFCB)) * ((1 / 2) * (1 / 12)) = 19261.00628930817610062893
+    SBCON1 |= SBCON1_BREN__ENABLED;
+    
+    // 19200 baud rate for prescaler of 12
+    SBRLH1 = 0xFF;
+    SBRLL1 = 0xCB;
+    
+    //SCON1 &= ~(SCON1_SMODE__BMASK | SCON1_MCE__BMASK | SCON1_REN__BMASK);
+    //SCON1 = SCON1_REN__RECEIVE_ENABLED | SCON1_SMODE__8_BIT | SCON1_MCE__MULTI_DISABLED;
+    SCON1 |= SCON1_REN__RECEIVE_ENABLED;
+    
+    
+	/***********************************************************************
+	 - A receive timeout will occur after 16 idle periods on the UART RX line
+	 ***********************************************************************/
+	UART1FCN1 |= UART1FCN1_RXTO__TIMEOUT_16;
+    
+    // restore
+    SFRPAGE = SFRPAGE_save;
 }
 
 

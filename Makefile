@@ -63,16 +63,36 @@ RF_RX_FEATURE = BUCKET_SNIFFING_INCLUDED
 
 # these are the maximum clock speeds
 ifeq ($(TARGET_MCU), EFM8BB1)
+
  # for EFM8BB1 in Sonoff v2.0 receivers (black color box)
  MCU_FREQ_KHZ = 24500
+ DEVICE_IRAM_SIZE = 256
+ DEVICE_XRAM_SIZE = 256
+ DEVICE_CODE_SIZE = 8192
+ 
 else ifeq ($(TARGET_MCU), EFM8BB1LCB)
+
  MCU_FREQ_KHZ = 24500
+ DEVICE_IRAM_SIZE = 256
+ DEVICE_XRAM_SIZE = 256
+ DEVICE_CODE_SIZE = 8192
+ 
 else ifeq ($(TARGET_MCU), OB38S003)
+
 # for OB38S003 used in Sonoff v2.2 receivers (white color box)
  MCU_FREQ_KHZ = 16000
+ DEVICE_IRAM_SIZE = 256
+ DEVICE_XRAM_SIZE = 256
+ DEVICE_CODE_SIZE = 8192
+ 
 else ifeq ($(TARGET_MCU), EFM8BB52)
+
 # for BB52 Explorer Kit
  MCU_FREQ_KHZ = 24500
+ DEVICE_IRAM_SIZE = 256
+ DEVICE_XRAM_SIZE = 2048
+ DEVICE_CODE_SIZE = 32768
+ 
 endif
 
 
@@ -89,8 +109,8 @@ ifndef MCU_FREQ_KHZ
  $(error Please define MCU_FREQ_KHZ in makefile)
 endif
 
-# the EFM8BB1 has a lock byte and bootloader byte we may need to account for
-MEMORY_SIZES  = --iram-size 256 --xram-size 256 --code-size 8192
+# FIXME: the EFM8BB1 has a lock byte and bootloader byte we may need to account for
+MEMORY_SIZES  = --iram-size $(DEVICE_IRAM_SIZE) --xram-size $(DEVICE_XRAM_SIZE) --code-size $(DEVICE_CODE_SIZE)
 MEMORY_MODEL  = --model-small
 HAS_DUAL_DPTR = n
 

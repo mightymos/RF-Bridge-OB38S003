@@ -13,6 +13,10 @@
 #define UART_TX_PIN P0_B4
 #define UART_RX_PIN P0_B5
 
+// table 3.1 of UG512: BB52 guide
+#define UART1_TX_PIN P2_B2
+#define UART1_RX_PIN P2_B3
+
 // for reading by oscilloscope
 #define DEBUG_PIN01  P1_B7
 

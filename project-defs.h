@@ -34,5 +34,8 @@
 // option to exclude radio transmission to save on code space
 #define RF_TX_INCLUDED
 
+// use hardware with a second uart as logging output (e.g., EFM8BB52)
+#define UART_LOGGING
+
 
 #endif // _PROJECT_DEFS_H
