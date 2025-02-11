@@ -963,7 +963,7 @@ void main (void)
                 
 #if defined(UART_LOGGING_ENABLED)
                 
-                printf_tiny("beep: %u\r\n", bucket);
+                printf_tiny("beep: %u ms\r\n", bucket);
 
 #endif
 				// this is blocking unfortunately

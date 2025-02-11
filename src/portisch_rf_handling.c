@@ -6,7 +6,7 @@
  */
 #include <stdint.h>
 #include <string.h>
-//#include <stdlib.h>
+#include <stdio.h>
 
 //#include "capture_interrupt.h"
 #include "delay.h"
@@ -19,7 +19,8 @@
 //#include "timers.h"
 
 // FIXME: not clear why this is four as opposed to anything else
-#define BUFFER_BUCKETS_SIZE 4
+//#define BUFFER_BUCKETS_SIZE 4
+#define BUFFER_BUCKETS_SIZE 255
 
 // FIXME: add comment
 __xdata uint8_t RF_DATA[RF_DATA_BUFFERSIZE];
@@ -363,8 +364,29 @@ void HandleRFBucket(uint16_t duration, bool high_low)
 void buffer_in(uint16_t bucket)
 {
 	// check if writing next byte into circular buffer will catch up to read position, and if so bail out
-	if ((buffer_buckets_write + 1 == buffer_buckets_read) || (buffer_buckets_read == 0 && buffer_buckets_write + 1 == BUFFER_BUCKETS_SIZE))
+	if ( (buffer_buckets_write + 1) == buffer_buckets_read )
 	{
+        
+#if defined(UART_LOGGING_ENABLED)
+                
+        //printf_tiny("%s\r\n", __LINE__);
+        printf_tiny("bucket buffer over 00 \r\n");
+
+#endif
+
+		return;
+	}
+    
+	if ( (buffer_buckets_read == 0) && ((buffer_buckets_write + 1) == BUFFER_BUCKETS_SIZE) )
+	{
+        
+#if defined(UART_LOGGING_ENABLED)
+                
+        //printf_tiny("%s\r\n", __LINE__);
+        printf_tiny("bucket buffer over 01 \r\n");
+
+#endif
+
 		return;
 	}
 
@@ -770,6 +792,12 @@ void SendBucketsByIndex(uint8_t index, uint8_t* rfdata)
                         {
                             // restart sync
                             rf_state = RF_IDLE;
+                            
+#if defined(UART_LOGGING_ENABLED)
+                
+                            printf_tiny("%s\r\n", __LINE__);
+                            printf_tiny("actual_byte greater than RF_DATA_BUFFERSIZE\r\n");
+#endif
                         }
                     }
 
