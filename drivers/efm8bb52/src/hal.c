@@ -171,7 +171,7 @@ void init_port_pins_for_serial(void)
 }
 
 // FIXME: consider naming convention
-void init_uart(void)
+void init_uart0(void)
 {   
     SCON0 &= ~(SCON0_SMODE__BMASK | SCON0_MCE__BMASK | SCON0_REN__BMASK);
     SCON0 = SCON0_REN__RECEIVE_ENABLED | SCON0_SMODE__8_BIT | SCON0_MCE__MULTI_DISABLED;
@@ -204,6 +204,19 @@ void init_uart1(void)
 	UART1FCN1 |= UART1FCN1_RXTO__TIMEOUT_16;
     
     // restore
+    SFRPAGE = SFRPAGE_save;
+}
+
+void init_uart1_transmit_interrupt_flag(void)
+{
+    // need to save and later restore page because SCON1 is on page 0x20
+    uint8_t SFRPAGE_save = SFRPAGE;
+    
+    SFRPAGE = 0x20;
+    
+    // initialite TI = 1 so that putchar() loop is skipped on first usage
+    SCON1_TI = 1;
+
     SFRPAGE = SFRPAGE_save;
 }
 

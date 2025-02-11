@@ -223,11 +223,11 @@ int main (void)
     // setup hardware serial
     // timer 1 is clock source for uart0 on efm8bb1
     // should call these after initializing port pins
-    init_uart();
+    init_uart0();
     uart_rx_enabled();
     
     // hardware serial interrupt
-    init_serial_interrupt();
+    init_uart0_transmit_interrupt_flag();
     enable_serial_interrupt();
     
 #if 0

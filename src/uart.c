@@ -19,6 +19,26 @@
     #define SBUF SBUF0
     #define SCON SCON0
     #define TI SCON0_TI
+    
+    
+    // supports printf_tiny() for uart logging/debugging output
+    int putchar (int c)
+    {
+        uint8_t SFRPAGE_save = SFRPAGE;
+        
+        SFRPAGE = 0x20;
+        
+        // assumes UART is initialized (i.e., TI was set to 1)
+        while (!SCON1_TI);
+        SCON1_TI = 0;
+        
+        SBUF1 = c;
+        
+        // restore
+        SFRPAGE = SFRPAGE_save;
+        
+        return c;
+    }
 #endif
 
 #include "portisch_command_format.h"
@@ -202,28 +222,3 @@ void uart_put_command(const uint8_t command)
     // in other words 0x55
     uart_putc(RF_CODE_STOP);
 }
-
-
-#if 1
-
-    // adapted from the SDCC manual
-    // supports printf_tiny() for uart logging or in other words debugging output
-    int putchar (int c)
-    {
-        uint8_t SFRPAGE_save = SFRPAGE;
-        
-        SFRPAGE = 0x20;
-        
-        SBUF1 = c;
-        
-        // assumes UART is initialized
-        while (!SCON1_TI);
-        SCON1_TI = 0;
-        
-        // restore
-        SFRPAGE = SFRPAGE_save;
-        
-        return c;
-    }
-
-#endif

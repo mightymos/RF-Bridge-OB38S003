@@ -21,7 +21,7 @@
 // type definitions
 #include <stdint.h>
 
-#if defined(UART_LOGGING)
+#if defined(UART_LOGGING_ENABLED)
 
     // for printf_tiny()
     #include <stdio.h>
@@ -549,11 +549,11 @@ void main (void)
     // add comment?
     set_clock_mode();
 
-	// call hardware initialization routine
+	// set port modes
 #if defined(TARGET_MCU_OB38S003)
     init_port_pins();
 #elif defined(TARGET_MCU_EFM8BB1) || defined(TARGET_MCU_EFM8BB1LCB) || defined(TARGET_MCU_EFM8BB52)
-    // the crossbar on this microcontroller makes initialization more complicated
+    // crossbar on these microcontrollers means configuration is different on passthrough versus rcswitch/portisch firmwares
     init_port_pins_for_serial();
 #else
     #error Please define TARGET_MCU in makefile
@@ -566,21 +566,27 @@ void main (void)
     
     // DEBUG:
     // on some boards, "debug pin" is actually buzzer
-    // so we do not want to use it for debugging unless buzzer has been removed
+    // so we do not want to manipulate it for debugging unless buzzer has been removed
     //debug_pin01_off();
     
-    
-	// baud rate is 19200, 8 data bits, 1 stop bit, no parity
-	// polled version basically sets TI flag so putchar() does not get stuck in an infinite loop
-	//UART0_initStdio();
-	// enable uart (with interrupts)
-	//UART0_init(UART0_RX_ENABLE, UART0_WIDTH_8, UART0_MULTIPROC_DISABLE);
-    init_uart();
+    // FIXME: may swap use of uart0 and uart1 eventually
+	// baud rate is 19200, 8 data bits, 1 stop bit, no parity for portisch
+    init_uart0();
     uart_rx_enabled();
+    
+#if defined(TARGET_MCU_EFM8BB52)
+    
+    // uses dedicated baud rate generator
+    init_uart1();
+    
+    // initialite TI = 1 so that putchar() loop is skipped on first usage
+    init_uart1_transmit_interrupt_flag();
+    
+#endif
     
     // FIXME: despite rcswitch doing it this way, it seems like we only want to enable after setting uart timer baud rate
     // sets TI=1 so ring buffer logic works
-    init_serial_interrupt();
+    init_uart0_transmit_interrupt_flag();
     // enable actual interrupt
     enable_serial_interrupt();
     
@@ -625,8 +631,9 @@ void main (void)
 	// enable global interrupts needs to happen prior to use of timer based delays (e.g., PCA0_Sniffing() uses delay)
 	enable_global_interrupts();
     
-    
-#if 1
+
+// defined in Makefile (or not by commenting out)
+#if defined(BUCKET_SNIFFING_INCLUDED)
 	// start sniffing be default
 	// set desired sniffing type to PT2260
 	sniffing_mode = STANDARD;
@@ -652,72 +659,19 @@ void main (void)
     startup_blink();
 
 
-#if defined(UART_LOGGING)
+#if defined(UART_LOGGING_ENABLED)
 
-    // DEBUG:
-    // startup
-    //requires code and memory space, which is in short supply
-    //but good to check that polled uart is working
-    init_uart1();
+    // DEBUG: requires code and memory space, which is in short supply
+    // so we would only be able to and/or want to include on larger microcontrollers
     
     printf_tiny("boot:\r\n");
-    //uart_put_command(RF_CODE_ACK);
-    //putchar(0x4a);
-    
-#endif
-    
-#if 0
 
-    // DEBUG: infinite blink
-    while(1)
-    {
-        // single blink
-        led_on();
-        
-        init_first_delay_ms(1000);
-        wait_first_delay_finished();
-        
-        led_off();
-        
-        init_first_delay_ms(1000);
-        wait_first_delay_finished();
-    }
-    
 #endif
 
 	// we used to disable watchdog at startup in case external ram needs to be cleared etc.
 	// now we explicitly enable
     enable_watchdog();
 	
-    
-#if 0
-    // DEBUG: infinite loop to echo back serial characters
-    while (true)
-    {
-        rxdata = uart_getc();
-        
-        if (rxdata != UART_NO_DATA)
-        {
-            // we save code space by passing byte instead of an integer
-            // and avoiding repeated masking
-            rxdataNoFlags = rxdata & 0xFF;
-            
-            // echo received character
-            uart_putc(rxdataNoFlags);
-        }
-    
-        // check if serial transmit buffer is empty
-        if(!is_uart_tx_buffer_empty())
-        {
-            if (is_uart_tx_finished())
-            {
-                // if not empty, set TI, which triggers interrupt to actually transmit
-                uart_init_tx_polling();
-            }
-        }
-    }
-#endif
-    
     
     // main loop
 	while (true)
@@ -758,7 +712,6 @@ void main (void)
 		if (rxdata == UART_NO_DATA)
 		{
 
-#if 1
 			// FIXME: the magic numbers make this difficult to understand
 			// but seems to reset uart if it sits in non-idle state
 			// for too long without receiving any more data
@@ -775,7 +728,6 @@ void main (void)
 					uart_command = NONE;
 				}
 			}
-#endif
 		}
 		else
 		{
@@ -1000,10 +952,7 @@ void main (void)
 				if (uart_state != IDLE)
 					break;
 
-				// this is blocking unfortunately
-				buzzer_on();
-
-                // as best I can tell, cast using pointers do not work because sdcc is little endian on 8051
+                // cast using pointers do not work because sdcc is little endian on 8051
                 // so we would need to swap bytes and then cast to uint16
                 // but since it's just two bytes anyway, do it with bit shifts instead
                 //bucket = *(uint16_t *)&RF_DATA[0];
@@ -1012,6 +961,13 @@ void main (void)
                 // reuse uint16_t variable used elsewhere
                 bucket = (RF_DATA[0] << 8) | RF_DATA[1];
                 
+#if defined(UART_LOGGING_ENABLED)
+                
+                printf_tiny("beep: %u\r\n", bucket);
+
+#endif
+				// this is blocking unfortunately
+				buzzer_on();
                 
                 // we initially avoided nop based delays to save on code space
                 //delay1ms(bucket);
