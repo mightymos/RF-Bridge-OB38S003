@@ -197,6 +197,11 @@ inline void enable_pca0_interrupt(void)
     EIE1 |= EIE1_EPCA0__ENABLED;
 }
 
+inline void disable_pca0_interrupt(void)
+{
+    EIE1 &= ~EIE1_EPCA0__ENABLED;
+}
+
 // this is necessary so that uart ring buffer logic operates correctly the first time it is used
 // i.e., flag is set as though the last character sent was completed, even though no previous character was actually sent
 inline void init_uart0_transmit_interrupt_flag(void)

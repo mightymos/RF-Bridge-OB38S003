@@ -844,13 +844,9 @@ void main (void)
 					switch(uart_command)
 					{
 						case RF_CODE_RFIN:
-							// we share a buffer between radio and uart - assume an atomic lock would work better here
-							//disable_capture_interrupt();
 							
 							//we read RF_DATA[] so do not want decoding writing to it while trying to read it
 							uart_put_RF_Data_Standard(RF_CODE_RFIN);
-							
-							//enable_capture_interrupt();
 							break;
 
 						case RF_CODE_SNIFFING_ON:
@@ -866,13 +862,9 @@ void main (void)
 				}
 				else
 				{
-					// disable interrupt for radio receiving while reading buffer
-					//disable_capture_interrupt();
-                    
+
 					result = buffer_out(&bucket);
                     
-					// FIXME: reenable (should store previous and just restore that?)
-					//enable_capture_interrupt();
 
 					// handle new received buckets
 					if (result)
@@ -920,9 +912,6 @@ void main (void)
 				// check if a RF signal got decoded
 				if ((RF_DATA_STATUS & RF_DATA_RECEIVED_MASK) != 0)
 				{
-					//
-					//disable_capture_interrupt();
-					
 					//
 					uart_put_RF_buckets(RF_CODE_SNIFFING_ON_BUCKET);
 
