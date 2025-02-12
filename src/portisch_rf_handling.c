@@ -19,8 +19,7 @@
 //#include "timers.h"
 
 // FIXME: not clear why this is four as opposed to anything else
-//#define BUFFER_BUCKETS_SIZE 4
-#define BUFFER_BUCKETS_SIZE 255
+#define BUFFER_BUCKETS_SIZE 4
 
 // FIXME: add comment
 __xdata uint8_t RF_DATA[RF_DATA_BUFFERSIZE];
@@ -377,13 +376,17 @@ void buffer_in(uint16_t bucket)
 		return;
 	}
     
+    //
 	if ( (buffer_buckets_read == 0) && ((buffer_buckets_write + 1) == BUFFER_BUCKETS_SIZE) )
 	{
+
+//#if defined(UART_LOGGING_ENABLED)
+#if 0
         
-#if defined(UART_LOGGING_ENABLED)
-                
+        // DEBUG: this just gets triggered no matter how large I make the buffers, can I explain if it matters or not?
         //printf_tiny("%s\r\n", __LINE__);
-        printf_tiny("bucket buffer over 01 \r\n");
+        printf_tiny("bbr: %c \r\n", buffer_buckets_read);
+        printf_tiny("bbw: %c \r\n", buffer_buckets_write);
 
 #endif
 
@@ -487,7 +490,7 @@ void PCA0_DoSniffing(void)
 
 
     // FIXME: add comment
-    // FIXME: eventually move setting radio outside outside of function
+    // FIXME: eventually move setting radio state outside of function
     rf_state = RF_IDLE;
     
 	// FIXME: add comment
@@ -508,7 +511,7 @@ void PCA0_StopSniffing(void)
 	// be sure the timeout timer is stopped
 	stop_first_delay();
     
-    // FIXME: eventually move setting radio outside outside of function
+    // FIXME: eventually move setting radio state outside of function
     rf_state = RF_IDLE;
 }
 

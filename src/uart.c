@@ -120,6 +120,16 @@ void uart_isr(void) __interrupt (UART0_IRQn)
         {
             UART_RX_Buffer_Position = 0;
         }
+        
+#if defined(UART_LOGGING_ENABLED)
+        // if the "pointers" are equal after incrementing we caught up to the start of and overwrote the buffer
+        if (UART_RX_Buffer_Position == UART_TX_Buffer_Position)
+        {
+            // DEBUG:
+            printf_tiny("uart rx overwrote\r\n");
+        }
+#endif
+
     }
 
     // transmit byte
@@ -209,8 +219,19 @@ void uart_putc(const uint8_t txdata)
     }
 
     UART_TX_Buffer[UART_TX_Buffer_Position] = txdata;
+    
     UART_TX_Buffer_Position++;
     UART_Buffer_Write_Len++;
+    
+#if defined(UART_LOGGING_ENABLED)
+
+    if (UART_Buffer_Write_Len >= UART_TX_BUFFER_SIZE)
+    {
+        printf_tiny("uart tx buffer overflow\r\n");
+    }
+    
+#endif
+    
 }
 
 void uart_put_command(const uint8_t command)

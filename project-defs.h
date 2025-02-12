@@ -35,7 +35,7 @@
 #define RF_TX_INCLUDED
 
 // use hardware with a second uart as logging output (e.g., EFM8BB52)
-//#define UART_LOGGING_ENABLED
+#define UART_LOGGING_ENABLED
 
 // FIXME: not inserted in code at time of writing
 //#define DEBUG_PINS_ENABLED
