@@ -142,7 +142,7 @@ void init_port_pins_for_serial(void)
     
 }
 
-void init_uart(void)
+void init_uart0(void)
 {   
     SCON0 &= ~(SMODE__BMASK | MCE__BMASK | REN__BMASK);
     SCON0 = REN__RECEIVE_ENABLED | SMODE__8_BIT | MCE__MULTI_DISABLED;

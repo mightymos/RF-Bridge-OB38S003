@@ -215,7 +215,7 @@ inline void enable_pca0_interrupt(void)
 
 // this is necessary so that uart ring buffer logic operates correctly the first time it is used
 // i.e., flag is set as though the last character sent was completed, even though no previous character was actually sent
-inline void init_serial_interrupt(void)
+inline void init_uart0_transmit_interrupt_flag(void)
 {
     TI = 1;
 }
@@ -279,7 +279,7 @@ void refresh_watchdog(void);
 void reset_mcu(void);
 void init_port_pins_for_passthrough(void);
 void init_port_pins_for_serial(void);
-void init_uart(void);
+void init_uart0(void);
 void init_timer0_8bit_autoreload(const uint8_t);
 void init_timer1_8bit_autoreload(const uint8_t);
 

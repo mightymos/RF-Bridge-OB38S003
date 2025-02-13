@@ -31,13 +31,12 @@
 #define _PROJECT_DEFS_H
 
 // this type of file is usually a good place for project wide constants
-// option to exclude radio transmission to save on code space
-#define RF_TX_INCLUDED
+
 
 // use hardware with a second uart as logging output (e.g., EFM8BB52)
-#define UART_LOGGING_ENABLED
+//#define UART_LOGGING_ENABLED
 
-// FIXME: not inserted in code at time of writing
+// FIXME: not used in codebase at time of writing
 //#define DEBUG_PINS_ENABLED
 
 #endif // _PROJECT_DEFS_H

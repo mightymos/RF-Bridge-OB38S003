@@ -94,8 +94,8 @@ void init_port_pins(void)
     
 }
 
-
-void init_uart(void)
+// we just use the same naming convention as other ports (uart0) because some mcu have two uarts
+void init_uart0(void)
 {
     // BRGS = 1 so uart baud rate generator uses SREL (instead of timer 1)
     AUX |= 0x80;
