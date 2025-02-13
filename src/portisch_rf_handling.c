@@ -243,6 +243,7 @@ bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses,
 			// FIXME: it can be confusing to bury things like this in functions
 			// disable interrupt for RF receiving while uart transfer
 			disable_capture_interrupt();
+            //disable_pca0_interrupt();
 
 			// set status
 			RF_DATA_STATUS = i;
@@ -417,6 +418,7 @@ bool buffer_out(uint16_t* bucket)
 
 	// disable interrupt for RF receiving while reading buffer
 	disable_capture_interrupt();
+    //disable_pca0_interrupt();
 
 
 	*bucket = buffer_buckets[buffer_buckets_read];
@@ -478,6 +480,7 @@ void PCA0_DoSniffing(void)
 
 	// enable interrupt for RF receiving
 	enable_capture_interrupt();
+    //enable_pca0_interrupt();
 
 	// start PCA
 	pca0_run();
@@ -507,6 +510,7 @@ void PCA0_StopSniffing(void)
 
 	// disable interrupt for RF receiving
 	disable_capture_interrupt();
+    //disable_pca0_interrupt();
 
 	// be sure the timeout timer is stopped
 	stop_first_delay();
@@ -826,6 +830,7 @@ void SendBucketsByIndex(uint8_t index, uint8_t* rfdata)
                         // disable interrupt for RF receiving while uart transfer
                         //FIXME: want to move outside of buried function eventually?
                         disable_capture_interrupt();
+                        //disable_pca0_interrupt();
 
                         // add sync bucket number to data
                         RF_DATA[0] |= ((bucket_count << 4) | ((bucket_sync & 0x8000) >> 8));

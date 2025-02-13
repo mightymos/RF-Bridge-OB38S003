@@ -781,6 +781,7 @@ void main (void)
 					// enable interrupt for RF receiving
 					//PCA0CPM0 |= PCA0CPM0_ECCF__ENABLED;
                     enable_capture_interrupt();
+                    //enable_pca0_interrupt();
 
 					// enable UART again
 					blockReadingUART = false;
@@ -859,6 +860,7 @@ void main (void)
 
 					// enable interrupt for RF receiving
 					enable_capture_interrupt();
+                    //enable_pca0_interrupt();
 				}
 				else
 				{
@@ -920,6 +922,7 @@ void main (void)
 
 					// enable interrupt for RF receiving
 					enable_capture_interrupt();
+                    //enable_pca0_interrupt();
 				}
 				else
 				{
