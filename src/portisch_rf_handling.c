@@ -366,8 +366,9 @@ void buffer_in(uint16_t bucket)
 	// check if writing next byte into circular buffer will catch up to read position, and if so bail out
 	if ( (buffer_buckets_write + 1) == buffer_buckets_read )
 	{
-        
-#if defined(UART_LOGGING_ENABLED)
+
+#if 0
+//#if defined(UART_LOGGING_ENABLED)
                 
         //printf_tiny("%s\r\n", __LINE__);
         printf_tiny("bucket buffer over 00 \r\n");
@@ -381,9 +382,9 @@ void buffer_in(uint16_t bucket)
 	if ( (buffer_buckets_read == 0) && ((buffer_buckets_write + 1) == BUFFER_BUCKETS_SIZE) )
 	{
 
-//#if defined(UART_LOGGING_ENABLED)
+
 #if 0
-        
+//#if defined(UART_LOGGING_ENABLED)        
         // DEBUG: this just gets triggered no matter how large I make the buffers, can I explain if it matters or not?
         //printf_tiny("%s\r\n", __LINE__);
         printf_tiny("bbr: %c \r\n", buffer_buckets_read);
@@ -798,8 +799,9 @@ void SendBucketsByIndex(uint8_t index, uint8_t* rfdata)
                             
 #if defined(UART_LOGGING_ENABLED)
                 
-                            printf_tiny("%s\r\n", __LINE__);
-                            printf_tiny("actual_byte greater than RF_DATA_BUFFERSIZE\r\n");
+                            // FIXME:
+                            //printf_tiny("%s\r\n", __LINE__);
+                            printf_tiny("actual_byte > RF_DATA_BUFFERSIZE\r\n");
 #endif
                         }
                     }

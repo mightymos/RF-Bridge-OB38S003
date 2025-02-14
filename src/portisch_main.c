@@ -47,6 +47,10 @@
 // got this output from the tool:
 // rfraw AA B0 21 03 08 0138 03B7 277C 28 18 19 09 08 19 08 19 08 19 09 09 08 18 19 08 18 18 18 18 19 08 19 08 18 55
 
+// FIXME: need to confirm this command length is valid
+// 0xB0 code that is really long (to test if buffer overflows)
+// AA B0 8F 04 08 13 75 02 49 01 11 13 9F 38 19 2A 19 2A 1A 1A 19 29 2A 19 2A 1A 19 29 29 29 29 2A 1A 1A 1A 1A 19 2A 19 29 2A 1A 19 2A 19 2A 1A 1A 1A 1A 1A 1A 1A 19 2A 1A 1A 1A 1A 1A 1A 1A 1A 1A 19 2A 1A 1A 19 29 29 2A 19 29 29 29 29 29 29 55 38 19 2A 19 2A 1A 1A 19 29 2A 19 2A 1A 19 29 29 29 29 2A 1A 1A 1A 1A 19 2A 19 29 2A 1A 19 2A 19 2A 1A 1A 1A 1A 1A 1A 1A 19 2A 1A 1A 1A 1A 1A 1A 1A 1A 1A 19 2A 1A 1A 19 29 29 2A 19 29 29 29 29 29 29 55
+
 // 0xA5 (standard transmit) examples
 // PT226X
 // rfraw AA A5 2A 62 01 5E 04 1A D0 03 58 55
@@ -659,7 +663,11 @@ void main (void)
     // DEBUG: requires code and memory space, which is in short supply
     // so we would only be able to and/or want to include on larger microcontrollers
     
-    printf_tiny("boot:\r\n");
+    printf_tiny("compiled:\r\n");
+    printf_tiny("%s\r\n", __DATE__);
+    printf_tiny("%s\r\n", __TIME__);
+    
+    printf_tiny("booting...\r\n");
 
 #endif
 
