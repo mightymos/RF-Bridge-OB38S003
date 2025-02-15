@@ -439,6 +439,7 @@ bool radio_tx_state_machine(const uart_command_t command)
                 case RF_CODE_RFOUT_NEW:
                     // byte 0:		PROTOCOL_DATA index
                     // byte 1..:	Data
+                    // FIXME: this does not do any bounds checking on index
                     // FIXME: rcswitch treats "protocol 1" as index 0, so might need to make consistent with portisch
                     SendBucketsByIndex(RF_DATA[0], &RF_DATA[1]);
                     break;
