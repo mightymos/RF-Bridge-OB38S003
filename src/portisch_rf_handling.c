@@ -455,6 +455,11 @@ void capture_handler(uint16_t current_capture_value)
 		// FIXME: add comment
 		pin = rdata_level();
 		buffer_in(current_capture_value | ((uint16_t)(!pin) << 15));
+        
+#if defined(DEBUG_PINS_ENABLED)
+        set_debug_pin01(pin);
+#endif
+
 	}
 	else
 	{
@@ -529,8 +534,12 @@ bool SendSingleBucket(const bool high_low, uint16_t bucket_time)
     set_led(high_low);
     set_tdata(high_low);
     
-    // DEBUG
-    //set_debug_pin01(high_low);
+#if defined(DEBUG_PINS_ENABLED)
+
+    // DEBUG: mirror radio transmit output to a free gpio
+    set_debug_pin01(high_low);
+    
+#endif
 	
 	// FIXME: nop style delay seems to basically work (with first protocol)
 	// but bucket timings measured at receiver are inaccurate due to delay_us inaccuracy

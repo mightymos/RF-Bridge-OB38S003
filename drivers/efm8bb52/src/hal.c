@@ -131,7 +131,7 @@ void init_port_pins_for_serial(void)
         
     // this is different from efm8bb1 which is digital mode by default
     P0MDIN = P0MDIN_B0__DIGITAL | P0MDIN_B1__ANALOG | P0MDIN_B2__ANALOG | P0MDIN_B3__ANALOG | P0MDIN_B4__DIGITAL | P0MDIN_B5__DIGITAL | P0MDIN_B6__ANALOG | P0MDIN_B7__ANALOG;
-    P1MDIN = P1MDIN_B0__ANALOG | P1MDIN_B1__ANALOG | P1MDIN_B2__ANALOG | P1MDIN_B3__DIGITAL | P1MDIN_B4__DIGITAL | P1MDIN_B5__ANALOG | P1MDIN_B6__DIGITAL | P1MDIN_B7__ANALOG;
+    P1MDIN = P1MDIN_B0__ANALOG | P1MDIN_B1__ANALOG | P1MDIN_B2__ANALOG | P1MDIN_B3__DIGITAL | P1MDIN_B4__DIGITAL | P1MDIN_B5__ANALOG | P1MDIN_B6__DIGITAL | P1MDIN_B7__DIGITAL;
     
     // disables high side driver so uart rx is used as input
     // disables high side driver so radio receive is used as input

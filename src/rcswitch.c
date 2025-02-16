@@ -286,8 +286,12 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     //
     set_tdata(firstLogicLevel);
 
-    // DEBUG:
-    //set_debug_pin01(firstLogicLevel);
+#if defined(DEBUG_PINS_ENABLED)
+
+    // DEBUG: mirror radio transmit output to a free gpio
+    set_debug_pin01(firstLogicLevel);
+    
+#endif
 
     init_second_delay_us(delayHigh);
     wait_second_delay_finished();
@@ -296,8 +300,12 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     //
     set_tdata(secondLogicLevel);
     
+#if defined(DEBUG_PINS_ENABLED)
+
     // DEBUG:
-    //set_debug_pin01(secondLogicLevel);
+    set_debug_pin01(secondLogicLevel);
+    
+#endif
 
 
     init_second_delay_us(delayLow);
