@@ -310,6 +310,10 @@ void uart_state_machine(const uint8_t rxdataNoFlags)
 			{
                 packetLength = RF_DATA_BUFFERSIZE;
                 uart_state = SYNC_FINISH;
+                
+#if defined(UART_LOGGING_ENABLED)
+                printf_tiny("RF_DATA[] = 0x%x overflow\r\n", rxdataNoFlags);
+#endif
 			}
 			break;
 
@@ -735,6 +739,10 @@ void main (void)
 					idleResetCount = 0;
 					uart_state = IDLE;
 					uart_command = NONE;
+                    
+#if defined(UART_LOGGING_ENABLED)
+                    printf_tiny("uart idle reset\r\n");
+#endif
 				}
 			}
 		}

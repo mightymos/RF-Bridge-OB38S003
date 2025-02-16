@@ -37,6 +37,6 @@
 #define UART_LOGGING_ENABLED
 
 // FIXME: not used in codebase at time of writing
-#define DEBUG_PINS_ENABLED
+//#define DEBUG_PINS_ENABLED
 
 #endif // _PROJECT_DEFS_H
