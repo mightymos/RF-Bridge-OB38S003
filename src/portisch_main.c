@@ -296,18 +296,16 @@ void uart_state_machine(const uint8_t rxdataNoFlags)
 		case RECEIVING:
 			RF_DATA[position] = rxdataNoFlags;
 
-			// DEBUG:
-			//puthex2(RF_DATA[position]);
-			//uart_putc(RF_DATA[position]);
 			
 			position++;
 
-			// FIXME: uartPacket[] versus RF_DATA[] array length
+			// if we have reached expected packet length, then look for finish byte next
 			if (position == packetLength)
 			{
 				uart_state = SYNC_FINISH;
 			} else if (position >= RF_DATA_BUFFERSIZE)
 			{
+                // FIXME: handle overflow so that decoding resumes working
                 packetLength = RF_DATA_BUFFERSIZE;
                 uart_state = SYNC_FINISH;
                 
