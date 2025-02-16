@@ -1,6 +1,14 @@
 esphome:
   name: sonoff-rf-bridge
   friendly_name: Sonoff RF Bridge
+  
+  # we try to issue software reset to 8051 microcontroller through UART
+  # whenever ESP8285 resets or powers on so they are both in an initial known state
+  # (note: firmware on microcontroller must have been flashed to support)
+  on_boot:
+      then:
+      - rf_bridge.send_raw: 
+          raw: 'AAFE55'
 
 esp8266:
   # esp01_1m also seems to work, however it is physically an esp8285 chip in the sonoff bridge
@@ -37,9 +45,6 @@ uart:
 api:
   encryption:
     key: !secret api_key
-    
-  # this was reported to stop "freezing" issues but needs to be tested
-  #reboot_timeout: 0s
 
   services:
   # code can be sent as integer or as a hex. not clear what difference it makes
@@ -111,10 +116,19 @@ rf_bridge:
 
 
 button:
-  # Restart the ESP8285 wifi chip
+  # restart the ESP8285 wifi chip
   - platform: restart
     name: "Restart"
   
+  # sending ACK can be useful for resetting uart state machine on microcontroller
+  - platform: template
+    name: Acknowledge
+    id: ack_mcu
+    on_press:
+      then:
+        rf_bridge.send_raw:
+          raw: 'AAA055'
+        
   # places portisch flashed microcontroller into various modes
   # commands are defined here: https://github.com/Portisch/RF-Bridge-EFM8BB1/wiki
   - platform: template
@@ -138,7 +152,7 @@ button:
       then:
         - rf_bridge.start_bucket_sniffing 
 
-
+  # beep for 100 milliseconds
   - platform: template
     name: Beep
     id: Beep
@@ -147,7 +161,7 @@ button:
         - rf_bridge.beep:
             duration: 100
 
-
+  # reset microcontroller feature was added to RF-Bridge-OB38S003 custom firmware
   - platform: template
     name: "restart radio"
     id: mcu_reset
@@ -156,6 +170,7 @@ button:
       - rf_bridge.send_raw: 
           raw: 'AAFE55'
 
+  # learning mode
   - platform: template
     name: "learning mode"
     id: learning
@@ -197,10 +212,12 @@ binary_sensor:
     device_class: door
     publish_initial_state : true
 
-# allows toggling the wifi status LED
+# at first this shows warning/error/wifi status and then reverts to being controllable as a regular LED
 light:
   - platform: status_led
     name: "Status LED"
+    initial_state:
+      state: ON
     pin: 
       number: GPIO13
       inverted: true
@@ -227,7 +244,7 @@ switch:
 
   - platform: template
   
-    # these standard timings can be easily decoded by another receiver, so we can detect if MCU is sending 0xB0 commands inadvertently
+    # these standard timings should be easily decoded by another receiver, so useful to test radio transmit functionality
     # sync low = 0x2, bit 0 = 0x81, bit 1 = 0x90, sync high = 0x8
     # modify to send 0xDEADBE = 0b11011110 10101101 10111110
     # rfraw AA B0 21 03 08 0138 03B7 277C 29 09 08 19 09 09 09 08 19 08 19 08 19 09 08 19 09 08 19 09 09 09 09 08 18 55
@@ -238,9 +255,11 @@ switch:
     turn_on_action:
       - rf_bridge.send_raw:
           raw: 'AAB0210308013803B7277C2818190908190819081909090818190818181818190819081855'
+
     turn_off_action:
       - rf_bridge.send_raw:
           raw: 'AAB0210308013803B7277C2909081909090908190819081909081909081909090909081855'
+
           
 
 # example window blinds using Bitbucket sending. Works on Portisch firmware only.
