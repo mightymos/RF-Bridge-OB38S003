@@ -284,6 +284,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     uint8_t secondLogicLevel = invertedSignal ? 1 : 0;
 
     //
+    set_led(firstLogicLevel);
     set_tdata(firstLogicLevel);
 
 #if defined(DEBUG_PINS_ENABLED)
@@ -298,6 +299,7 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
 
 
     //
+    set_led(secondLogicLevel);
     set_tdata(secondLogicLevel);
     
 #if defined(DEBUG_PINS_ENABLED)

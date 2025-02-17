@@ -222,14 +222,17 @@ light:
       number: GPIO13
       inverted: true
 
-# example LED strip using standard protocol. Works on RCswitch and Portisch firmwares.
+
 switch:
+
+  # example adapted from LED strip using standard protocol installed in oven range
   - platform: template
-    id: range
-    name: "Stove range light"
+    id: range01
+    name: "Transmit (by timing)"
     optimistic: true
     turn_on_action: 
       - rf_bridge.send_code:
+      
           # made these times equal for on/off even though when sniffed they would vary a little
           sync: 0x2F1A
           low:  0x0184
@@ -241,20 +244,34 @@ switch:
           low:  0x0184 
           high: 0x048C 
           code: 0x00C303
-
-  - platform: template
   
+  # same example but using protocol ID (times will be different)
+  - platform: template
+    id: range02
+    name: "Transmit (by protocol ID)"
+    optimistic: true
+    turn_on_action: 
+      - rf_bridge.send_advanced_code:
+          length: 0x04
+          protocol: 0x01
+          code: "00C301"
+    turn_off_action: 
+      - rf_bridge.send_advanced_code:
+          length: 0x04
+          protocol: 0x01
+          code: "00C303"
+          
     # these standard timings should be easily decoded by another receiver, so useful to test radio transmit functionality
     # sync low = 0x2, bit 0 = 0x81, bit 1 = 0x90, sync high = 0x8
     # modify to send 0xDEADBE = 0b11011110 10101101 10111110
     # rfraw AA B0 21 03 08 0138 03B7 277C 29 09 08 19 09 09 09 08 19 08 19 08 19 09 08 19 09 08 19 09 09 09 09 08 18 55
-    # the other codes are 0x35720A or 0x35720E which is what my real door sensor sends
+  - platform: template
     id: sim_door_sensor
-    name: "Door sensor (simulated)"
+    name: "Door sensor (replay)"
     optimistic: true
     turn_on_action:
       - rf_bridge.send_raw:
-          raw: 'AAB0210308013803B7277C2818190908190819081909090818190818181818190819081855'
+          raw: 'AAB0210308013803B7277C2909081909090908190819081909081909081909090909081855'
 
     turn_off_action:
       - rf_bridge.send_raw:
@@ -262,7 +279,8 @@ switch:
 
           
 
-# example window blinds using Bitbucket sending. Works on Portisch firmware only.
+# example window blinds using Bitbucket sending.
+# Works on Portisch firmware only.
 cover:
   - platform: time_based
     name: "Living room blinds"
