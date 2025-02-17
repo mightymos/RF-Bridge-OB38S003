@@ -13,7 +13,7 @@
 
 // FIXME: explain choice of size
 // portisch allocated TX=64 and RX=32
-#define UART_RX_BUFFER_SIZE 48
+#define UART_RX_BUFFER_SIZE 32
 #define UART_TX_BUFFER_SIZE	32
 
 

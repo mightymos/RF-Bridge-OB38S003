@@ -22,12 +22,12 @@
 // advanced sniffing 0xA6 is unsupported
 // (rcswitch is essentially doing a form of this anyway with 0xA4 because we compare measured timings to a table to look for match)
 // advanced transmit 0xA8 can take a variable data length
-// with sync, command, length, protocol index, and end, we will choose to support eight data bytes (64 bits) for a total of 13 bytes
-#define PACKET_MAX_SIZE  13
+// with sync, command, length, protocol index, and end, we will choose to support eight data bytes (64 bits) for a total of at least 13 bytes
+#define PACKET_MAX_SIZE  16
 
 
-// we place this in internal ram so that a larger external ram buffer can be allocated in uart.c for use in portisch
-uint8_t uartPacket[PACKET_MAX_SIZE];
+// have to balance this array size against buffer sizes allocated to uarts in uart.h
+__xdata uint8_t uartPacket[PACKET_MAX_SIZE];
 
 // includes protocol ID and actual radio data
 uint8_t gLengthExpected = 0;

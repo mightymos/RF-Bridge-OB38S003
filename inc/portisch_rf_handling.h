@@ -27,7 +27,9 @@
 #if defined(BUCKET_SNIFFING_INCLUDED)
     // FIXME: calculate how many bytes we really need
     // FIXME: this is as many as we can squeeze out for now
-    #define RF_DATA_BUFFERSIZE 96
+    #define RF_DATA_BUFFERSIZE 112
+    // on the EFM8BB52 dev kit we have lots of RAM
+    //#define RF_DATA_BUFFERSIZE 160
 #else
     #define RF_DATA_BUFFERSIZE 64
 #endif
