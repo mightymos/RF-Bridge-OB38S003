@@ -24,6 +24,8 @@
 //    #define RF_DATA_BUFFERSIZE		64
 //#endif
 
+// we share the radio buffer with the uart packets
+// so even if sniffing is disabled, we still need buffer space
 #if defined(BUCKET_SNIFFING_INCLUDED)
     // FIXME: calculate how many bytes we really need
     // FIXME: this is as many as we can squeeze out for now

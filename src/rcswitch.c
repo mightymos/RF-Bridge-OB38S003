@@ -293,8 +293,8 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
     
 #endif
 
-    init_second_delay_us(delayHigh);
-    wait_second_delay_finished();
+    init_first_delay_us(delayHigh);
+    wait_first_delay_finished();
 
 
     //
@@ -308,8 +308,8 @@ void transmit(const bool invertedSignal, uint16_t delayHigh, uint16_t delayLow)
 #endif
 
 
-    init_second_delay_us(delayLow);
-    wait_second_delay_finished();
+    init_first_delay_us(delayLow);
+    wait_first_delay_finished();
 }
 
 

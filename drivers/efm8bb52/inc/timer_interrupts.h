@@ -51,7 +51,7 @@
 #define TIMER3_RELOAD_1MILLIS   0xF805
 
 //
-//void init_first_delay_us(const uint16_t timeout);
+void init_first_delay_us(const uint16_t timeout);
 void init_first_delay_ms(const uint16_t timeout);
 void init_second_delay_us(const uint16_t timeout);
 void init_second_delay_ms(const uint16_t timeout);

@@ -90,8 +90,9 @@ void set_timer3_reload(const uint16_t reload)
     TMR3RLL = (reload & 0xFF);
 }
 
-
-#if 0
+// not used in portisch, but can be used in rcswitch
+// but at one time we removed to save on code space
+#if 1
 
 /*
  * we use this generic naming as compared with Portisch because different timers are used depending on microcontroller

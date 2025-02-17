@@ -78,7 +78,9 @@ void set_timer1_reload(const uint8_t reload)
 }
 
 
-#if 0
+// not used in portisch, but can be used in rcswitch
+// but at one time we removed to save on code space
+#if 1
 
 /*
  * Init Timer 0 with microseconds interval, maximum is 65535micros.
@@ -103,7 +105,7 @@ void init_first_delay_us(const uint16_t timeout)
 #endif
 
 /*
- * Init Timer 1 with milliseconds interval, maximum is ~2.5ms.
+ * Init Timer 0 with milliseconds interval, maximum is ~2.5ms.
  */
 void init_first_delay_ms(const uint16_t timeout)
 {
@@ -121,7 +123,7 @@ void init_first_delay_ms(const uint16_t timeout)
 }
 
 /*
- * Init Timer 0 with microseconds interval, maximum is 65535micros.
+ * Init Timer 1 with microseconds interval, maximum is 65535micros.
  */
 void init_second_delay_us(const uint16_t timeout)
 {

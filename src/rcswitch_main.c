@@ -252,7 +252,7 @@ int main (void)
     
     // supports microseconds and milliseconds delays respectively
     init_timer0_8bit_autoreload();
-    //init_timer0_8bit_autoreload();
+    //init_timer1_8bit_autoreload();
     
     // timer 2 supports compare and capture module
     // for determining pulse lengths of received radio signals

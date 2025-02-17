@@ -91,7 +91,7 @@ void set_timer3_reload(const uint16_t reload)
 }
 
 
-#if 0
+#if 1
 
 /*
  * we use this generic naming as compared with Portisch because different timers are used depending on microcontroller

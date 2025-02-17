@@ -25,7 +25,7 @@
 #define TIMER1_RELOAD_1MILLIS 0x58
 
 //
-//void init_first_delay_us(const uint16_t timeout);
+void init_first_delay_us(const uint16_t timeout);
 void init_first_delay_ms(const uint16_t timeout);
 void init_second_delay_us(const uint16_t timeout);
 void init_second_delay_ms(const uint16_t timeout);
