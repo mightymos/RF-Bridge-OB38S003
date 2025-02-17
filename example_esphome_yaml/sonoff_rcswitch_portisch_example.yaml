@@ -253,12 +253,12 @@ switch:
     turn_on_action: 
       - rf_bridge.send_advanced_code:
           length: 0x04
-          protocol: 0x01
+          protocol: 0x00
           code: "00C301"
     turn_off_action: 
       - rf_bridge.send_advanced_code:
           length: 0x04
-          protocol: 0x01
+          protocol: 0x00
           code: "00C303"
           
     # these standard timings should be easily decoded by another receiver, so useful to test radio transmit functionality
