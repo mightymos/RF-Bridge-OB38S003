@@ -18,8 +18,6 @@
     // PT2260, EV1527,... original RF bridge protocol
     #define PORTISCH_SUPPORT_PT226X_PROTOCOL
     
-    // HT6P20X chips
-    #define PORTISCH_SUPPORT_HT6P20X_PROTOCOL
 
 #elif defined(MULTI_PROTOCOLS_INCLUDED)
     
