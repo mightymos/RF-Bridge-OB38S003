@@ -248,6 +248,9 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
                             //delay = *(uint16_t *)&uartPacket[0];
                             delay = (uartPacket[0] << 8) | uartPacket[1];
                             
+#if defined(UART_LOGGING_ENABLED)
+                            printf_tiny("beep: %u ms\r\n", delay);
+#endif
                             
                             // FIXME: will blocking trip watchdog timer? 
                             buzzer_on();

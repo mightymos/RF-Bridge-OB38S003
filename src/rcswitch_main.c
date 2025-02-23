@@ -309,7 +309,19 @@ int main (void)
     // just to give some startup time
     delay1ms(500);
 
-        
+#if defined(UART_LOGGING_ENABLED)
+
+    // DEBUG: requires code and memory space, which is in short supply
+    // so we would only be able to and/or want to include on larger microcontrollers
+    
+    printf_tiny("compiled:\r\n");
+    printf_tiny("%s\r\n", __DATE__);
+    printf_tiny("%s\r\n", __TIME__);
+    
+    printf_tiny("booting...\r\n");
+
+#endif
+
     // watchdog will force a reset, unless we periodically write to it, demonstrating loop is not stuck somewhere
     enable_watchdog();
 
