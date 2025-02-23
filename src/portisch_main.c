@@ -396,6 +396,8 @@ bool radio_tx_state_machine(const uart_command_t command)
     uint8_t* rfdata;
     uint8_t data_len;
     uint16_t* buckets_pointer;
+    
+    uint8_t index;
 
 	// do transmit of the data
 	switch(rf_state)
@@ -428,6 +430,7 @@ bool radio_tx_state_machine(const uart_command_t command)
                     tr_packet[2] = RF_DATA[8];
                     
                     // help make function call more readable
+                    // FIXME: we could really set these as constanst rather than needing to look them up because we are assuming the standard protocol
                     start_size = PROTOCOL_DATA[0].start.size;
                     bit0_size  = PROTOCOL_DATA[0].bit0.size;
                     bit1_size  = PROTOCOL_DATA[0].bit1.size;
@@ -441,9 +444,22 @@ bool radio_tx_state_machine(const uart_command_t command)
                 case RF_CODE_RFOUT_NEW:
                     // byte 0:		PROTOCOL_DATA index
                     // byte 1..:	Data
-                    // FIXME: this does not do any bounds checking on index
                     // FIXME: rcswitch treats "protocol 1" as index 0, so might need to make consistent with portisch
-                    SendBucketsByIndex(RF_DATA[0], &RF_DATA[1]);
+                    index = RF_DATA[0];
+                    
+                    // do bounds checking of index
+                    if (index >= NUM_OF_PROTOCOLS)
+                    {
+                        
+#if defined(UART_LOGGING_ENABLED)
+                        // DEBUG:
+                        printf_tiny("protocol id [%d] exceeds # of protocols %d\r\n", index, NUM_OF_PROTOCOLS);
+#endif
+                        // zero protocol should always be available, so choose as default of protocol id requested to transmit is exceeded
+                        index = 0;
+                    }
+                    
+                    SendBucketsByIndex(index, &RF_DATA[1]);
                     break;
                 case RF_CODE_RFOUT_BUCKET:
                     num_buckets = RF_DATA[0];
@@ -674,6 +690,9 @@ void main (void)
     printf_tiny("compiled:\r\n");
     printf_tiny("%s\r\n", __DATE__);
     printf_tiny("%s\r\n", __TIME__);
+    printf_tiny("%s\r\n", __FILE__);
+    
+    printf_tiny("# of protocols: %d\r\n", NUM_OF_PROTOCOLS);
     
     printf_tiny("booting...\r\n");
 

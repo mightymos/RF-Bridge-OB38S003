@@ -190,7 +190,9 @@ bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses,
 	// because maybe this is not correct because a
 	// repeat delay
 	if (status[i].bit_count == bit_count - 1)
+    {
 		last_bit = 1;
+    }
 
 	// check if bit 0 is finished
 	if (status[i].bit0_status == bit0_size - last_bit)
@@ -296,7 +298,7 @@ void HandleRFBucket(uint16_t duration, bool high_low)
 			if (status[0].sync_status == 0)
 			{
 				// if PT226x standard sniffing calculate the pulse time by the longer sync bucket
-				// this will enable receive PT226x in a range of PT226x_SYNC_MIN <-> 32767�s
+				// this will enable receive PT226x in a range of PT226x_SYNC_MIN <-> 32767 microsec
 				if (duration > PT226x_SYNC_MIN && !high_low) // && (duration < PT226x_SYNC_MAX))
 				{
 					// increment start because of the skipped first high bucket

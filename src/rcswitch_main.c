@@ -317,6 +317,9 @@ int main (void)
     printf_tiny("compiled:\r\n");
     printf_tiny("%s\r\n", __DATE__);
     printf_tiny("%s\r\n", __TIME__);
+    printf_tiny("%s\r\n", __FILE__);
+    
+    printf_tiny("# of protocols: %d\r\n", NUM_OF_PROTOCOLS);
     
     printf_tiny("booting...\r\n");
 
