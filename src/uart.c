@@ -22,6 +22,8 @@
     
     
     // supports printf_tiny() for uart logging/debugging output
+    // eventually we might want to swap the uart assignments
+    // because one is connected to the usb port at a fixed baud rate
     int putchar (int c)
     {
         uint8_t SFRPAGE_save = SFRPAGE;
