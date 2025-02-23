@@ -7,6 +7,7 @@ An alternative firmware for 433 MHz radio to wifi bridges, targetting these boar
 | Sonoff Bridge R2 v1.0 (black box) | EFM8BB1 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | Supported | Flashing works, see instructions below for Tasmota firmware upgrade |
 | Sonoff Bridge R2 v2.2 (white box) | OB38S003 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | Supported | Requires reprogramming with official or open source flasher |
 | EFM8BB1 Busy Bee Low Cost Kit Board | EFM8BB1 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | Supported | Requires external receiver and/or transmitter |
+| EFM8 BB52 8-bit MCU Explorer Kit (BB52-EK2701A) |  EFM8BB52 | Supported | Decode + Transmit (RfRaw 0xA5/0xA8) | Supported | Requires external receiver and/or transmitter |
 
 These microcontrollers were originally intended for radio decoding but lacked support for code sniffing and additional protocols.  
 As a consequence many people just bypass the microcontroller with a hardware modification:  
@@ -37,7 +38,7 @@ THIS IS A WORK IN PROGRESS and requires multiple flashing steps.
  
 Passthrough mode is the simplest, provided you are comfortable flashing ESPHome YAML or configuring Tasmota MQTT for your particular radio devices.  
 RCSwitch supports several standard protocols and is fast at decoding.  
-Portisch supports either standard protocol with sniffing of unknown codes or advanced decoding of multiple protocol timings.  
+Portisch supports either standard protocol in addition to sniffing of unknown codes, or advanced decoding of multiple protocol timings.  
 
 # Recommendations
 If purchasing new devices I recommend using Zigbee or similar newer radio technologies.  

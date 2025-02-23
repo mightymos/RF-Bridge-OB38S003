@@ -4,6 +4,8 @@
 // we use the same format as portisch so okay to include
 #include "portisch_command_format.h"
 
+#include "project-defs.h"
+
 #include "rcswitch.h"
 #include "state_machine.h"
 #include "uart.h"
@@ -164,7 +166,10 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
                         // re-enable default RF_CODE_RFIN sniffing
                         //gLastSniffingCommand = PCA0_DoSniffing(gLastSniffingCommand);
                         //state = IDLE;
-                        break; 
+                        break;
+                        
+                    case RF_RESET_MCU:
+                        break;
 
                     // unknown command
                     default:
@@ -208,6 +213,10 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
                     // FIXME: review this logic
                     gLengthExpected = PACKET_MAX_SIZE;
                     state = SYNC_FINISH;
+                    
+#if defined(UART_LOGGING_ENABLED)
+                printf_tiny("uartPacket[] = 0x%x overflow\r\n", rxdata);
+#endif
                 }
                 break;
 
@@ -247,6 +256,18 @@ RF_COMMAND_T uart_state_machine(const unsigned int rxdataWithFlags)
 
                             // send acknowledge
                             uart_put_command(RF_CODE_ACK);
+                            break;
+                            
+                        case RF_RESET_MCU:
+                            // force the microcontroller to reset
+                            reset_mcu();
+                            
+                            // we should never reach this because mcu should reset
+                            while (1)
+                            {
+                                //startup_blink();
+                            }
+
                             break;
                     }
                     
