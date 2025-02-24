@@ -215,6 +215,8 @@ bool DecodeBucket(uint8_t i, bool high_low, uint16_t duration, uint16_t *pulses,
 		//BITS_INC(status[i]);
 		status[i].bit_count += 1;
 		status[i].actual_bit_of_byte -= 1;
+        
+        //
 		RF_DATA[(status[i].bit_count - 1) >> 3] |= (1 << status[i].actual_bit_of_byte);
 	}
 
