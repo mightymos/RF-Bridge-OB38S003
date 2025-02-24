@@ -52,6 +52,8 @@ typedef enum
 	ADVANCED
 } rf_sniffing_mode_t;
 
+// this bit basically acts as a flag to indicate a successful decoding when set
+// the remainder of the bits can indicate which protocol id was decoded
 #define RF_DATA_RECEIVED_MASK	0x80
 
 extern __xdata rf_state_t rf_state;
@@ -77,7 +79,7 @@ extern __xdata uint8_t bucket_count;
 
 
 extern bool buffer_out(uint16_t* bucket);
-extern void HandleRFBucket(uint16_t duration, bool high_low);
+extern void HandleRFBucket(const uint16_t duration, const bool high_low);
 extern void PCA0_DoSniffing(void);
 extern void PCA0_StopSniffing(void);
 extern void SendRFBuckets(uint16_t* buckets, uint8_t* rfdata, uint8_t data_len);

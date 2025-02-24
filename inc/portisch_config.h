@@ -17,9 +17,8 @@
     // if bucket sniffing is included, we cannot fit many protocols in memory so we just allow the standard one
     // PT2260, EV1527,... original RF bridge protocol
     #define PORTISCH_SUPPORT_PT226X_PROTOCOL
-    
 
-#elif defined(MULTI_PROTOCOLS_INCLUDED)
+#elif defined(MULTIPLE_PROTOCOLS_INCLUDED)
     
     // typical protocols, comment to disable
     // PT2260, EV1527,... original RF bridge protocol
@@ -64,5 +63,9 @@
     //#define PORTISCH_SUPPORT_DT_5514_PROTOCOL
     // Auriol H13726 Weather Station, Issue #106
     //#define PORTISCH_SUPPORT_H13726_PROTOCOL
+    
+#else
+    // error check
+    #error Please defined either BUCKET_SNIFFING_INCLUDED or MULTIPLE_PROTOCOLS_INCLUDED in Makefile.
 
 #endif

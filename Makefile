@@ -59,7 +59,8 @@ TARGET_MCU = EFM8BB52
 # defined here so result can be included in file name
 # uncomment only one
 #RF_RX_FEATURE = BUCKET_SNIFFING_INCLUDED
-RF_RX_FEATURE = MULTI_PROTOCOLS_INCLUDED
+RF_RX_FEATURE = MULTIPLE_PROTOCOLS_INCLUDED
+
 
 # these are the maximum clock speeds
 ifeq ($(TARGET_MCU), EFM8BB1)
