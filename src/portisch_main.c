@@ -880,7 +880,7 @@ void main (void)
 					{
 						case RF_CODE_RFIN:
 							
-							//we read RF_DATA[] so do not want decoding writing to it while trying to read it
+							// we read RF_DATA[] so do not want decoding writing to it while trying to read it
 							uart_put_RF_Data_Standard(RF_CODE_RFIN);
 							break;
 
@@ -888,6 +888,11 @@ void main (void)
 							uart_put_RF_Data_Advanced(RF_CODE_SNIFFING_ON, RF_DATA_STATUS & 0x7F);
 							break;
 					}
+                    
+#if defined(UART_LOGGING_ENABLED)
+                    printf_tiny("uart_command = 0x%x\r\n",   uart_command);
+                    printf_tiny("RF_DATA_STATUS = 0x%x\r\n", RF_DATA_STATUS);
+#endif
 
 					// clear RF status
 					RF_DATA_STATUS = 0;
