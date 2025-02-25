@@ -61,6 +61,8 @@
 // 0xA8 (advanced transmit) examples
 // PT226X
 // rfraw AA A8 04 00 D0 F9 32 55
+// rfraw AA A8 04 00 35 72 0A 55
+// rfraw AA A8 04 00 35 72 0E 55
 //
 // HT6P20X
 // rfraw AA A8 04 01 D0 F9 32 55
