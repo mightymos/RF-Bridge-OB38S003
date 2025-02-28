@@ -148,7 +148,7 @@ void uart_isr(void) __interrupt (UART0_IRQn)
             gTXFinished = true;
         }
 
-
+        // handle wrap around
         if (UART_Buffer_Write_Position == UART_TX_BUFFER_SIZE)
         {
             UART_Buffer_Write_Position = 0;
@@ -195,6 +195,7 @@ unsigned int uart_getc(void)
     rxdata = UART_RX_Buffer[UART_Buffer_Read_Position];
     UART_Buffer_Read_Position++;
 
+    // FIXME: we do this wrap around check before the array access in putc(), does it matter?
     if (UART_Buffer_Read_Position == UART_RX_BUFFER_SIZE)
     {
         UART_Buffer_Read_Position = 0;

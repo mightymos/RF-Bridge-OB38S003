@@ -797,6 +797,13 @@ void SendBucketsByIndex(uint8_t index, uint8_t* rfdata)
                         {
                             // restart sync
                             rf_state = RF_IDLE;
+                            
+#if defined(UART_LOGGING_ENABLED)
+                
+                            // FIXME:
+                            //printf_tiny("%s\r\n", __LINE__);
+                            printf_tiny("bucket_count > ARRAY_LENGTH(buckets)\r\n");
+#endif
                         }
                     }
 
