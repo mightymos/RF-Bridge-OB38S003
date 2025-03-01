@@ -128,20 +128,28 @@ void uart_put_RF_Data_Advanced(uint8_t command, uint8_t protocol_index)
         {
             uart_putc(RF_DATA[index]);
             index++;
+            
+#if defined(UART_LOGGING_ENABLED)
+            //FIXME: greater than or greater than or equal to?
+            if (index >= RF_DATA_BUFFERSIZE)
+            {
+                printf_tiny("index >= RF_DATA_BUFFERSIZE\r\n");
+            }
+#endif
 
             // be safe so as to avoid buffer overflow
             // FIXME: could modulo divide be worked into ring buffer logic itself?
-            if ((index % UART_TX_BUFFER_SIZE) == 0)
+            //if ((index % UART_TX_BUFFER_SIZE) == 0)
+            //{
+            // start and wait for transmit
+            while(!is_uart_tx_buffer_empty())
             {
-                // start and wait for transmit
-                while(!is_uart_tx_buffer_empty())
+                if (is_uart_tx_finished())
                 {
-                    if (is_uart_tx_finished())
-                    {
-                        uart_init_tx_polling();
-                    }
+                    uart_init_tx_polling();
                 }
             }
+            //}
         }
 
         uart_putc(RF_CODE_STOP);

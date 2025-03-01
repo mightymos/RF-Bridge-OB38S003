@@ -798,12 +798,10 @@ void SendBucketsByIndex(uint8_t index, uint8_t* rfdata)
                             // restart sync
                             rf_state = RF_IDLE;
                             
-#if defined(UART_LOGGING_ENABLED)
-                
-                            // FIXME:
-                            //printf_tiny("%s\r\n", __LINE__);
-                            printf_tiny("bucket_count > ARRAY_LENGTH(buckets)\r\n");
-#endif
+//#if defined(UART_LOGGING_ENABLED)
+//                            // DEBUG: if included this triggers regularly, so exclude for now
+//                            printf_tiny("bucket_count > ARRAY_LENGTH(buckets)\r\n");
+//#endif
                         }
                     }
 
@@ -821,7 +819,8 @@ void SendBucketsByIndex(uint8_t index, uint8_t* rfdata)
                         actual_byte++;
 
                         // check if maximum of array got reached
-                        if (actual_byte > RF_DATA_BUFFERSIZE)
+                        // FIXME: greater than or greater than or equal to?
+                        if (actual_byte >= RF_DATA_BUFFERSIZE)
                         {
                             // restart sync
                             rf_state = RF_IDLE;
@@ -830,7 +829,7 @@ void SendBucketsByIndex(uint8_t index, uint8_t* rfdata)
                 
                             // FIXME:
                             //printf_tiny("%s\r\n", __LINE__);
-                            printf_tiny("actual_byte > RF_DATA_BUFFERSIZE\r\n");
+                            printf_tiny("actual_byte >= RF_DATA_BUFFERSIZE\r\n");
 #endif
                         }
                     }
