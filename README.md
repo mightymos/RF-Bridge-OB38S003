@@ -45,6 +45,9 @@ If purchasing new devices I recommend using Zigbee or similar newer radio techno
 These can be somewhat more expensive but are much quicker and simpler to pair devices and use immediately with Home Assistant:  
 https://www.home-assistant.io/integrations/zha/
 
+OpenMQTTGateway is an alternative that supports Sonoff Bridge:  
+https://docs.openmqttgateway.com/setitup/rf.html#sonoff-rf-bridge-hardware-setup
+
 # Building the firmware 
 If you do not wish to use the pre-build from releases, Install SDCC compiler for your platform:  
 https://sdcc.sourceforge.net/  
