@@ -70,6 +70,14 @@
 // converter tool for raw byte format
 // https://jonajona.nl/convertB1.html
 
+// beep examples
+// 100 ms
+// rfraw AA C0 00 64 55
+// 1000 ms
+// rfraw AA C0 03 E8 55
+// 2000 ms
+// rfraw AA C0 07 D0 55
+
 // uart state machine
 __xdata uart_state_t uart_state = IDLE;
 __xdata uart_command_t uart_command = NONE;
