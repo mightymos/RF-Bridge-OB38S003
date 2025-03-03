@@ -1020,9 +1020,13 @@ void main (void)
 				// send uart command
 				uart_put_command(RF_CODE_ACK);
                 
+                
+                PCA0_DoSniffing();
+                
                 blockReadingUART = false;
                 
 				uart_command = last_sniffing_command;
+                
 				break;
             case RF_RESET_MCU:
                 
@@ -1041,6 +1045,8 @@ void main (void)
 
 				// send firmware version
 				uart_put_command(FIRMWARE_VERSION);
+                
+                PCA0_DoSniffing();
                 
                 blockReadingUART = false;
                 
