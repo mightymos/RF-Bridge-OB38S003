@@ -5,11 +5,11 @@ esphome:
   # we try to issue software reset to 8051 microcontroller through UART
   # whenever ESP8285 resets or powers on so they are both in an initial known state
   # (note: firmware on microcontroller must have been flashed to support)
-  on_boot:
-      then:
-      - rf_bridge.send_raw:
-          # think spaces must be avoided
-          raw: 'AAFE55'
+  #on_boot:
+  #    then:
+  #    - rf_bridge.send_raw:
+  #        # think spaces must be avoided
+  #        raw: 'AAFE55'
 
 esp8266:
   # esp01_1m also seems to work, however it is physically an esp8285 chip in the sonoff bridge
