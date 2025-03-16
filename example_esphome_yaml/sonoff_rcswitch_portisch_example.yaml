@@ -5,11 +5,11 @@ esphome:
   # we try to issue software reset to 8051 microcontroller through UART
   # whenever ESP8285 resets or powers on so they are both in an initial known state
   # (note: firmware on microcontroller must have been flashed to support)
-  #on_boot:
-  #    then:
-  #    - rf_bridge.send_raw:
-  #        # think spaces must be avoided
-  #        raw: 'AAFE55'
+  on_boot:
+      then:
+      - rf_bridge.send_raw:
+          # think spaces must be avoided
+          raw: 'AAFE55'
 
 esp8266:
   # esp01_1m also seems to work, however it is physically an esp8285 chip in the sonoff bridge
@@ -17,11 +17,13 @@ esp8266:
 
 # Enable logging
 logger:
+  # zero effectively disables logging through uart
   baud_rate: 0
 
 ota:
- - platform: esphome
-   password: !secret ota_password
+  # platform required when changing from platform io v6.1.15 to v6.1.16
+  platform: esphome
+  password: !secret ota_password
 
 wifi:
   ssid: !secret wifi_ssid
@@ -217,11 +219,13 @@ binary_sensor:
 light:
   - platform: status_led
     name: "Status LED"
-    initial_state:
-      state: ON
+
     pin: 
       number: GPIO13
       inverted: true
+      
+    # if instead we use initial_state it does not seem to leave blue led on once light component takes over
+    restore_mode: always_on
 
 
 switch:

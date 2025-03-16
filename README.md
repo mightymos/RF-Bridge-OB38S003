@@ -34,11 +34,18 @@ The firmware radio decoding is inspired by the original
 2) rc-switch projects.  
 
 # Status
-THIS IS A WORK IN PROGRESS and requires multiple flashing steps.   
+Use requires multiple flashing steps.   
  
-Passthrough mode is the simplest, provided you are comfortable flashing ESPHome YAML or configuring Tasmota MQTT for your particular radio devices.  
-RCSwitch supports several standard protocols and is fast at decoding.  
-Portisch supports either standard protocol in addition to sniffing of unknown codes, or advanced decoding of multiple protocol timings.  
+Passthrough : is the simplest, provided you are comfortable flashing ESPHome YAML or configuring Tasmota MQTT for your particular radio devices.  
+RCSwitch    : supports several standard protocols and is fast at decoding.  
+Portisch    : supports either standard protocol in addition to sniffing of unknown codes, or advanced decoding of multiple protocol timings.  
+
+# Known Issues
+Portisch has been observed to output garbage data if left in sniffing mode for many hours.  
+Workarounds include entering sniffing mode only briefly or automatically issuing a reset (i.e., rfraw AA FE 55 in Tasmota).  
+
+The issue is documented here:  
+https://github.com/mightymos/RF-Bridge-OB38S003/issues/19
 
 # Recommendations
 If purchasing new devices I recommend using Zigbee or similar newer radio technologies.  
