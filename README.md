@@ -55,6 +55,9 @@ https://www.home-assistant.io/integrations/zha/
 OpenMQTTGateway is an alternative that supports Sonoff Bridge:  
 https://docs.openmqttgateway.com/setitup/rf.html#sonoff-rf-bridge-hardware-setup
 
+RFLink32:  
+https://github.com/cpainchaud/RFLink32
+
 # Building the firmware 
 If you do not wish to use the pre-build from releases, Install SDCC compiler for your platform:  
 https://sdcc.sourceforge.net/  
