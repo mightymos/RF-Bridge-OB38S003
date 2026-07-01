@@ -33,22 +33,12 @@ The firmware radio decoding is inspired by the original
 1) RF-Bridge-EFM8BB1 (Portisch), and
 2) rc-switch projects.  
 
-# Status
-Use requires multiple flashing steps.   
- 
-Passthrough : is the simplest, provided you are comfortable flashing ESPHome YAML or configuring Tasmota MQTT for your particular radio devices.  
-RCSwitch    : supports several standard protocols and is fast at decoding.  
-Portisch    : supports either standard protocol in addition to sniffing of unknown codes, or advanced decoding of multiple protocol timings.  
-
-# Known Issues
-Portisch has been observed to output garbage data if left in sniffing mode for many hours.  
-Workarounds include entering sniffing mode only briefly or automatically issuing a reset (i.e., rfraw AA FE 55 in Tasmota).  
-
-The issue is documented here:  
-https://github.com/mightymos/RF-Bridge-OB38S003/issues/19
+# FCC rules
+Please become familiar with 47 CFR § 15.231 prior to use:  
+https://www.law.cornell.edu/cfr/text/47/15.231
 
 # Recommendations
-If purchasing new devices I recommend using Zigbee or similar newer radio technologies.  
+If purchasing new devices Zigbee or similar newer radio technologies are recommended.  
 These can be somewhat more expensive but are much quicker and simpler to pair devices and use immediately with Home Assistant:  
 https://www.home-assistant.io/integrations/zha/
 
@@ -58,8 +48,22 @@ https://docs.openmqttgateway.com/setitup/rf.html#sonoff-rf-bridge-hardware-setup
 RFLink32:  
 https://github.com/cpainchaud/RFLink32
 
+# Status
+Use requires multiple flashing steps.   
+ 
+Passthrough : simplest firmware, but places the burden of decoding on flashing ESPHome YAML or configuring Tasmota MQTT for your particular radio devices.  
+RCSwitch    : supports a few standard protocols using a look up table for fast decoding, but lacks sniffing ability.  
+Portisch    : supports standard decoding using rules plus sniffing of unknown codes, or decoding of multiple protocol timings using a look up table in another mode.  
+
+# Known Issues
+Portisch has been observed to output garbage data if left in sniffing mode for many hours.  
+Workarounds include entering sniffing mode only briefly or automatically issuing a reset (i.e., rfraw AA FE 55 in Tasmota).  
+
+The issue is documented here:  
+https://github.com/mightymos/RF-Bridge-OB38S003/issues/19
+
 # Building the firmware 
-If you do not wish to use the pre-build from releases, Install SDCC compiler for your platform:  
+If you do not wish to use the pre-build from releases, Install SDCC compiler (at least v4.5.0) for your platform:  
 https://sdcc.sourceforge.net/  
 
 On command line run make.  
@@ -69,7 +73,7 @@ See Flasher section below.
 
 # Flashing
 Reprogamming requires erasing the radio chip (e.g. OB38S003 microcontroller) because the stock firmware is protected.  
-The stock firmware cannot be recovered because it has not been read out.
+The stock firmware cannot be recovered because it has not been dumped.
 
 Steps overview:
 1. Have an **external flasher board** prepared (see below).  
