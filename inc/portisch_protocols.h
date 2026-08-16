@@ -85,10 +85,11 @@ typedef struct BUCKET_PROTOCOL_DATA
  */
 #if defined(PORTISCH_SUPPORT_PT226X_PROTOCOL)
 #define PT226X
-__code static uint16_t PROTOCOL_BUCKETS(PT226X)[] = { 350, 1050, 10850 };
-__code static uint8_t  PROTOCOL_START(PT226X)[]   = { HIGH(0), LOW(2) };
-__code static uint8_t  PROTOCOL_BIT0(PT226X)[]    = { HIGH(0), LOW(1) };
-__code static uint8_t  PROTOCOL_BIT1(PT226X)[]    = { HIGH(1), LOW(0) };
+// FIXME: can no longer remember why we are using const, __code, and static keywords
+const __code static uint16_t PROTOCOL_BUCKETS(PT226X)[] = { 350, 1050, 10850 };
+const __code static uint8_t  PROTOCOL_START(PT226X)[]   = { HIGH(0), LOW(2) };
+const __code static uint8_t  PROTOCOL_BIT0(PT226X)[]    = { HIGH(0), LOW(1) };
+const __code static uint8_t  PROTOCOL_BIT1(PT226X)[]    = { HIGH(1), LOW(0) };
 #endif
 
 /*
@@ -97,11 +98,11 @@ __code static uint8_t  PROTOCOL_BIT1(PT226X)[]    = { HIGH(1), LOW(0) };
  */
 #if defined(PORTISCH_SUPPORT_Rohrmotor24_PROTOCOL)
 #define Rohrmotor24
-__code static uint16_t PROTOCOL_BUCKETS(Rohrmotor24)[] = { 370, 740, 4800, 1500, 8400};
-__code static uint8_t PROTOCOL_START(Rohrmotor24)[] = { HIGH(2), LOW(3) };
-__code static uint8_t PROTOCOL_BIT0(Rohrmotor24)[]  = { HIGH(0), LOW(1) };
-__code static uint8_t PROTOCOL_BIT1(Rohrmotor24)[]  = { HIGH(1), LOW(0) };
-__code static uint8_t PROTOCOL_END(Rohrmotor24)[]   = { LOW(4) };
+const __code static uint16_t PROTOCOL_BUCKETS(Rohrmotor24)[] = { 370, 740, 4800, 1500, 8400};
+const __code static uint8_t PROTOCOL_START(Rohrmotor24)[] = { HIGH(2), LOW(3) };
+const __code static uint8_t PROTOCOL_BIT0(Rohrmotor24)[]  = { HIGH(0), LOW(1) };
+const __code static uint8_t PROTOCOL_BIT1(Rohrmotor24)[]  = { HIGH(1), LOW(0) };
+const __code static uint8_t PROTOCOL_END(Rohrmotor24)[]   = { LOW(4) };
 #endif
 
 /*
@@ -110,10 +111,10 @@ __code static uint8_t PROTOCOL_END(Rohrmotor24)[]   = { LOW(4) };
  */
 #if defined(PORTISCH_SUPPORT_PAR56_PROTOCOL)
 #define PAR56
-__code static uint16_t PROTOCOL_BUCKETS(PAR56)[] = { 380, 1100, 3000, 9000};
-__code static uint8_t PROTOCOL_START(PAR56)[] = { HIGH(2), LOW(3) };
-__code static uint8_t PROTOCOL_BIT0(PAR56)[]  = { HIGH(0), LOW(1) };
-__code static uint8_t PROTOCOL_BIT1(PAR56)[]  = { HIGH(1), LOW(0) };
+const __code static uint16_t PROTOCOL_BUCKETS(PAR56)[] = { 380, 1100, 3000, 9000};
+const __code static uint8_t PROTOCOL_START(PAR56)[] = { HIGH(2), LOW(3) };
+const __code static uint8_t PROTOCOL_BIT0(PAR56)[]  = { HIGH(0), LOW(1) };
+const __code static uint8_t PROTOCOL_BIT1(PAR56)[]  = { HIGH(1), LOW(0) };
 #endif
 
 /*
@@ -121,10 +122,10 @@ __code static uint8_t PROTOCOL_BIT1(PAR56)[]  = { HIGH(1), LOW(0) };
  */
 #if defined(PORTISCH_SUPPORT_WS_1200_PROTOCOL)
 #define WS_1200
-__code static uint16_t PROTOCOL_BUCKETS(WS_1200)[] = { 500, 1000, 1500, 29500 };
-__code static uint8_t PROTOCOL_START(WS_1200)[] = { LOW(3) };
-__code static uint8_t PROTOCOL_BIT0(WS_1200)[]  = { HIGH(2), LOW(1) };
-__code static uint8_t PROTOCOL_BIT1(WS_1200)[]  = { HIGH(0), LOW(1) };
+const __code static uint16_t PROTOCOL_BUCKETS(WS_1200)[] = { 500, 1000, 1500, 29500 };
+const __code static uint8_t PROTOCOL_START(WS_1200)[] = { LOW(3) };
+const __code static uint8_t PROTOCOL_BIT0(WS_1200)[]  = { HIGH(2), LOW(1) };
+const __code static uint8_t PROTOCOL_BIT1(WS_1200)[]  = { HIGH(0), LOW(1) };
 #endif
 
 /*
@@ -132,10 +133,10 @@ __code static uint8_t PROTOCOL_BIT1(WS_1200)[]  = { HIGH(0), LOW(1) };
   */
 #if defined(PORTISCH_SUPPORT_ALDI_4x_PROTOCOL)
 #define ALDI_4x
-__code static uint16_t PROTOCOL_BUCKETS(ALDI_4x)[] = { 400, 1200, 3000, 7250};
-__code static uint8_t PROTOCOL_START(ALDI_4x)[] = { HIGH(2), LOW(3) };
-__code static uint8_t PROTOCOL_BIT0(ALDI_4x)[]  = { HIGH(0), LOW(1) };
-__code static uint8_t PROTOCOL_BIT1(ALDI_4x)[]  = { HIGH(1), LOW(0) };
+const __code static uint16_t PROTOCOL_BUCKETS(ALDI_4x)[] = { 400, 1200, 3000, 7250};
+const __code static uint8_t PROTOCOL_START(ALDI_4x)[] = { HIGH(2), LOW(3) };
+const __code static uint8_t PROTOCOL_BIT0(ALDI_4x)[]  = { HIGH(0), LOW(1) };
+const __code static uint8_t PROTOCOL_BIT1(ALDI_4x)[]  = { HIGH(1), LOW(0) };
 #endif
 
 /*
@@ -144,10 +145,10 @@ __code static uint8_t PROTOCOL_BIT1(ALDI_4x)[]  = { HIGH(1), LOW(0) };
  */
 #if defined(PORTISCH_SUPPORT_HT6P20X_PROTOCOL)
 #define HT6P20X
-__code static uint16_t PROTOCOL_BUCKETS(HT6P20X)[] = { 450, 900, 10350};
-__code static uint8_t PROTOCOL_START(HT6P20X)[]    = { LOW(2), HIGH(0) };
-__code static uint8_t PROTOCOL_BIT0(HT6P20X)[]     = { LOW(0), HIGH(1) };
-__code static uint8_t PROTOCOL_BIT1(HT6P20X)[]     = { LOW(1), HIGH(0) };
+const __code static uint16_t PROTOCOL_BUCKETS(HT6P20X)[] = { 450, 900, 10350};
+const __code static uint8_t PROTOCOL_START(HT6P20X)[]    = { LOW(2), HIGH(0) };
+const __code static uint8_t PROTOCOL_BIT0(HT6P20X)[]     = { LOW(0), HIGH(1) };
+const __code static uint8_t PROTOCOL_BIT1(HT6P20X)[]     = { LOW(1), HIGH(0) };
 #endif
 
 /*
@@ -156,10 +157,10 @@ __code static uint8_t PROTOCOL_BIT1(HT6P20X)[]     = { LOW(1), HIGH(0) };
  */
 #if defined(PORTISCH_SUPPORT_HT12_PROTOCOL)
 #define HT12
-__code static uint16_t PROTOCOL_BUCKETS(HT12)[] = { 330, 630, 10830};
-__code static uint8_t PROTOCOL_START(HT12)[]    = { LOW(2), HIGH(0) };
-__code static uint8_t PROTOCOL_BIT0(HT12)[]     = { LOW(0), HIGH(1) };
-__code static uint8_t PROTOCOL_BIT1(HT12)[]     = { LOW(1), HIGH(0) };
+const __code static uint16_t PROTOCOL_BUCKETS(HT12)[] = { 330, 630, 10830};
+const __code static uint8_t PROTOCOL_START(HT12)[]    = { LOW(2), HIGH(0) };
+const __code static uint8_t PROTOCOL_BIT0(HT12)[]     = { LOW(0), HIGH(1) };
+const __code static uint8_t PROTOCOL_BIT1(HT12)[]     = { LOW(1), HIGH(0) };
 #endif
 
 /*
@@ -168,10 +169,10 @@ __code static uint8_t PROTOCOL_BIT1(HT12)[]     = { LOW(1), HIGH(0) };
  */
 #if defined(PORTISCH_SUPPORT_HT12a_PROTOCOL)
 #define HT12a
-__code static uint16_t PROTOCOL_BUCKETS(HT12a)[] = { 200, 380, 6950};
-__code static uint8_t PROTOCOL_START(HT12a)[] = { LOW(2), HIGH(0) };
-__code static uint8_t PROTOCOL_BIT0(HT12a)[]  = { LOW(0), HIGH(1) };
-__code static uint8_t PROTOCOL_BIT1(HT12a)[]  = { LOW(1), HIGH(0) };
+const __code static uint16_t PROTOCOL_BUCKETS(HT12a)[] = { 200, 380, 6950};
+const __code static uint8_t PROTOCOL_START(HT12a)[] = { LOW(2), HIGH(0) };
+const __code static uint8_t PROTOCOL_BIT0(HT12a)[]  = { LOW(0), HIGH(1) };
+const __code static uint8_t PROTOCOL_BIT1(HT12a)[]  = { LOW(1), HIGH(0) };
 #endif
 
 /*
@@ -180,10 +181,10 @@ __code static uint8_t PROTOCOL_BIT1(HT12a)[]  = { LOW(1), HIGH(0) };
  */
 #if defined(PORTISCH_SUPPORT_HT12_Atag_PROTOCOL)
 #define HT12b
-__code static uint16_t PROTOCOL_BUCKETS(HT12b)[] = { 350, 650, 13000};
-__code static uint8_t PROTOCOL_START(HT12b)[] = { LOW(2), HIGH(0) };
-__code static uint8_t PROTOCOL_BIT0(HT12b)[]  = { LOW(0), HIGH(1) };
-__code static uint8_t PROTOCOL_BIT1(HT12b)[]  = { LOW(1), HIGH(0) };
+const __code static uint16_t PROTOCOL_BUCKETS(HT12b)[] = { 350, 650, 13000};
+const __code static uint8_t PROTOCOL_START(HT12b)[] = { LOW(2), HIGH(0) };
+const __code static uint8_t PROTOCOL_BIT0(HT12b)[]  = { LOW(0), HIGH(1) };
+const __code static uint8_t PROTOCOL_BIT1(HT12b)[]  = { LOW(1), HIGH(0) };
 #endif
 
 /*
@@ -192,10 +193,10 @@ __code static uint8_t PROTOCOL_BIT1(HT12b)[]  = { LOW(1), HIGH(0) };
  */
 #if defined(PORTISCH_SUPPORT_HT12_Atag_PROTOCOL)
 #define HT12c
-__code static uint16_t PROTOCOL_BUCKETS(HT12c)[] = { 350, 700, 15650};
-__code static uint8_t PROTOCOL_START(HT12c)[] = { LOW(2), HIGH(0) };
-__code static uint8_tPROTOCOL_BIT0(HT12c)[]   = { LOW(0), HIGH(1) };
-__code static uint8_t PROTOCOL_BIT1(HT12c)[]  = { LOW(1), HIGH(0) };
+const __code static uint16_t PROTOCOL_BUCKETS(HT12c)[] = { 350, 700, 15650};
+const __code static uint8_t PROTOCOL_START(HT12c)[] = { LOW(2), HIGH(0) };
+const __code static uint8_tPROTOCOL_BIT0(HT12c)[]   = { LOW(0), HIGH(1) };
+const __code static uint8_t PROTOCOL_BIT1(HT12c)[]  = { LOW(1), HIGH(0) };
 #endif
 
 /*
@@ -204,10 +205,10 @@ __code static uint8_t PROTOCOL_BIT1(HT12c)[]  = { LOW(1), HIGH(0) };
  */
 #if defined(PORTISCH_SUPPORT_SP45_PROTOCOL)
 #define SP45
-__code static uint16_t PROTOCOL_BUCKETS(SP45)[] = { 650, 7810, 1820, 3980 };
-__code static uint8_t PROTOCOL_START(SP45)[] = { HIGH(0), LOW(1) };
-__code static uint8_t PROTOCOL_BIT0(SP45)[]  = { HIGH(0), LOW(2) };
-__code static uint8_t PROTOCOL_BIT1(SP45)[]  = { HIGH(0), LOW(3) };
+const __code static uint16_t PROTOCOL_BUCKETS(SP45)[] = { 650, 7810, 1820, 3980 };
+const __code static uint8_t PROTOCOL_START(SP45)[] = { HIGH(0), LOW(1) };
+const __code static uint8_t PROTOCOL_BIT0(SP45)[]  = { HIGH(0), LOW(2) };
+const __code static uint8_t PROTOCOL_BIT1(SP45)[]  = { HIGH(0), LOW(3) };
 #endif
 
 /*
@@ -215,10 +216,10 @@ __code static uint8_t PROTOCOL_BIT1(SP45)[]  = { HIGH(0), LOW(3) };
  */
 #if defined(PORTISCH_SUPPORT_DC90_PROTOCOL)
 #define DC90
-__code static uint16_t PROTOCOL_BUCKETS(DC90)[] = { 360, 720, 4800, 1500 };
-__code static uint8_t PROTOCOL_START(DC90)[] = { HIGH(2), LOW(3) };
-__code static uint8_t PROTOCOL_BIT0(DC90)[]  = { HIGH(0), LOW(1) };
-__code static uint8_t PROTOCOL_BIT1(DC90)[]  = { HIGH(1), LOW(0) };
+const __code static uint16_t PROTOCOL_BUCKETS(DC90)[] = { 360, 720, 4800, 1500 };
+const __code static uint8_t PROTOCOL_START(DC90)[] = { HIGH(2), LOW(3) };
+const __code static uint8_t PROTOCOL_BIT0(DC90)[]  = { HIGH(0), LOW(1) };
+const __code static uint8_t PROTOCOL_BIT1(DC90)[]  = { HIGH(1), LOW(0) };
 #endif
 
 /*
@@ -226,10 +227,10 @@ __code static uint8_t PROTOCOL_BIT1(DC90)[]  = { HIGH(1), LOW(0) };
  */
 #if defined(PORTISCH_SUPPORT_DG_HOSA_PROTOCOL)
 #define DG_HOSA
-__code static uint16_t PROTOCOL_BUCKETS(DG_HOSA)[] = { 590, 1500, 430, 13450 };
-__code static uint8_t PROTOCOL_START(DG_HOSA)[] = { HIGH(2), LOW(3) };
-__code static uint8_t PROTOCOL_BIT0(DG_HOSA)[]  = { HIGH(0), LOW(1) };
-__code static uint8_t PROTOCOL_BIT1(DG_HOSA)[]  = { HIGH(1), LOW(0) };
+const __code static uint16_t PROTOCOL_BUCKETS(DG_HOSA)[] = { 590, 1500, 430, 13450 };
+const __code static uint8_t PROTOCOL_START(DG_HOSA)[] = { HIGH(2), LOW(3) };
+const __code static uint8_t PROTOCOL_BIT0(DG_HOSA)[]  = { HIGH(0), LOW(1) };
+const __code static uint8_t PROTOCOL_BIT1(DG_HOSA)[]  = { HIGH(1), LOW(0) };
 #endif
 
 /*
@@ -237,11 +238,11 @@ __code static uint8_t PROTOCOL_BIT1(DG_HOSA)[]  = { HIGH(1), LOW(0) };
  */
 #if defined(PORTISCH_SUPPORT_Kaku_PROTOCOL)
 #define KaKu
-__code static uint16_t PROTOCOL_BUCKETS(KaKu)[] = { 300, 2560, 140, 1150, 10230 };
-__code static uint8_t PROTOCOL_START(KaKu)[] = {  HIGH(0), LOW(1) };
-__code static uint8_t PROTOCOL_BIT0(KaKu)[]  = {  HIGH(0), LOW(3),  HIGH(0), LOW(2) };
-__code static uint8_t PROTOCOL_BIT1(KaKu)[]  = {  HIGH(0), LOW(2),  HIGH(0), LOW(3) };
-__code static uint8_t PROTOCOL_END(KaKu)[]   = {  HIGH(0), LOW(4) };
+const __code static uint16_t PROTOCOL_BUCKETS(KaKu)[] = { 300, 2560, 140, 1150, 10230 };
+const __code static uint8_t PROTOCOL_START(KaKu)[] = {  HIGH(0), LOW(1) };
+const __code static uint8_t PROTOCOL_BIT0(KaKu)[]  = {  HIGH(0), LOW(3),  HIGH(0), LOW(2) };
+const __code static uint8_t PROTOCOL_BIT1(KaKu)[]  = {  HIGH(0), LOW(2),  HIGH(0), LOW(3) };
+const __code static uint8_t PROTOCOL_END(KaKu)[]   = {  HIGH(0), LOW(4) };
 #endif
 
 /*
@@ -249,11 +250,11 @@ __code static uint8_t PROTOCOL_END(KaKu)[]   = {  HIGH(0), LOW(4) };
  */
 #if defined(PORTISCH_SUPPORT_DIO_PROTOCOL)
 #define DIO_emg
-__code static uint16_t PROTOCOL_BUCKETS(DIO_emg)[] = { 260, 2714, 1300, 10400 };
-__code static uint8_t PROTOCOL_START(DIO_emg)[] = { HIGH(0), LOW(1) };
-__code static uint8_t PROTOCOL_BIT0(DIO_emg)[]  = { HIGH(0), LOW(0), HIGH(0), LOW(2) };
-__code static uint8_t PROTOCOL_BIT1(DIO_emg)[]  = { HIGH(0), LOW(2), HIGH(0), LOW(0) };
-__code static uint8_t PROTOCOL_END(DIO_emg)[]   = { HIGH(0), LOW(3) };
+const __code static uint16_t PROTOCOL_BUCKETS(DIO_emg)[] = { 260, 2714, 1300, 10400 };
+const __code static uint8_t PROTOCOL_START(DIO_emg)[] = { HIGH(0), LOW(1) };
+const __code static uint8_t PROTOCOL_BIT0(DIO_emg)[]  = { HIGH(0), LOW(0), HIGH(0), LOW(2) };
+const __code static uint8_t PROTOCOL_BIT1(DIO_emg)[]  = { HIGH(0), LOW(2), HIGH(0), LOW(0) };
+const __code static uint8_t PROTOCOL_END(DIO_emg)[]   = { HIGH(0), LOW(3) };
 #endif
 
 /*
@@ -261,10 +262,10 @@ __code static uint8_t PROTOCOL_END(DIO_emg)[]   = { HIGH(0), LOW(3) };
  */
 #if defined(PORTISCH_SUPPORT_1BYONE_PROTOCOL)
 #define OneByOne
-__code static uint16_t PROTOCOL_BUCKETS(OneByOne)[] = { 370, 1080, 6530 };
-__code static uint8_t PROTOCOL_START(OneByOne)[] = { LOW(2), HIGH(0) };
-__code static uint8_t PROTOCOL_BIT0(OneByOne)[]  = { LOW(1), HIGH(0) };
-__code static uint8_t PROTOCOL_BIT1(OneByOne)[]  = { LOW(0), HIGH(1) };
+const __code static uint16_t PROTOCOL_BUCKETS(OneByOne)[] = { 370, 1080, 6530 };
+const __code static uint8_t PROTOCOL_START(OneByOne)[] = { LOW(2), HIGH(0) };
+const __code static uint8_t PROTOCOL_BIT0(OneByOne)[]  = { LOW(1), HIGH(0) };
+const __code static uint8_t PROTOCOL_BIT1(OneByOne)[]  = { LOW(0), HIGH(1) };
 #endif
 
 /*
@@ -272,11 +273,11 @@ __code static uint8_t PROTOCOL_BIT1(OneByOne)[]  = { LOW(0), HIGH(1) };
  */
 #if defined(PORTISCH_SUPPORT_Prologue_PROTOCOL)
 #define Prologue
-__code static uint16_t PROTOCOL_BUCKETS(Prologue)[] = { 660, 2000, 4000, 9000 };
-__code static uint8_t PROTOCOL_START(Prologue)[] = { HIGH(0), LOW(3) };
-__code static uint8_t PROTOCOL_BIT0(Prologue)[]  = { HIGH(0), LOW(1) };
-__code static uint8_t PROTOCOL_BIT1(Prologue)[]  = { HIGH(0), LOW(2) };
-__code static uint8_t PROTOCOL_END(Prologue)[]   = { HIGH(0), LOW(1) };
+const __code static uint16_t PROTOCOL_BUCKETS(Prologue)[] = { 660, 2000, 4000, 9000 };
+const __code static uint8_t PROTOCOL_START(Prologue)[] = { HIGH(0), LOW(3) };
+const __code static uint8_t PROTOCOL_BIT0(Prologue)[]  = { HIGH(0), LOW(1) };
+const __code static uint8_t PROTOCOL_BIT1(Prologue)[]  = { HIGH(0), LOW(2) };
+const __code static uint8_t PROTOCOL_END(Prologue)[]   = { HIGH(0), LOW(1) };
 #endif
 
 /*
@@ -284,11 +285,11 @@ __code static uint8_t PROTOCOL_END(Prologue)[]   = { HIGH(0), LOW(1) };
  */
 #if defined(PORTISCH_SUPPORT_DOG_COLLAR_PROTOCOL)
 #define DogCollar
-__code static uint16_t PROTOCOL_BUCKETS(DogCollar)[] = { 1560, 720, 210 };
-__code static uint8_t PROTOCOL_START(DogCollar)[] = { HIGH(0), LOW(1) };
-__code static uint8_t PROTOCOL_BIT0(DogCollar)[]  = { HIGH(2), LOW(1) };
-__code static uint8_t PROTOCOL_BIT1(DogCollar)[]  = { HIGH(1), LOW(2) };
-__code static uint8_t PROTOCOL_END(DogCollar)[]   = { HIGH(2), LOW(1) };
+const __code static uint16_t PROTOCOL_BUCKETS(DogCollar)[] = { 1560, 720, 210 };
+const __code static uint8_t PROTOCOL_START(DogCollar)[] = { HIGH(0), LOW(1) };
+const __code static uint8_t PROTOCOL_BIT0(DogCollar)[]  = { HIGH(2), LOW(1) };
+const __code static uint8_t PROTOCOL_BIT1(DogCollar)[]  = { HIGH(1), LOW(2) };
+const __code static uint8_t PROTOCOL_END(DogCollar)[]   = { HIGH(2), LOW(1) };
 #endif
 
 /*
@@ -296,10 +297,10 @@ __code static uint8_t PROTOCOL_END(DogCollar)[]   = { HIGH(2), LOW(1) };
  */
 #if defined(PORTISCH_SUPPORT_BY302_PROTOCOL)
 #define BY302
-__code static uint16_t PROTOCOL_BUCKETS(BY302)[] = { 470, 1020, 3070 };
-__code static uint8_t PROTOCOL_START(BY302)[] = { LOW(2), HIGH(0) };
-__code static uint8_t PROTOCOL_BIT0(BY302)[]  = { LOW(1), HIGH(0) };
-__code static uint8_t PROTOCOL_BIT1(BY302)[]  = { LOW(0), HIGH(1) };
+const __code static uint16_t PROTOCOL_BUCKETS(BY302)[] = { 470, 1020, 3070 };
+const __code static uint8_t PROTOCOL_START(BY302)[] = { LOW(2), HIGH(0) };
+const __code static uint8_t PROTOCOL_BIT0(BY302)[]  = { LOW(1), HIGH(0) };
+const __code static uint8_t PROTOCOL_BIT1(BY302)[]  = { LOW(0), HIGH(1) };
 #endif
 
 /*
@@ -307,10 +308,10 @@ __code static uint8_t PROTOCOL_BIT1(BY302)[]  = { LOW(0), HIGH(1) };
  */
 #if defined(PORTISCH_SUPPORT_DT_5514_PROTOCOL)
 #define DT_5514
-__code static uint16_t PROTOCOL_BUCKETS(DT_5514)[] = { 400, 720, 4910 };
-__code static uint8_t PROTOCOL_START(DT_5514)[] = { LOW(1), HIGH(2) };
-__code static uint8_t PROTOCOL_BIT0(DT_5514)[]  = { LOW(0), HIGH(1) };
-__code static uint8_t PROTOCOL_BIT1(DT_5514)[]  = { LOW(1), HIGH(0) };
+const __code static uint16_t PROTOCOL_BUCKETS(DT_5514)[] = { 400, 720, 4910 };
+const __code static uint8_t PROTOCOL_START(DT_5514)[] = { LOW(1), HIGH(2) };
+const __code static uint8_t PROTOCOL_BIT0(DT_5514)[]  = { LOW(0), HIGH(1) };
+const __code static uint8_t PROTOCOL_BIT1(DT_5514)[]  = { LOW(1), HIGH(0) };
 #endif
 
 /*
@@ -318,10 +319,10 @@ __code static uint8_t PROTOCOL_BIT1(DT_5514)[]  = { LOW(1), HIGH(0) };
  */
 #if defined(PORTISCH_SUPPORT_H13726_PROTOCOL)
 #define H13726
-__code static uint16_t PROTOCOL_BUCKETS(H13726)[] = { 560, 1910, 3890, 8820 };
-__code static uint8_t PROTOCOL_START(H13726)[] = { LOW(3), HIGH(0) };
-__code static uint8_t PROTOCOL_BIT0(H13726)[]  = { LOW(1), HIGH(0) };
-__code static uint8_t PROTOCOL_BIT1(H13726)[]  = { LOW(2), HIGH(0) };
+const __code static uint16_t PROTOCOL_BUCKETS(H13726)[] = { 560, 1910, 3890, 8820 };
+const __code static uint8_t PROTOCOL_START(H13726)[] = { LOW(3), HIGH(0) };
+const __code static uint8_t PROTOCOL_BIT0(H13726)[]  = { LOW(1), HIGH(0) };
+const __code static uint8_t PROTOCOL_BIT1(H13726)[]  = { LOW(2), HIGH(0) };
 #endif
 
 __code static struct BUCKET_PROTOCOL_DATA PROTOCOL_DATA[] =
