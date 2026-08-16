@@ -358,6 +358,9 @@ void uart_state_machine(const uint8_t rxdataNoFlags)
                         
                         // 
                         uint8_t index = 0;
+						
+						//
+						uint8_t bucket_value;
                         
                         
                         uint16_t* buckets_pointer = (uint16_t *)(RF_DATA + 2);
@@ -366,6 +369,13 @@ void uart_state_machine(const uint8_t rxdataNoFlags)
                         while (index < num_buckets)
                         {
                             buckets_pointer[index] = ((buckets_pointer[index] << 8) | (buckets_pointer[index] >> 8));
+							
+							// FIXME: suggested by @btli, has not been validated on air
+							// convert units of microseconds to units of tens of microseconds as used by timers
+							// convert here prior to actual pin toggling to avoid delay inaccuracies
+							bucket_value = buckets_pointer[index];
+							buckets_pointer[index] = bucket_value / 10;
+							
                             index++;
                             
                         }

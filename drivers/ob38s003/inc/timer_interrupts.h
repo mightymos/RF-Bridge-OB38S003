@@ -11,15 +11,17 @@
 
 // use separate defines to avoid any need for bit manipulation for speed
 
+//FIXME: suggested by @btli, did not validate on air
 //hex(0xFF - (10*10^-6)/(1/16000000)) = 0x5F
-#define TIMER0_RELOAD_10MICROS 0x5F
+#define TIMER0_RELOAD_10MICROS 0x60
 
 //hex(0xFF - (1*10^-3)/(1/(16000000/96))) = 0x58.55555555555555555555
 #define TIMER0_RELOAD_1MILLIS 0x58
 
+//FIXME: suggested by @btli, did not validate on air
 // we need to use the prescaler to allow both microsecond and millisecond timings
 //hex(0xFF - (10*10^-6)/(1/16000000)) = 0x5F
-#define TIMER1_RELOAD_10MICROS 0x5F
+#define TIMER1_RELOAD_10MICROS 0x60
 
 //hex(0xFF - (1*10^-3)/(1/(16000000/96))) = 0x58.55555555555555555555
 #define TIMER1_RELOAD_1MILLIS 0x58
