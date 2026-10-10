@@ -558,9 +558,7 @@ bool SendSingleBucket(const bool high_low, uint16_t bucket_time)
 	// but bucket timings measured at receiver are inaccurate due to delay_us inaccuracy
 	//efm8_delay_us(bucket_time);
 	// FIXME: so maybe just use timer delays instead
-	// FIXME: suggested by @btli, not validated on air
-	//init_second_delay_us(bucket_time / 10);
-	init_second_delay_us(bucket_time);
+	init_second_delay_us(bucket_time / 10);
 	wait_second_delay_finished();
 
 	return !high_low;
