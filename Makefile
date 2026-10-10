@@ -52,9 +52,9 @@
 # low cost development board
 #TARGET_MCU = EFM8BB1LCB
 # sonoff white box
-TARGET_MCU = OB38S003
+#TARGET_MCU = OB38S003
 # BB52 Explorer Kit
-#TARGET_MCU = EFM8BB52
+TARGET_MCU = EFM8BB52
 
 # defined here so result can be included in file name
 # uncomment only one
