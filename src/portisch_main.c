@@ -417,8 +417,15 @@ bool radio_tx_state_machine(const uart_command_t command)
 
 			tr_repeats--;
 
-            //
+            // 
 			PCA0_StopSniffing();
+			
+			// FIXME: on EFM8BB52 kit adding this dummy delay fixes the too long first sync pulse
+			// measured as 1342 us but should be only about 320 us
+			// (again, WITH the dummy delay of about 1000 us, the sync pulse is correctly about 320 us)
+			// why?
+			//init_second_delay_us(1000);
+			//wait_second_delay_finished();
 
             // this chooses between the different transmission types
             switch (command)
@@ -600,7 +607,8 @@ void main (void)
     // so we do not want to manipulate it for debugging unless buzzer has been removed
     debug_pin01_off();
 	debug_pin02_off();
-    
+    debug_pin03_off();
+	
 #endif
     
     // FIXME: may swap use of uart0 and uart1 eventually

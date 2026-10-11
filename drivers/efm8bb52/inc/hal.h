@@ -110,6 +110,7 @@ inline void uart_rx_disabled(void)
     SCON0 &= ~SCON0_REN__RECEIVE_ENABLED;
 }
 
+// debug pin 01
 inline void debug_pin01_on(void)
 {
     DEBUG_PIN01 = 1;
@@ -130,6 +131,7 @@ inline void debug_pin01_toggle(void)
     DEBUG_PIN01 = !DEBUG_PIN01;
 }
 
+// debug pin 02
 inline void debug_pin02_on(void)
 {
     DEBUG_PIN02 = 1;
@@ -149,6 +151,30 @@ inline void debug_pin02_toggle(void)
 {
     DEBUG_PIN02 = !DEBUG_PIN02;
 }
+
+// debug pin 03
+inline void debug_pin03_on(void)
+{
+    DEBUG_PIN03 = 1;
+}
+
+inline void debug_pin03_off(void)
+{
+    DEBUG_PIN03 = 0;
+}
+
+inline void set_debug_pin03(const bool state)
+{
+    DEBUG_PIN03 = state;
+}
+
+inline void debug_pin03_toggle(void)
+{
+    DEBUG_PIN03 = !DEBUG_PIN03;
+}
+
+
+
 
 inline void enable_global_interrupts(void)
 {

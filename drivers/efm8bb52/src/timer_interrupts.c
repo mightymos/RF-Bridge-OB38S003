@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "project-defs.h"
+
 //
 #include "SI_EFM8BB52_Register_Enums.h"
 
@@ -133,6 +135,13 @@ void init_first_delay_ms(const uint16_t timeout)
 
 void init_second_delay_us(const uint16_t timeout)
 {
+	
+//#if defined(TARGET_MCU_EFM8BB52) && defined(DEBUG_PINS_ENABLED)
+//
+//	debug_pin03_on();
+//	
+//#endif
+
     //
     //set_timer2_reload((uint16_t)(0x10000 - ((uint32_t) MCU_FREQ / (1000000 / (uint32_t)interval))));
     set_timer3_reload(TIMER3_RELOAD_10MICROS);
@@ -145,6 +154,12 @@ void init_second_delay_us(const uint16_t timeout)
 
     // start timer
     TMR3CN0 |= TMR3CN0_TR3__RUN;
+	
+//#if defined(TARGET_MCU_EFM8BB52) && defined(DEBUG_PINS_ENABLED)
+//
+//	debug_pin03_off();
+//	
+//#endif
 }
 
 /*
