@@ -17,7 +17,14 @@
 #define UART1_TX_PIN P2_B2
 #define UART1_RX_PIN P2_B3
 
-// for reading by oscilloscope
+// for reading by pulseview with sagae logic analyzer
+// rx capture mirror
 #define DEBUG_PIN01  P1_B7
+
+// TODO: tx mirror
+#define DEBUG_PIN02  P2_B0
+
+// TODO: sync pin required?
+//#define
 
 #endif

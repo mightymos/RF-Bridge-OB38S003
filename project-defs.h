@@ -36,7 +36,11 @@
 // use hardware with a second uart as logging output (e.g., EFM8BB52)
 //#define UART_LOGGING_ENABLED
 
-// FIXME: not used in codebase at time of writing
-//#define DEBUG_PINS_ENABLED
+// used to mirror rf 433 mhz receive and transmit signals
+// for comparison of signal timings to comparator measured values
+// we would normally do this only on development boards because sonoff hardware does not break out spare pins to headers
+// we also use up code space by including debug functions
+#define DEBUG_PINS_ENABLED
+
 
 #endif // _PROJECT_DEFS_H

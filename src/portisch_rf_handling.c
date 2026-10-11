@@ -469,7 +469,8 @@ void capture_handler(uint16_t current_capture_value)
 		pin = rdata_level();
 		buffer_in(current_capture_value | ((uint16_t)(!pin) << 15));
         
-#if defined(DEBUG_PINS_ENABLED)
+#if defined (TARGET_MCU_EFM8BB52) && defined(DEBUG_PINS_ENABLED)
+		// mirrors the rf receive signal
         set_debug_pin01(pin);
 #endif
 
@@ -547,10 +548,11 @@ bool SendSingleBucket(const bool high_low, uint16_t bucket_time)
     set_led(high_low);
     set_tdata(high_low);
     
-#if defined(DEBUG_PINS_ENABLED)
+#if defined(TARGET_MCU_EFM8BB52) && defined(DEBUG_PINS_ENABLED)
 
     // DEBUG: mirror radio transmit output to a free gpio
-    set_debug_pin01(high_low);
+	// example: 0xAA 0xA5 0x24 0xE0 0x01 0x40 0x03 0x84 0xD0 0x03 0x58 0x55
+    set_debug_pin02(high_low);
     
 #endif
 	

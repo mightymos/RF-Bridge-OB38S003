@@ -25,7 +25,7 @@ typedef enum
 } uart_state_t;
 
 
-// commands which should be supported partially by rcswitch and mostly by portisch are given here (learning are not supported as of writing):
+// commands which should be supported partially by rcswitch and mostly by portisch are given here:
 // https://github.com/Portisch/RF-Bridge-EFM8BB1/wiki/Commands
 typedef enum
 {

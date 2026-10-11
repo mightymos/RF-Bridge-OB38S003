@@ -130,6 +130,26 @@ inline void debug_pin01_toggle(void)
     DEBUG_PIN01 = !DEBUG_PIN01;
 }
 
+inline void debug_pin02_on(void)
+{
+    DEBUG_PIN02 = 1;
+}
+
+inline void debug_pin02_off(void)
+{
+    DEBUG_PIN02 = 0;
+}
+
+inline void set_debug_pin02(const bool state)
+{
+    DEBUG_PIN02 = state;
+}
+
+inline void debug_pin02_toggle(void)
+{
+    DEBUG_PIN02 = !DEBUG_PIN02;
+}
+
 inline void enable_global_interrupts(void)
 {
     IE_EA = 1;
