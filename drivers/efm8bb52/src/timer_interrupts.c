@@ -70,26 +70,24 @@ void clear_pca_counter(void)
 // Portisch favored this approach to timer delay
 void set_timer2_reload(const uint16_t reload)
 {
-    // original portisch does not
-    // seems we should initialize timer registers and setup reload values next
-    //TMR2H = ((reload >> 8) & 0xFF);
-    //TMR2L = (reload & 0xFF);
-    
-    // these are the reload values (placed into actual timer registers on overflow)
+    // these are the reload values
     TMR2RLH = ((reload >> 8) & 0xFF);
     TMR2RLL = (reload & 0xFF);
+	
+    // we must preload these registers, otherwise the first timeout will be incorrect (i.e., will incorrectly start from 0x0000)
+    TMR2H = ((reload >> 8) & 0xFF);
+    TMR2L = (reload & 0xFF);
 }
 
 void set_timer3_reload(const uint16_t reload)
-{
-    // original portisch does not
-    // seems we should initialize timer registers and setup reload values next
-    //TMR3H = ((reload >> 8) & 0xFF);
-    //TMR3L = (reload & 0xFF);
-    
-    // these are the reload values (placed into actual timer registers on overflow)
+{    
+    // these are the reload values
     TMR3RLH = ((reload >> 8) & 0xFF);
     TMR3RLL = (reload & 0xFF);
+	
+    // we must preload these registers, otherwise the first timeout will be incorrect (i.e., will incorrectly start from 0x0000)
+    TMR3H = ((reload >> 8) & 0xFF);
+    TMR3L = (reload & 0xFF);
 }
 
 

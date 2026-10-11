@@ -420,12 +420,24 @@ bool radio_tx_state_machine(const uart_command_t command)
             // 
 			PCA0_StopSniffing();
 			
+#if defined(TARGET_MCU_EFM8BB52) && defined(DEBUG_PINS_ENABLED)
+
+			debug_pin03_on();
+    
+#endif
+			
 			// FIXME: on EFM8BB52 kit adding this dummy delay fixes the too long first sync pulse
 			// measured as 1342 us but should be only about 320 us
-			// (again, WITH the dummy delay of about 1000 us, the sync pulse is correctly about 320 us)
 			// why?
-			//init_second_delay_us(1000);
-			//wait_second_delay_finished();
+			init_second_delay_us(10);
+			wait_second_delay_finished();
+			
+			
+#if defined(TARGET_MCU_EFM8BB52) && defined(DEBUG_PINS_ENABLED)
+
+			debug_pin03_off();
+    
+#endif
 
             // this chooses between the different transmission types
             switch (command)
