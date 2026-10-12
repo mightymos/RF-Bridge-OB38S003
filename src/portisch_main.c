@@ -423,17 +423,15 @@ bool radio_tx_state_machine(const uart_command_t command)
 #if defined(TARGET_MCU_EFM8BB52) && defined(DEBUG_PINS_ENABLED)
 
 			debug_pin03_on();
-    
-#endif
+
+			volatile uint16_t dummy = 1000;
 			
-			// FIXME: on EFM8BB52 kit adding this dummy delay fixes the too long first sync pulse
-			// measured as 1342 us but should be only about 320 us
-			// why?
-			init_second_delay_us(10);
+			// passing in value of 1 (i.e. 10us) results in a 17us time in pulseview
+			// passing in value of 100 (i.e., 1000 us) results in a 1027us time
+			// passing in a variable of 1000 divided by 10 results in 1049us time
+			init_second_delay_us(dummy / 10);
 			wait_second_delay_finished();
-			
-			
-#if defined(TARGET_MCU_EFM8BB52) && defined(DEBUG_PINS_ENABLED)
+
 
 			debug_pin03_off();
     
