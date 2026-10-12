@@ -40,7 +40,7 @@
 // for comparison of signal timings to comparator measured values
 // we would normally do this only on development boards because sonoff hardware does not break out spare pins to headers
 // we also use up code space by including debug functions
-#define DEBUG_PINS_ENABLED
+//#define DEBUG_PINS_ENABLED
 
 
 #endif // _PROJECT_DEFS_H
